@@ -1,0 +1,1135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Belmont FC – Season Dashboard 25/26</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<style>
+:root {
+  --blue:   #0a1d37;
+  --blue2:  #162f52;
+  --yellow: #fdb813;
+  --dark:   #050d1a;
+  --card:   #0c1f3d;
+  --text:   #f0f4f8;
+  --muted:  #8ba2c1;
+  --border: rgba(253,184,19,0.15);
+  --green:  #2ecc71;
+  --red:    #e74c3c;
+  --amber:  #f39c12;
+  --fbox:   rgba(255,255,255,0.03);
+  --fbox-b: rgba(255,255,255,0.08);
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:var(--dark); font-family:'DM Sans',sans-serif; color:var(--text);
+  min-height:100vh; background-image:radial-gradient(circle at 50% -10%, var(--blue2) 0%, var(--dark) 70%); overflow-x:hidden; }
+
+/* HEADER */
+.header { padding:28px 32px 20px; border-bottom:2px solid var(--yellow); display:flex; align-items:flex-end; justify-content:space-between; flex-wrap:wrap; gap:12px; }
+.club-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(2.5rem,6vw,4rem); letter-spacing:0.02em; line-height:0.9; }
+.club-title span { color:var(--yellow); }
+.sub { font-size:0.7rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--yellow); margin-top:8px; font-weight:600; }
+.hdr-r { text-align:right; }
+.hdr-r .lbl { font-size:0.6rem; text-transform:uppercase; letter-spacing:0.12em; color:var(--muted); }
+.hdr-r .val { font-family:'Bebas Neue',sans-serif; font-size:1.3rem; letter-spacing:0.06em; color:var(--yellow); }
+
+/* STATS */
+.stats { display:flex; gap:12px; flex-wrap:wrap; padding:20px 32px; background:rgba(0,0,0,0.2); align-items:stretch; }
+.pill { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:12px 20px;
+  display:flex; flex-direction:column; flex:1 1 110px; cursor:pointer;
+  transition:transform 0.2s, border-color 0.2s; text-align:left; outline:none; color:inherit; }
+.pill:hover { border-color:var(--yellow); transform:translateY(-2px); }
+.pill.active-pill { border-color:var(--yellow); background:var(--blue2); box-shadow:0 0 15px rgba(253,184,19,0.1); }
+.pill .v { font-family:'Bebas Neue',sans-serif; font-size:1.8rem; line-height:1; }
+.pill .l { font-size:0.65rem; text-transform:uppercase; color:var(--muted); margin-top:4px; }
+.pill-np { background:var(--card); border:1px solid var(--border); border-radius:12px; padding:12px 20px;
+  display:flex; flex-direction:row; align-items:center; gap:20px; flex:2 1 220px;
+  cursor:pointer; transition:transform 0.2s, border-color 0.2s; outline:none; color:inherit; }
+.pill-np:hover { border-color:var(--yellow); transform:translateY(-2px); }
+.pill-np.active-pill { border-color:var(--yellow); background:var(--blue2); box-shadow:0 0 15px rgba(253,184,19,0.1); }
+.pill-np .main .v { font-family:'Bebas Neue',sans-serif; font-size:1.8rem; line-height:1; }
+.pill-np .main .l { font-size:0.65rem; text-transform:uppercase; color:var(--muted); margin-top:4px; }
+.np-reasons { display:flex; flex-direction:column; gap:4px; padding-left:16px; border-left:1px solid rgba(253,184,19,0.2); }
+.np-reason { display:flex; align-items:center; gap:6px; font-size:0.7rem; color:var(--muted); white-space:nowrap; }
+.np-reason .dot { width:5px; height:5px; border-radius:50%; flex-shrink:0; }
+.np-reason .cnt { font-family:'Bebas Neue',sans-serif; font-size:0.9rem; color:var(--text); min-width:16px; }
+
+/* FILTER BAR */
+.filters-bar {
+  padding:14px 32px;
+  border-bottom:1px solid var(--border);
+  position:sticky; top:0; z-index:20;
+  background:rgba(5,13,26,0.97); backdrop-filter:blur(12px);
+}
+.filters-grid {
+  display:grid;
+  grid-template-columns: auto auto auto auto auto;
+  gap:10px;
+  align-items:start;
+}
+/* Filter box */
+.fbox {
+  background:var(--fbox);
+  border:1px solid var(--fbox-b);
+  border-radius:10px;
+  padding:10px 14px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  min-width:0;
+}
+.fbox-title {
+  font-size:0.58rem;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:0.13em;
+  color:var(--yellow);
+  opacity:0.85;
+}
+.fbox-body { display:flex; gap:6px; flex-wrap:wrap; align-items:center; }
+
+/* Buttons */
+.btn {
+  background:var(--blue2); border:1px solid rgba(255,255,255,0.1); color:var(--muted);
+  font-family:'DM Sans',sans-serif; font-size:0.74rem; padding:5px 10px;
+  border-radius:6px; cursor:pointer; white-space:nowrap; transition:all 0.15s;
+  user-select:none;
+}
+.btn:hover { border-color:var(--yellow); color:var(--text); }
+.btn.active { background:var(--yellow); border-color:var(--yellow); color:var(--blue); font-weight:700; }
+.btn.disabled { opacity:0.3; cursor:not-allowed; pointer-events:none; }
+
+/* Selects */
+select {
+  background:var(--blue2); border:1px solid rgba(255,255,255,0.1); color:var(--muted);
+  font-family:'DM Sans',sans-serif; font-size:0.74rem; padding:5px 22px 5px 8px;
+  border-radius:6px; outline:none; appearance:none; cursor:pointer;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='9' fill='%238ba2c1'%3E%3Cpath d='M0 3l4.5 4.5L9 3z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 7px center;
+  transition:border-color 0.15s, color 0.15s;
+}
+select:hover, select:focus { border-color:var(--yellow); color:var(--text); }
+select option:disabled { color:rgba(139,162,193,0.35); }
+
+/* Reset box */
+.fbox-reset {
+  background:transparent;
+  border:1px solid rgba(253,184,19,0.3);
+  border-radius:10px;
+  padding:10px 14px;
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+  align-items:center;
+  justify-content:center;
+}
+.breset {
+  background:transparent; border:none; color:var(--yellow);
+  font-family:'DM Sans',sans-serif; font-size:0.75rem; font-weight:700;
+  cursor:pointer; letter-spacing:0.05em; padding:4px 8px; border-radius:5px;
+  white-space:nowrap; transition:all 0.15s;
+}
+.breset:hover { background:rgba(253,184,19,0.1); }
+.active-count {
+  font-size:0.6rem; color:var(--muted); text-align:center; letter-spacing:0.08em;
+  text-transform:uppercase; min-height:14px;
+}
+
+/* TABLE */
+.twrap-outer { padding:20px 32px 48px; }
+.rcount { font-size:0.7rem; text-transform:uppercase; color:var(--muted); margin-bottom:12px; }
+.rcount span { color:var(--yellow); font-weight:700; }
+.twrap { border-radius:12px; border:1px solid var(--border); overflow-x:auto; background:var(--card); }
+table { width:100%; border-collapse:collapse; font-size:0.85rem; min-width:800px; }
+thead tr { background:var(--blue2); }
+thead th { padding:13px 15px; text-align:left; font-size:0.6rem; font-weight:700;
+  text-transform:uppercase; color:var(--yellow); border-bottom:1px solid var(--border);
+  cursor:pointer; white-space:nowrap; user-select:none; }
+thead th:hover { color:#fff; }
+tbody tr { border-bottom:1px solid rgba(255,255,255,0.04); transition:background 0.1s; }
+tbody tr:hover { background:rgba(255,255,255,0.03); }
+td { padding:12px 15px; vertical-align:middle; white-space:nowrap; }
+td.dcol { font-family:'Bebas Neue',sans-serif; font-size:1rem; color:var(--muted); }
+td.divcol { font-weight:700; color:var(--yellow); font-size:0.82rem; }
+.bfc { color:var(--yellow); font-weight:700; }
+.sc { display:inline-flex; align-items:center; gap:4px; border:1px solid var(--yellow);
+  border-radius:6px; padding:3px 9px; font-family:'Bebas Neue',sans-serif; font-size:1.1rem;
+  color:var(--yellow); background:var(--blue); }
+.sc.win  { background:var(--green); color:#fff; border-color:var(--green); }
+.sc.loss { background:var(--red);   color:#fff; border-color:var(--red); }
+.sc.draw { background:rgba(253,184,19,0.15); }
+.badge { font-size:0.62rem; font-weight:700; padding:3px 8px; border-radius:4px; text-transform:uppercase; white-space:nowrap; }
+.badge-np     { background:rgba(255,255,255,0.05);  color:var(--muted); border:1px solid rgba(255,255,255,0.12); }
+.badge-nr     { background:rgba(243,156,18,0.15);   color:var(--amber); border:1px solid rgba(243,156,18,0.3); }
+.badge-cup    { background:rgba(253,184,19,0.13);   color:var(--yellow); border:1px solid rgba(253,184,19,0.3); }
+.badge-league { background:rgba(255,255,255,0.05);  color:var(--muted); border:1px solid rgba(255,255,255,0.1); }
+.reason-tag   { font-size:0.62rem; padding:2px 7px; border-radius:3px; font-weight:600; }
+.reason-weather    { background:rgba(52,152,219,0.2);  color:#74b9ff; }
+.reason-opposition { background:rgba(231,76,60,0.2);   color:#ff7675; }
+.reason-belmont    { background:rgba(253,184,19,0.2);   color:var(--yellow); }
+td.refcol { font-size:0.78rem; color:var(--muted); font-style:italic; }
+td.loccol { font-size:0.78rem; color:var(--muted); max-width:160px; overflow:hidden; text-overflow:ellipsis; }
+
+@media (max-width:900px) {
+  .filters-grid { grid-template-columns:1fr 1fr 1fr; }
+  .filters-grid { grid-template-columns:repeat(3,auto) auto auto; }
+  .fbox-reset { flex-direction:row; justify-content:flex-start; }
+}
+@media (max-width:600px) {
+  .header,.stats,.filters-bar,.twrap-outer { padding-left:16px; padding-right:16px; }
+  .filters-grid { grid-template-columns:1fr; }
+  .pill,.pill-np { flex:1 1 calc(50% - 6px); }
+}
+
+/* TABS */
+.tab-bar { display:flex; gap:0; padding:0 32px; background:rgba(0,0,0,0.25); border-bottom:1px solid var(--border); }
+.tab-btn { font-family:'DM Sans',sans-serif; font-size:0.8rem; font-weight:600; letter-spacing:0.06em;
+  text-transform:uppercase; padding:13px 22px; cursor:pointer; background:transparent; border:none;
+  color:var(--muted); border-bottom:3px solid transparent; margin-bottom:-1px; transition:all 0.18s; }
+.tab-btn:hover { color:var(--text); }
+.tab-btn.active { color:var(--yellow); border-bottom-color:var(--yellow); }
+.tab-panel { display:none; }
+.tab-panel.active { display:block; }
+
+/* STATS TAB */
+.stats-page { padding:24px 32px 48px; }
+.stats-filters { display:flex; gap:10px; flex-wrap:wrap; align-items:center; margin-bottom:24px;
+  padding:12px 16px; background:var(--fbox); border:1px solid var(--fbox-b); border-radius:10px; }
+.stats-filters .flbl { font-size:0.58rem; font-weight:700; text-transform:uppercase; letter-spacing:0.13em; color:var(--yellow); opacity:0.85; }
+.stats-grid { display:grid; grid-template-columns:repeat(2, 1fr); gap:20px; }
+.stat-card { background:var(--card); border:1px solid var(--border); border-radius:12px; overflow:hidden; display:flex; flex-direction:column; }
+.stat-card .stat-table-wrap { overflow-y:auto; max-height:380px; }
+.stat-card-header { padding:14px 18px 10px; border-bottom:1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between; }
+.stat-card-title { font-family:'Bebas Neue',sans-serif; font-size:1.05rem; letter-spacing:0.06em; color:var(--yellow); }
+.stat-card-sub { font-size:0.62rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; }
+.stat-table { width:100%; border-collapse:collapse; font-size:0.8rem; }
+.stat-table th { padding:8px 14px; text-align:left; font-size:0.58rem; font-weight:700; text-transform:uppercase;
+  letter-spacing:0.1em; color:var(--muted); border-bottom:1px solid var(--border); background:var(--blue2); }
+.stat-table th.right { text-align:right; }
+.stat-table th.center { text-align:center; }
+.stat-table td { padding:9px 14px; border-bottom:1px solid rgba(255,255,255,0.03); vertical-align:middle; white-space:normal; word-break:break-word; }
+.stat-table td.opp { max-width:88px; overflow:hidden; }
+.stat-table td.right { text-align:right; font-family:'Bebas Neue',sans-serif; font-size:0.95rem; color:var(--text); }
+.stat-table tr:last-child td { border-bottom:none; }
+.stat-table tr:hover td { background:rgba(255,255,255,0.02); }
+.rank { font-family:'Bebas Neue',sans-serif; font-size:0.9rem; color:var(--muted); width:24px; }
+.rank.gold   { color:#FFD700; }
+.rank.silver { color:#C0C0C0; }
+.rank.bronze { color:#CD7F32; }
+.bar-wrap { display:flex; align-items:center; gap:8px; }
+.bar-bg { flex:1; height:5px; background:rgba(255,255,255,0.07); border-radius:3px; overflow:hidden; min-width:40px; }
+.bar-fill { height:100%; border-radius:3px; background:var(--yellow); transition:width 0.4s ease; }
+.bar-fill.green { background:var(--green); }
+.bar-fill.red   { background:var(--red); }
+.score-chip { display:inline-flex; align-items:center; gap:3px; font-family:'Bebas Neue',sans-serif;
+  font-size:1rem; padding:2px 8px; border-radius:5px; }
+.score-chip.win  { background:rgba(46,204,113,0.15); color:var(--green); border:1px solid rgba(46,204,113,0.3); }
+.score-chip.loss { background:rgba(231,76,60,0.15);  color:var(--red);   border:1px solid rgba(231,76,60,0.3); }
+.score-chip.draw { background:rgba(253,184,19,0.1);  color:var(--yellow);border:1px solid rgba(253,184,19,0.25); }
+.team-name { font-size:0.82rem; color:var(--text); }
+.team-name.bfc-name { color:var(--yellow); font-weight:700; }
+.no-data { padding:24px; text-align:center; color:var(--muted); font-size:0.8rem; }
+@media(max-width:700px) { .stats-grid { grid-template-columns:1fr; } .tab-bar,.stats-page { padding-left:16px; padding-right:16px; } }
+@media(max-width:1100px) { .stats-grid { grid-template-columns:1fr; } }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="club-title">Belmont <span>FC</span></div>
+    <div class="sub">Herbert Park, Dublin 4 &nbsp;·&nbsp; Season 2025 / 26</div>
+  </div>
+  <div class="hdr-r">
+    <div class="lbl">Files Loaded</div>
+    <div class="val" id="filesLoaded" style="font-size:0.75rem;letter-spacing:0.03em;color:var(--muted)">—</div>
+    <div class="lbl" style="margin-top:8px">Last Updated</div>
+    <div class="val" id="lastUpdated">—</div>
+  </div>
+</div>
+
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('fixtures',this)">Fixtures</button>
+  <button class="tab-btn" onclick="switchTab('insights',this)">Season Insights</button>
+</div>
+
+<div id="tab-fixtures" class="tab-panel active">
+<div id="statsRow" class="stats"></div>
+
+<div class="filters-bar">
+  <div class="filters-grid">
+
+    <!-- Box 1: Game Location -->
+    <div class="fbox">
+      <div class="fbox-title">Game Location</div>
+      <div class="fbox-body" id="fg-ha">
+        <button class="btn active" data-key="ha" data-val="all"  onclick="toggleBtn(this)">All</button>
+        <button class="btn"        data-key="ha" data-val="home" onclick="toggleBtn(this)">Home</button>
+        <button class="btn"        data-key="ha" data-val="away" onclick="toggleBtn(this)">Away</button>
+      </div>
+    </div>
+
+    <!-- Box 3: Championship -->
+    <div class="fbox">
+      <div class="fbox-title">Championship</div>
+      <div class="fbox-body" id="fg-tp">
+        <button class="btn active" data-key="tp" data-val="all"    onclick="toggleBtn(this)">All</button>
+        <button class="btn"        data-key="tp" data-val="League"  onclick="toggleBtn(this)">League</button>
+        <button class="btn"        data-key="tp" data-val="Cup"     onclick="toggleBtn(this)">Cup</button>
+      </div>
+    </div>
+
+    <!-- Box 4: Date + Rival -->
+    <div class="fbox">
+      <div class="fbox-title">Date &amp; Rival</div>
+      <div class="fbox-body">
+        <select id="dateSel" onchange="setDropdown('date',this.value)"></select>
+        <select id="rivalSel" onchange="setDropdown('rival',this.value)"></select>
+      </div>
+    </div>
+
+    <!-- Box 5: Age + Division + Group -->
+    <div class="fbox">
+      <div class="fbox-title">Age, Division &amp; Group</div>
+      <div class="fbox-body">
+        <select id="groupSel" onchange="setDropdown('group',this.value)"></select>
+        <select id="ageSel"   onchange="setDropdown('age',this.value)"></select>
+        <select id="divSel"   onchange="setDropdown('div',this.value)"></select>
+      </div>
+    </div>
+
+    <!-- Reset -->
+    <div class="fbox-reset" style="padding:8px 10px;">
+      <button class="breset" style="font-size:0.68rem;padding:3px 6px;" onclick="resetAll()">↺ Reset</button>
+      <div class="active-count" id="activeCount"></div>
+    </div>
+
+  </div>
+</div>
+
+<div class="twrap-outer">
+  <div class="rcount" id="rcount"></div>
+  <div class="twrap">
+    <table>
+      <thead>
+        <tr>
+          <th onclick="sortBy('date_sort')">Date ↕</th>
+          <th onclick="sortBy('group')">Group ↕</th>
+          <th onclick="sortBy('division')">Division ↕</th>
+          <th>Type</th>
+          <th onclick="sortBy('home')" style="width:10%">Home ↕</th>
+          <th style="text-align:center">Result</th>
+          <th onclick="sortBy('away')" style="width:10%">Away ↕</th>
+          <th onclick="sortBy('referee')">Referee ↕</th>
+          </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+// ── Global stubs (onclick handlers need these to exist at HTML-parse time) ──
+function toggleBtn(btn)              { if(window._toggleBtn) window._toggleBtn(btn); }
+function setDropdown(key, val)       { if(window._setDropdown) window._setDropdown(key, val); }
+function sortBy(col)                 { if(window._sortBy) window._sortBy(col); }
+function resetAll()                  { if(window._resetAll) window._resetAll(); }
+function selectOnlySt(val)           { if(window._selectOnlySt) window._selectOnlySt(val); }
+function switchTab(tab, btn)         { if(window._switchTab) window._switchTab(tab, btn); }
+function insFilterChange(key, val)   { if(window._insFilterChange) window._insFilterChange(key, val); }
+function resetInsights()             { if(window._resetInsights) window._resetInsights(); }
+
+// ── CSV loader ──────────────────────────────────────────────────────────────
+// Reads data from belmont_ddsl_data.csv in the same directory as this file.
+// The CSV must have these columns (in any order):
+//   date, date_sort, division_raw, home, h_goals, a_goals, away,
+//   referee, location, tournament, played, reason
+
+function parseCSV(text) {
+  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
+  if (lines.length < 2) return [];
+  const headers = lines[0].split(',').map(h => h.trim());
+  const rows = [];
+  for (let i = 1; i < lines.length; i++) {
+    const line = lines[i].trim();
+    if (!line) continue;
+    // Simple CSV parse (handles empty fields; no quoted-comma support needed here)
+    const vals = line.split(',');
+    const obj = {};
+    headers.forEach((h, idx) => {
+      let v = vals[idx] !== undefined ? vals[idx].trim() : '';
+      // Coerce numeric goal fields
+      if (h === 'h_goals' || h === 'a_goals') {
+        obj[h] = v === '' || v === 'null' ? null : Number(v);
+      } else {
+        obj[h] = v;
+      }
+    });
+    rows.push(obj);
+  }
+  return rows;
+}
+
+function showError(msg) {
+  document.body.innerHTML = `<div style="padding:40px;font-family:sans-serif;color:#e74c3c;background:#050d1a;min-height:100vh">
+    <h2 style="color:#fdb813;margin-bottom:12px">⚠ Could not load data</h2>
+    <p style="color:#f0f4f8;margin-bottom:8px">${msg}</p>
+    <p style="color:#8ba2c1;font-size:0.85rem">Make sure your Google Sheet is shared as <strong>"Anyone with the link"</strong> and that the Sheet ID and gid values are correct.</p>
+  </div>`;
+}
+
+let DATA = [];
+
+async function tryFetch(url) {
+  try {
+    const resp = await fetch(url);
+    if (!resp.ok) return null;
+    const text = await resp.text();
+    const rows = parseCSV(text);
+    return rows.length > 0 ? rows : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+async function loadData() {
+  const sheetId = '1Dej_HbjnZZb3Zrb86ExJ6Mg4XCb0PrT5_5BQOfyRJbM';
+  const url1 = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
+  const url2 = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=827954`;
+
+  const [rows1, rows2] = await Promise.all([
+    tryFetch(url1),
+    tryFetch(url2)
+  ]);
+
+  if (!rows1 && !rows2) {
+    showError('Neither gamesdata1.csv nor gamesdata2.csv could be loaded.');
+    return;
+  }
+
+  // Show which files loaded
+  const el = document.getElementById('filesLoaded');
+  if (el) {
+    const loaded = [rows1 ? 'Sheet 1 (gid:0)' : null, rows2 ? 'Sheet 2 (gid:827954)' : null].filter(Boolean);
+    const missing = [!rows1 ? 'Sheet 1 (gid:0)' : null, !rows2 ? 'Sheet 2 (gid:827954)' : null].filter(Boolean);
+    let html = loaded.map(f => `<span style="color:var(--green)">${f} ✓</span>`).join('&nbsp; ');
+    if (missing.length) html += '&nbsp; ' + missing.map(f => `<span style="color:var(--red);opacity:0.6">${f} ✗</span>`).join('&nbsp; ');
+    el.innerHTML = html;
+  }
+
+  DATA = [...(rows1 || []), ...(rows2 || [])];
+  initDashboard();
+}
+
+loadData();
+
+
+function initDashboard() {
+function getDiv(r) {
+  const m = String(r).match(/^(\d+(?:\.\d+(?:\/\d+)*)?)/);
+  return m ? m[1] : r;
+}
+function getAge(r) {
+  const m = String(r).match(/^(\d+)/);
+  return m ? 'U' + m[1] : 'Other';
+}
+
+const ALL = DATA.map(g => {
+  const bh = /belmont/i.test(g.home);
+  const isNP = g.played === 'N';
+  const hasScore = g.h_goals !== null && g.h_goals !== undefined;
+  let result_type = 'np';
+  if (!isNP) {
+    if (hasScore) {
+      const me = bh ? g.h_goals : g.a_goals, them = bh ? g.a_goals : g.h_goals;
+      result_type = me > them ? 'win' : me === them ? 'draw' : 'loss';
+    } else {
+      result_type = 'nr';
+    }
+  }
+  return { ...g, division: getDiv(g.division_raw), age: getAge(g.division_raw),
+    is_home: bh, result_type, tournament: g.tournament || 'League',
+    group: g.group || '' };
+});
+
+// ── Last Updated: derive from latest game date in data ──
+(function() {
+  const played = ALL.filter(g => g.result_type === 'win' || g.result_type === 'draw' || g.result_type === 'loss');
+  if (played.length) {
+    const latest = played.reduce((best, g) => ((g.date_sort || '') > (best.date_sort || '') ? g : best), played[0]);
+    const el = document.getElementById('lastUpdated');
+    if (el) el.textContent = latest.date || latest.date_sort || '—';
+  }
+})();
+
+// Filters state
+// ha: single value ('all'/'home'/'away')
+// st: Set of active result types (multiselect — all active = show all)
+// tp: single value
+// date/age/div: single value
+let filters = {
+  ha: 'all',
+  st: new Set(['win','draw','loss','nr','np']),  // all on = show all
+  tp: 'all',
+  date: 'all',
+  age: 'all',
+  div: 'all',
+  rival: 'all',
+  group: 'all'
+};
+let sortCol = 'date_sort', sortAsc = false;
+
+const ALL_ST = ['win','draw','loss','nr','np'];
+
+function matchGame(g) {
+  if (filters.ha === 'home' && !g.is_home) return false;
+  if (filters.ha === 'away' && g.is_home)  return false;
+  // multiselect: if all active, treat as "all"; otherwise filter
+  if (filters.st.size < ALL_ST.length && !filters.st.has(g.result_type)) return false;
+  if (filters.tp !== 'all' && g.tournament !== filters.tp) return false;
+  if (filters.age !== 'all' && g.age !== filters.age) return false;
+  if (filters.div !== 'all' && g.division !== filters.div) return false;
+  if (filters.date !== 'all' && g.date !== filters.date) return false;
+  if (filters.rival !== 'all') {
+    const opp = g.is_home ? g.away : g.home;
+    if (opp !== filters.rival) return false;
+  }
+  if (filters.group !== 'all' && g.group !== filters.group) return false;
+  return true;
+}
+
+// Pool ignoring a specific filter key (for available-options calculation)
+function poolExcluding(key) {
+  return ALL.filter(g => {
+    if (key !== 'ha')   { if (filters.ha === 'home' && !g.is_home) return false; if (filters.ha === 'away' && g.is_home) return false; }
+    if (key !== 'st')   { if (filters.st.size < ALL_ST.length && !filters.st.has(g.result_type)) return false; }
+    if (key !== 'tp')   { if (filters.tp !== 'all' && g.tournament !== filters.tp) return false; }
+    if (key !== 'age')  { if (filters.age !== 'all' && g.age !== filters.age) return false; }
+    if (key !== 'div')  { if (filters.div !== 'all' && g.division !== filters.div) return false; }
+    if (key !== 'date') { if (filters.date !== 'all' && g.date !== filters.date) return false; }
+    if (key !== 'rival') { if (filters.rival !== 'all') { const opp2 = g.is_home ? g.away : g.home; if (opp2 !== filters.rival) return false; } }
+    if (key !== 'group') { if (filters.group !== 'all' && g.group !== filters.group) return false; }
+    return true;
+  });
+}
+
+function applyFilters() {
+  const filtered = ALL.filter(matchGame);
+  filtered.sort((a,b) => {
+    const va = a[sortCol]??'', vb = b[sortCol]??'';
+    return sortAsc ? (va<vb?-1:va>vb?1:0) : (va<vb?1:va>vb?-1:0);
+  });
+  renderStats(filtered);
+  render(filtered);
+  updateDropdowns();
+  updateActiveCount();
+  const isFiltered = filters.ha!=='all' || filters.st.size<ALL_ST.length ||
+    filters.tp!=='all' || filters.date!=='all' || filters.age!=='all' || filters.div!=='all' || filters.rival!=='all' || filters.group!=='all';
+  document.getElementById('rcount').innerHTML = isFiltered
+    ? `Showing <span>${filtered.length}</span> of ${ALL.length} matches`
+    : `<span>${ALL.length}</span> matches total`;
+}
+
+/* ── BUTTON HANDLERS ── */
+// Single-select toggle (ha, tp)
+function toggleBtn(btn) {
+  const key = btn.dataset.key, val = btn.dataset.val;
+  filters[key] = val;
+  document.querySelectorAll(`[data-key="${key}"]`).forEach(b =>
+    b.classList.toggle('active', b.dataset.val === val));
+  applyFilters();
+}
+
+// Result multi-select is handled via stat pills (no filter buttons)
+
+/* ── DROPDOWN HANDLERS ── */
+function setDropdown(key, val) {
+  filters[key] = val;
+  applyFilters();
+}
+
+/* ── LINKED DROPDOWNS ── */
+function updateDropdowns() {
+  // Each dropdown shows only options present in the pool excluding itself
+  rebuildSelect('dateSel', 'date',
+    [...new Set(poolExcluding('date').map(g=>g.date))]
+      .sort((a,b) => {
+        const da = ALL.find(x=>x.date===a)?.date_sort||'';
+        const db = ALL.find(x=>x.date===b)?.date_sort||'';
+        return db.localeCompare(da);
+      }),
+    filters.date, 'Date');
+
+  const agePool = poolExcluding('age');
+  rebuildSelect('ageSel', 'age',
+    [...new Set(agePool.map(g=>g.age))].sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1))),
+    filters.age, 'Age');
+
+  const divPool = poolExcluding('div');
+  rebuildSelect('divSel', 'div',
+    [...new Set(divPool.map(g=>g.division))].sort((a,b)=>parseFloat(a)-parseFloat(b)),
+    filters.div, 'Division');
+
+  const rivalPool = poolExcluding('rival');
+  const rivals = [...new Set(rivalPool.map(g => g.is_home ? g.away : g.home))].sort((a,b)=>a.localeCompare(b));
+  rebuildSelect('rivalSel', 'rival', rivals, filters.rival, 'Rival');
+
+  const groupPool = poolExcluding('group');
+  const groups = [...new Set(groupPool.map(g => g.group).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  rebuildSelect('groupSel', 'group', groups, filters.group, 'Group');
+}
+
+function rebuildSelect(id, key, options, currentVal, label) {
+  const sel = document.getElementById(id);
+  sel.innerHTML = `<option value="all">${label}</option>`;
+  options.forEach(v => {
+    const o = new Option(v, v);
+    if (v === currentVal) o.selected = true;
+    sel.appendChild(o);
+  });
+  // If current value no longer available, reset it
+  if (currentVal !== 'all' && !options.includes(currentVal)) {
+    filters[key] = 'all';
+    sel.value = 'all';
+  }
+}
+
+/* ── ACTIVE FILTER COUNT ── */
+function updateActiveCount() {
+  let count = 0;
+  if (filters.ha !== 'all') count++;
+  if (filters.st.size < ALL_ST.length) count++;
+  if (filters.tp !== 'all') count++;
+  if (filters.date !== 'all') count++;
+  if (filters.age !== 'all') count++;
+  if (filters.div !== 'all') count++;
+  if (filters.rival !== 'all') count++;
+  if (filters.group !== 'all') count++;
+  const el = document.getElementById('activeCount');
+  el.textContent = count > 0 ? `${count} filter${count>1?'s':''} active` : '';
+}
+
+/* ── STATS ── */
+// Colour map for NP reasons
+const REASON_COLOURS = {
+  'Weather':    '#74b9ff',
+  'Opposition': '#ff7675',
+  'Belmont FC': 'var(--yellow)',
+  'Referee':    '#a29bfe',
+};
+function reasonColour(r) { return REASON_COLOURS[r] || 'var(--muted)'; }
+
+function renderStats(filtered) {
+  // Stats pool: respects ha/tp/age/div/date but ignores st filter (always show all result types)
+  const pool = ALL.filter(g => {
+    if (filters.ha === 'home' && !g.is_home) return false;
+    if (filters.ha === 'away' && g.is_home)  return false;
+    if (filters.tp !== 'all' && g.tournament !== filters.tp) return false;
+    if (filters.age !== 'all' && g.age !== filters.age) return false;
+    if (filters.div !== 'all' && g.division !== filters.div) return false;
+    if (filters.date !== 'all' && g.date !== filters.date) return false;
+    if (filters.rival !== 'all') { const opp = g.is_home ? g.away : g.home; if (opp !== filters.rival) return false; }
+    if (filters.group !== 'all' && g.group !== filters.group) return false;
+    return true;
+  });
+  const total = pool.length;
+  const played = pool.filter(g => g.result_type === 'win' || g.result_type === 'draw' || g.result_type === 'loss');
+  const w  = played.filter(g=>g.result_type==='win').length;
+  const d  = played.filter(g=>g.result_type==='draw').length;
+  const l  = played.filter(g=>g.result_type==='loss').length;
+  const nr = pool.filter(g=>g.result_type==='nr').length;
+  const npGames = pool.filter(g=>g.result_type==='np');
+  const np = npGames.length;
+
+  // Build dynamic reason counts — only show reasons that exist in current pool
+  const reasonCounts = {};
+  npGames.forEach(g => {
+    if (g.reason) reasonCounts[g.reason] = (reasonCounts[g.reason]||0) + 1;
+  });
+  const reasonBullets = Object.entries(reasonCounts)
+    .sort((a,b) => b[1]-a[1])
+    .map(([r,cnt]) =>
+      `<div class="np-reason"><span class="dot" style="background:${reasonColour(r)}"></span><span class="cnt">${cnt}</span> ${r}</div>`
+    ).join('');
+
+  // Active state: pill is highlighted if its result_type is in the filter AND not all selected
+  const isAllSt = filters.st.size === ALL_ST.length;
+  const act = v => (!isAllSt && filters.st.has(v)) ? 'active-pill' : '';
+  const totalAct = isAllSt ? '' : 'active-pill'; // total pill active when filtering
+
+  document.getElementById('statsRow').innerHTML = `
+    <button class="pill ${isAllSt?'':'' }" onclick="selectOnlySt(null)">
+      <div class="v">${total}</div><div class="l">Total</div>
+    </button>
+    <button class="pill ${act('win')}" onclick="selectOnlySt('win')">
+      <div class="v" style="color:var(--green)">${w}</div><div class="l">Wins</div>
+    </button>
+    <button class="pill ${act('draw')}" onclick="selectOnlySt('draw')">
+      <div class="v">${d}</div><div class="l">Draws</div>
+    </button>
+    <button class="pill ${act('loss')}" onclick="selectOnlySt('loss')">
+      <div class="v" style="color:var(--red)">${l}</div><div class="l">Losses</div>
+    </button>
+    <button class="pill ${act('nr')}" onclick="selectOnlySt('nr')">
+      <div class="v" style="color:var(--amber)">${nr}</div><div class="l">Not Reported</div>
+    </button>
+    <button class="pill-np ${act('np')}" onclick="selectOnlySt('np')">
+      <div class="main">
+        <div class="v" style="color:var(--muted)">${np}</div>
+        <div class="l">Not Played</div>
+      </div>
+      ${reasonBullets ? `<div class="np-reasons">${reasonBullets}</div>` : ''}
+    </button>`;
+}
+
+// Clicking a stat pill toggles that result type on/off (multi-select)
+// Clicking Total resets to all. Clicking an already-solo selection resets to all.
+function selectOnlySt(val) {
+  if (val === null) {
+    // Total clicked — reset to all
+    filters.st = new Set(ALL_ST);
+  } else if (filters.st.size === ALL_ST.length) {
+    // Currently all selected — isolate clicked one
+    filters.st = new Set([val]);
+  } else if (filters.st.has(val) && filters.st.size === 1) {
+    // Only one selected and it's this one — reset to all
+    filters.st = new Set(ALL_ST);
+  } else if (filters.st.has(val)) {
+    // Remove from selection
+    filters.st.delete(val);
+  } else {
+    // Add to selection
+    filters.st.add(val);
+  }
+  applyFilters();
+}
+
+/* ── RENDER TABLE ── */
+function render(games) {
+  const tb = document.getElementById('tbody');
+  if (!games.length) {
+    tb.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--muted)">No matches match the selected filters</td></tr>';
+    return;
+  }
+  tb.innerHTML = games.map(g => {
+    const homeT = g.is_home ? '<span class="bfc">Belmont FC</span>' : esc(g.home);
+    const awayT = !g.is_home ? '<span class="bfc">Belmont FC</span>' : esc(g.away);
+    let result;
+    if (g.result_type === 'np') {
+      const rc = g.reason==='Weather'?'reason-weather':g.reason==='Opposition'?'reason-opposition':g.reason==='Belmont FC'?'reason-belmont':'';
+      result = `<span class="badge badge-np">NP</span>${g.reason ? ` <span class="reason-tag ${rc}">${esc(g.reason)}</span>` : ''}`;
+    } else if (g.result_type === 'nr') {
+      result = '<span class="badge badge-nr">Not Reported</span>';
+    } else {
+      result = `<div class="sc ${g.result_type}">${g.h_goals}&ndash;${g.a_goals}</div>`;
+    }
+    const tb2 = g.tournament==='Cup'
+      ? '<span class="badge badge-cup">Cup</span>'
+      : '<span class="badge badge-league">Lge</span>';
+    return `<tr>
+      <td class="dcol">${g.date}</td>
+      <td class="divcol" style="color:var(--muted);font-weight:400;font-size:0.8rem">${g.group ? esc(g.group) : '<span style="opacity:0.3">—</span>'}</td>
+      <td class="divcol">${esc(g.division)}</td>
+      <td>${tb2}</td>
+      <td>${homeT}</td>
+      <td style="text-align:center;min-width:120px">${result}</td>
+      <td>${awayT}</td>
+      <td class="refcol">${g.referee ? esc(g.referee) : '<span style="opacity:0.3">—</span>'}</td>
+    </tr>`;
+  }).join('');
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function sortBy(col) { sortAsc = sortCol===col ? !sortAsc : true; sortCol=col; applyFilters(); }
+
+function resetAll() {
+  filters = { ha:'all', st:new Set(ALL_ST), tp:'all', date:'all', age:'all', div:'all', rival:'all', group:'all' };
+  sortCol = 'date_sort'; sortAsc = false;
+  document.querySelectorAll('[data-key="ha"]').forEach(b => b.classList.toggle('active', b.dataset.val==='all'));
+  document.querySelectorAll('[data-key="tp"]').forEach(b => b.classList.toggle('active', b.dataset.val==='all'));
+  applyFilters();
+}
+
+// Register all event-handler functions as global so onclick="" attributes work
+window._toggleBtn       = toggleBtn;
+window._setDropdown     = setDropdown;
+window._sortBy          = sortBy;
+window._resetAll        = resetAll;
+window._selectOnlySt    = selectOnlySt;
+window._switchTab       = switchTab;
+window._insFilterChange = insFilterChange;
+window._resetInsights   = resetInsights;
+
+// Initial render
+applyFilters();
+
+/* ════════════════════════════════
+   TAB SWITCHING
+════════════════════════════════ */
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+  if (tab === 'insights') renderInsights();
+}
+
+/* ════════════════════════════════
+   INSIGHTS TAB
+════════════════════════════════ */
+function rankIcon(i) {
+  if (i===0) return '<span class="rank gold">①</span>';
+  if (i===1) return '<span class="rank silver">②</span>';
+  if (i===2) return '<span class="rank bronze">③</span>';
+  return `<span class="rank">${i+1}</span>`;
+}
+
+function scoreChip(h, a, isBfc) {
+  const me = isBfc ? h : a, them = isBfc ? a : h;
+  const cls = me > them ? 'win' : me < them ? 'loss' : 'draw';
+  return `<span class="score-chip ${cls}">${h}–${a}</span>`;
+}
+
+function barFill(val, max, colour='') {
+  const pct = max > 0 ? Math.round((val/max)*100) : 0;
+  return `<div class="bar-wrap"><div class="bar-bg"><div class="bar-fill ${colour}" style="width:${pct}%"></div></div></div>`;
+}
+
+function esc2(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function insFilters() {
+  return {
+    group: document.getElementById('ins-groupSel')?.value || 'all',
+    age:   document.getElementById('ins-ageSel')?.value   || 'all',
+    div:   document.getElementById('ins-divSel')?.value   || 'all',
+    tp:    document.getElementById('ins-tpSel')?.value    || 'all',
+    ha:    document.getElementById('ins-haSel')?.value    || 'all',
+  };
+}
+
+function insPool() {
+  const f = insFilters();
+  return ALL.filter(g => {
+    if (g.result_type === 'np' || g.result_type === 'nr') return false;
+    if (g.h_goals === null) return false;
+    if (f.group !== 'all' && g.group !== f.group) return false;
+    if (f.age   !== 'all' && g.age !== f.age) return false;
+    if (f.div   !== 'all' && g.division !== f.div) return false;
+    if (f.tp    !== 'all' && g.tournament !== f.tp)  return false;
+    if (f.ha    === 'home' && !g.is_home) return false;
+    if (f.ha    === 'away' && g.is_home)  return false;
+    return true;
+  });
+}
+
+// Pool excluding one filter key (for linked filter dropdowns)
+function insPoolExcluding(key) {
+  const f = insFilters();
+  return ALL.filter(g => {
+    if (g.result_type === 'np' || g.result_type === 'nr' || g.h_goals === null) return false;
+    if (key !== 'group' && f.group !== 'all' && g.group !== f.group) return false;
+    if (key !== 'age'   && f.age   !== 'all' && g.age !== f.age) return false;
+    if (key !== 'div'   && f.div   !== 'all' && g.division !== f.div) return false;
+    if (key !== 'tp'    && f.tp    !== 'all' && g.tournament !== f.tp)  return false;
+    if (key !== 'ha'    && f.ha    === 'home' && !g.is_home) return false;
+    if (key !== 'ha'    && f.ha    === 'away' && g.is_home)  return false;
+    return true;
+  });
+}
+
+function insFilterChange(key, val) {
+  rebuildInsDropdowns();
+  renderInsights();
+}
+
+function resetInsights() {
+  document.getElementById('ins-groupSel').value = 'all';
+  document.getElementById('ins-ageSel').value   = 'all';
+  document.getElementById('ins-divSel').value   = 'all';
+  document.getElementById('ins-tpSel').value    = 'all';
+  document.getElementById('ins-haSel').value    = 'all';
+  rebuildInsDropdowns();
+  renderInsights();
+}
+
+function rebuildInsDropdowns() {
+  const f = insFilters();
+  // Group
+  const groupPool = insPoolExcluding('group');
+  const groups = [...new Set(groupPool.map(g=>g.group).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  rebuildInsSelect('ins-groupSel', groups, f.group, 'All Groups');
+  // Age
+  const agePool = insPoolExcluding('age');
+  const ages = [...new Set(agePool.map(g=>g.age))].sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1)));
+  rebuildInsSelect('ins-ageSel', ages, f.age, 'All Ages');
+  // Division
+  const divPool = insPoolExcluding('div');
+  const divs = [...new Set(divPool.map(g=>g.division))].sort((a,b)=>parseFloat(a)-parseFloat(b));
+  rebuildInsSelect('ins-divSel', divs, f.div, 'All Divisions');
+  // Type
+  const tpPool = insPoolExcluding('tp');
+  const tps = [...new Set(tpPool.map(g=>g.tournament))].sort();
+  rebuildInsSelect('ins-tpSel', tps, f.tp, 'All');
+  // HA — always show all 3 options
+  const haSel = document.getElementById('ins-haSel');
+  if (haSel) {
+    const cur = haSel.value;
+    haSel.innerHTML = '<option value="all">All</option><option value="home">Home</option><option value="away">Away</option>';
+    haSel.value = cur;
+  }
+}
+
+function rebuildInsSelect(id, options, currentVal, allLabel) {
+  const sel = document.getElementById(id);
+  if (!sel) return;
+  sel.innerHTML = `<option value="all">${allLabel}</option>`;
+  options.forEach(v => {
+    const o = new Option(v, v);
+    if (v === currentVal) o.selected = true;
+    sel.appendChild(o);
+  });
+  if (currentVal !== 'all' && !options.includes(currentVal)) sel.value = 'all';
+}
+
+function renderInsights() {
+  rebuildInsDropdowns();
+  const pool = insPool();
+  const grid = document.getElementById('insightsGrid');
+  if (!grid) return;
+
+  if (!pool.length) { grid.innerHTML = '<div class="no-data" style="grid-column:1/-1;padding:40px;font-size:0.9rem;">No played games match the selected filters.</div>'; return; }
+
+  const cards = [];
+
+  /* ── 1. Biggest Wins (by margin) ── */
+  const wins = pool.filter(g => {
+    const me = g.is_home ? g.h_goals : g.a_goals, them = g.is_home ? g.a_goals : g.h_goals;
+    return me > them;
+  }).map(g => {
+    const me = g.is_home ? g.h_goals : g.a_goals, them = g.is_home ? g.a_goals : g.h_goals;
+    return { ...g, margin: me - them };
+  }).sort((a,b) => b.margin - a.margin || (b.h_goals+b.a_goals) - (a.h_goals+a.a_goals)).slice(0,10);
+  cards.push(buildCard('🏆 Biggest Wins', 'By goal margin',
+    ['#','Opponent','Score','Margin'],
+    wins.map((g,i) => {
+      const opp = g.is_home ? g.away : g.home;
+      return `<tr>
+        <td>${rankIcon(i)}</td>
+        <td class="opp"><span class="team-name" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc2(opp)}</span><span style="font-size:0.65rem;color:var(--muted);white-space:nowrap">${g.date} · ${g.division}</span></td>
+        <td style="text-align:center;white-space:nowrap">${scoreChip(g.h_goals, g.a_goals, g.is_home)}</td>
+        <td class="right"><span style="color:var(--green);font-family:'Bebas Neue',sans-serif;font-size:1rem">+${g.margin}</span></td>
+      </tr>`;
+    }),
+    [null,null,'center','right']
+  ));
+
+  /* ── 2. Biggest Defeats ── */
+  const losses = pool.filter(g => {
+    const me = g.is_home ? g.h_goals : g.a_goals, them = g.is_home ? g.a_goals : g.h_goals;
+    return me < them;
+  }).map(g => {
+    const me = g.is_home ? g.h_goals : g.a_goals, them = g.is_home ? g.a_goals : g.h_goals;
+    return { ...g, margin: them - me };
+  }).sort((a,b) => b.margin - a.margin || (b.h_goals+b.a_goals) - (a.h_goals+a.a_goals)).slice(0,10);
+  cards.push(buildCard('💔 Biggest Defeats', 'By goal margin',
+    ['#','Opponent','Score','Margin'],
+    losses.map((g,i) => {
+      const opp = g.is_home ? g.away : g.home;
+      return `<tr>
+        <td>${rankIcon(i)}</td>
+        <td class="opp"><span class="team-name" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc2(opp)}</span><span style="font-size:0.65rem;color:var(--muted);white-space:nowrap">${g.date} · ${g.division}</span></td>
+        <td style="text-align:center;white-space:nowrap">${scoreChip(g.h_goals, g.a_goals, g.is_home)}</td>
+        <td class="right"><span style="color:var(--red);font-family:'Bebas Neue',sans-serif;font-size:1rem">-${g.margin}</span></td>
+      </tr>`;
+    }),
+    [null,null,'center','right']
+  ));
+
+  /* ── 3. Highest Scoring Games ── */
+  const highScore = [...pool].sort((a,b) => (b.h_goals+b.a_goals) - (a.h_goals+a.a_goals)).slice(0,10);
+  cards.push(buildCard('🔥 Highest Scoring Games', 'Total goals in match',
+    ['#','Opponent','Score','Goals'],
+    highScore.map((g,i) => {
+      const opp = g.is_home ? g.away : g.home;
+      const tot = g.h_goals + g.a_goals;
+      return `<tr>
+        <td>${rankIcon(i)}</td>
+        <td class="opp"><span class="team-name" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc2(opp)}</span><span style="font-size:0.65rem;color:var(--muted);white-space:nowrap">${g.date} · ${g.division}</span></td>
+        <td style="text-align:center;white-space:nowrap">${scoreChip(g.h_goals, g.a_goals, g.is_home)}</td>
+        <td class="right"><span style="color:var(--yellow);font-family:'Bebas Neue',sans-serif;font-size:1rem">${tot}</span></td>
+      </tr>`;
+    }),
+    [null,null,'center','right']
+  ));
+
+  /* ── 4. Most Goals Scored by Belmont ── */
+  const mostScored = [...pool].map(g => ({ ...g, bfc_goals: g.is_home ? g.h_goals : g.a_goals }))
+    .sort((a,b) => b.bfc_goals - a.bfc_goals).slice(0,10);
+  cards.push(buildCard('⚽ Most Goals Scored', 'Goals scored by Belmont FC',
+    ['#','Opponent','Score','Goals'],
+    mostScored.map((g,i) => {
+      const opp = g.is_home ? g.away : g.home;
+      return `<tr>
+        <td>${rankIcon(i)}</td>
+        <td class="opp"><span class="team-name" style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${esc2(opp)}</span><span style="font-size:0.65rem;color:var(--muted);white-space:nowrap">${g.date} · ${g.division}</span></td>
+        <td style="text-align:center;white-space:nowrap">${scoreChip(g.h_goals, g.a_goals, g.is_home)}</td>
+        <td class="right"><span style="color:var(--green);font-family:'Bebas Neue',sans-serif;font-size:1rem">${g.bfc_goals}</span></td>
+      </tr>`;
+    }),
+    [null,null,'center','right']
+  ));
+
+  /* ── 5. Opponents Belmont Scored Most Against ── */
+  const oppScoreMap = {};
+  pool.forEach(g => {
+    const opp = g.is_home ? g.away : g.home;
+    const bfcG = g.is_home ? g.h_goals : g.a_goals;
+    if (!oppScoreMap[opp]) oppScoreMap[opp] = { goals:0, games:0 };
+    oppScoreMap[opp].goals += bfcG; oppScoreMap[opp].games++;
+  });
+  const topScoredVs = Object.entries(oppScoreMap).sort((a,b)=>b[1].goals-a[1].goals).slice(0,10);
+  const maxVsGoals = topScoredVs[0]?.[1].goals || 1;
+  cards.push(buildCard('🎯 Top Scoring vs Opponents', 'Belmont FC goals scored against each team',
+    ['#','Opponent','Goals','Games'],
+    topScoredVs.map(([opp,s],i) => `<tr>
+      <td>${rankIcon(i)}</td>
+      <td style="max-width:88px;overflow:hidden;text-overflow:ellipsis"><span class="team-name">${esc2(opp)}</span></td>
+      <td class="right">${barFill(s.goals,maxVsGoals,'green')}<span style="color:var(--green)">${s.goals}</span></td>
+      <td class="right" style="color:var(--muted);font-size:0.78rem;white-space:nowrap">${s.games}</td>
+    </tr>`)
+  ));
+
+  /* ── 6. Toughest Opponents ── */
+  const concededMap = {};
+  pool.forEach(g => {
+    const opp = g.is_home ? g.away : g.home;
+    const oppG = g.is_home ? g.a_goals : g.h_goals;
+    if (!concededMap[opp]) concededMap[opp] = { goals:0, games:0 };
+    concededMap[opp].goals += oppG; concededMap[opp].games++;
+  });
+  const topConceded = Object.entries(concededMap).sort((a,b)=>b[1].goals-a[1].goals).slice(0,10);
+  const maxConcG = topConceded[0]?.[1].goals || 1;
+  cards.push(buildCard('🛡 Toughest Opponents', 'Goals conceded by Belmont FC against each team',
+    ['#','Opponent','Conceded','Games'],
+    topConceded.map(([opp,s],i) => `<tr>
+      <td>${rankIcon(i)}</td>
+      <td style="max-width:88px;overflow:hidden;text-overflow:ellipsis"><span class="team-name">${esc2(opp)}</span></td>
+      <td class="right">${barFill(s.goals,maxConcG,'red')}<span style="color:var(--red)">${s.goals}</span></td>
+      <td class="right" style="color:var(--muted);font-size:0.78rem;white-space:nowrap">${s.games}</td>
+    </tr>`)
+  ));
+
+  /* ── 7. Performance by Age Group ── */
+  const ageMap = {};
+  pool.forEach(g => {
+    if (!ageMap[g.age]) ageMap[g.age] = { w:0, d:0, l:0, gf:0, ga:0 };
+    const me = g.is_home ? g.h_goals : g.a_goals, them = g.is_home ? g.a_goals : g.h_goals;
+    ageMap[g.age].gf += me; ageMap[g.age].ga += them;
+    if (me>them) ageMap[g.age].w++; else if (me===them) ageMap[g.age].d++; else ageMap[g.age].l++;
+  });
+  const ageSorted = Object.entries(ageMap).sort((a,b)=>parseInt(a[0].slice(1))-parseInt(b[0].slice(1)));
+  cards.push(buildCard('📊 Performance by Age Group', 'Played games with score only',
+    ['Age','W','D','L','GF','GA','GD'],
+    ageSorted.map(([age,s]) => {
+      const gd = s.gf - s.ga;
+      const gdStr = gd>0?`<span style="color:var(--green)">+${gd}</span>`:gd<0?`<span style="color:var(--red)">${gd}</span>`:`<span style="color:var(--muted)">0</span>`;
+      return `<tr>
+        <td style="font-family:'Bebas Neue',sans-serif;color:var(--yellow);white-space:nowrap">${age}</td>
+        <td style="text-align:right;color:var(--green);font-family:'Bebas Neue',sans-serif">${s.w}</td>
+        <td style="text-align:right;font-family:'Bebas Neue',sans-serif">${s.d}</td>
+        <td style="text-align:right;color:var(--red);font-family:'Bebas Neue',sans-serif">${s.l}</td>
+        <td style="text-align:right;color:var(--muted);font-family:'Bebas Neue',sans-serif">${s.gf}</td>
+        <td style="text-align:right;color:var(--muted);font-family:'Bebas Neue',sans-serif">${s.ga}</td>
+        <td style="text-align:right;font-family:'Bebas Neue',sans-serif">${gdStr}</td>
+      </tr>`;
+    }),
+    [null,'right','right','right','right','right','right']
+  ));
+
+  /* ── 8. Results by Match Day ── */
+  const monthOrder = ['17-Jan','24-Jan','31-Jan','7-Feb','14-Feb','15-Feb','21-Feb','28-Feb','7-Mar','14-Mar','21-Mar','28-Mar','11-Apr'];
+  const monthMap = {};
+  pool.forEach(g => {
+    if (!monthMap[g.date]) monthMap[g.date] = { w:0, d:0, l:0 };
+    const me = g.is_home ? g.h_goals : g.a_goals, them = g.is_home ? g.a_goals : g.h_goals;
+    if (me>them) monthMap[g.date].w++; else if (me===them) monthMap[g.date].d++; else monthMap[g.date].l++;
+  });
+  const dateSorted = Object.entries(monthMap).sort((a,b)=>{
+    const ia=monthOrder.indexOf(a[0]),ib=monthOrder.indexOf(b[0]);
+    return (ia===-1?99:ia)-(ib===-1?99:ib);
+  });
+  cards.push(buildCard('📅 Results by Match Day', 'Win/Draw/Loss per fixture date',
+    ['Date','W','D','L','Games','Win%'],
+    dateSorted.map(([date,s]) => {
+      const tot = s.w+s.d+s.l;
+      const pct = tot>0?Math.round(s.w/tot*100):0;
+      const pctCol = pct>=60?'var(--green)':pct>=40?'var(--yellow)':'var(--red)';
+      return `<tr>
+        <td style="font-family:'Bebas Neue',sans-serif;color:var(--muted);white-space:nowrap">${date}</td>
+        <td style="text-align:right;color:var(--green);font-family:'Bebas Neue',sans-serif">${s.w}</td>
+        <td style="text-align:right;font-family:'Bebas Neue',sans-serif">${s.d}</td>
+        <td style="text-align:right;color:var(--red);font-family:'Bebas Neue',sans-serif">${s.l}</td>
+        <td style="text-align:right;color:var(--muted);font-family:'Bebas Neue',sans-serif">${tot}</td>
+        <td style="text-align:right;font-family:'Bebas Neue',sans-serif;color:${pctCol}">${pct}%</td>
+      </tr>`;
+    }),
+    [null,'right','right','right','right','right']
+  ));
+
+  grid.innerHTML = cards.join('');
+}
+
+function buildCard(title, sub, headers, rows, headerAligns) {
+  const ths = headers.map((h,i) => {
+    let cls = '';
+    if (headerAligns && headerAligns[i]) cls = headerAligns[i];
+    else if (i > 1) cls = 'right';
+    return `<th${cls?' class="'+cls+'"':''}>${h}</th>`;
+  }).join('');
+  const trs = rows.length ? rows.join('') : `<tr><td colspan="${headers.length}" class="no-data">No data</td></tr>`;
+  return `<div class="stat-card">
+    <div class="stat-card-header">
+      <div class="stat-card-title">${title}</div>
+      <div class="stat-card-sub">${sub}</div>
+    </div>
+    <div class="stat-table-wrap">
+      <table class="stat-table"><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>
+    </div>
+  </div>`;
+}
+
+
+}
+</script>
+
+</div>
+
+<div id="tab-insights" class="tab-panel">
+  <div class="stats-page">
+    <!-- Filters -->
+    <div class="stats-filters">
+      <span class="flbl">Group</span>
+      <select id="ins-groupSel" onchange="insFilterChange('group',this.value)"><option value="all">All Groups</option></select>
+      <span class="flbl" style="margin-left:8px">Age Group</span>
+      <select id="ins-ageSel" onchange="insFilterChange('age',this.value)"><option value="all">All Ages</option></select>
+      <span class="flbl" style="margin-left:8px">Division</span>
+      <select id="ins-divSel" onchange="insFilterChange('div',this.value)"><option value="all">All Divisions</option></select>
+      <span class="flbl" style="margin-left:8px">Championship</span>
+      <select id="ins-tpSel" onchange="insFilterChange('tp',this.value)">
+        <option value="all">All</option>
+      </select>
+      <span class="flbl" style="margin-left:8px">H / A</span>
+      <select id="ins-haSel" onchange="insFilterChange('ha',this.value)">
+        <option value="all">All</option>
+      </select>
+      <button onclick="resetInsights()" style="margin-left:auto;background:transparent;border:1px solid rgba(253,184,19,0.4);color:var(--yellow);font-family:'DM Sans',sans-serif;font-size:0.68rem;font-weight:700;padding:4px 10px;border-radius:5px;cursor:pointer;letter-spacing:0.05em;transition:all 0.15s;" onmouseover="this.style.background='rgba(253,184,19,0.1)'" onmouseout="this.style.background='transparent'">↺ Reset</button>
+    </div>
+    <!-- Cards grid -->
+    <div class="stats-grid" id="insightsGrid"></div>
+  </div>
+</div>
+</body>
+</html>
