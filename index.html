@@ -655,8 +655,9 @@ function renderStats(filtered) {
       `<div class="np-reason"><span class="dot" style="background:${reasonColour(r)}"></span><span class="cnt">${cnt}</span> ${r}</div>`
     ).join('');
 
-  const gf = played.filter(g => g.h_goals !== null).reduce((s,g) => s + (g.is_home ? g.h_goals : g.a_goals), 0);
-  const ga = played.filter(g => g.h_goals !== null).reduce((s,g) => s + (g.is_home ? g.a_goals : g.h_goals), 0);
+  const scoredGames = played.filter(g => g.h_goals !== null && filters.st.has(g.result_type));
+  const gf = scoredGames.reduce((s,g) => s + (g.is_home ? g.h_goals : g.a_goals), 0);
+  const ga = scoredGames.reduce((s,g) => s + (g.is_home ? g.a_goals : g.h_goals), 0);
 
   // Active state: pill is highlighted if its result_type is in the filter AND not all selected
   const isAllSt = filters.st.size === ALL_ST.length;
@@ -667,9 +668,9 @@ function renderStats(filtered) {
     <button class="pill ${isAllSt?'':'' }" onclick="selectOnlySt(null)">
       <div class="v">${total}</div>
       <div class="l">Total</div>
-      <div style="font-size:0.62rem;margin-top:6px;display:flex;gap:8px;color:var(--muted)">
-        <span><span style="color:var(--green);font-family:'Bebas Neue',sans-serif;font-size:0.85rem">${gf}</span> GF</span>
-        <span><span style="color:var(--red);font-family:'Bebas Neue',sans-serif;font-size:0.85rem">${ga}</span> GA</span>
+      <div style="display:flex;gap:8px;margin-top:6px;color:var(--muted);font-size:0.7rem;white-space:nowrap">
+        <span><span style="color:var(--green);font-family:'Bebas Neue',sans-serif;font-size:0.9rem">${gf}</span> GF</span>
+        <span><span style="color:var(--red);font-family:'Bebas Neue',sans-serif;font-size:0.9rem">${ga}</span> GA</span>
       </div>
     </button>
     <button class="pill ${act('win')}" onclick="selectOnlySt('win')">
