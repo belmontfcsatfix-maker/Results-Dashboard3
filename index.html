@@ -655,7 +655,19 @@ function renderStats(filtered) {
       `<div class="np-reason"><span class="dot" style="background:${reasonColour(r)}"></span><span class="cnt">${cnt}</span> ${r}</div>`
     ).join('');
 
-  const scoredGames = played.filter(g => g.h_goals !== null && filters.st.has(g.result_type));
+  const scoredGames = ALL.filter(g => {
+    if (filters.ha === 'home' && !g.is_home) return false;
+    if (filters.ha === 'away' && g.is_home)  return false;
+    if (filters.tp !== 'all' && g.tournament !== filters.tp) return false;
+    if (filters.age !== 'all' && g.age !== filters.age) return false;
+    if (filters.div !== 'all' && g.division !== filters.div) return false;
+    if (filters.date !== 'all' && g.date !== filters.date) return false;
+    if (filters.rival !== 'all') { const opp = g.is_home ? g.away : g.home; if (opp !== filters.rival) return false; }
+    if (filters.group !== 'all' && g.group !== filters.group) return false;
+    if (!filters.st.has(g.result_type)) return false;
+    if (g.h_goals === null) return false;
+    return g.result_type === 'win' || g.result_type === 'draw' || g.result_type === 'loss';
+  });
   const gf = scoredGames.reduce((s,g) => s + (g.is_home ? g.h_goals : g.a_goals), 0);
   const ga = scoredGames.reduce((s,g) => s + (g.is_home ? g.a_goals : g.h_goals), 0);
 
