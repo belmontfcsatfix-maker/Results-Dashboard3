@@ -635,7 +635,18 @@ function renderStats(filtered) {
     if (filters.group !== 'all' && g.group !== filters.group) return false;
     return true;
   });
-  const total = pool.length;
+  const total = ALL.filter(g => {
+    if (filters.ha === 'home' && !g.is_home) return false;
+    if (filters.ha === 'away' && g.is_home)  return false;
+    if (filters.tp !== 'all' && g.tournament !== filters.tp) return false;
+    if (filters.age !== 'all' && g.age !== filters.age) return false;
+    if (filters.div !== 'all' && g.division !== filters.div) return false;
+    if (filters.date !== 'all' && g.date !== filters.date) return false;
+    if (filters.rival !== 'all') { const opp = g.is_home ? g.away : g.home; if (opp !== filters.rival) return false; }
+    if (filters.group !== 'all' && g.group !== filters.group) return false;
+    if (!filters.st.has(g.result_type)) return false;
+    return true;
+  }).length;
   const played = pool.filter(g => g.result_type === 'win' || g.result_type === 'draw' || g.result_type === 'loss');
   const w  = played.filter(g=>g.result_type==='win').length;
   const d  = played.filter(g=>g.result_type==='draw').length;
