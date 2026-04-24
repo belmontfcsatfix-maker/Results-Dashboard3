@@ -414,8 +414,8 @@ async function loadData() {
   // Show which files loaded
   const el = document.getElementById('filesLoaded');
   if (el) {
-    const loaded = [rows1 ? 'Sheet 1 (gid:0)' : null, rows2 ? 'Sheet 2 (gid:827954)' : null].filter(Boolean);
-    const missing = [!rows1 ? 'Sheet 1 (gid:0)' : null, !rows2 ? 'Sheet 2 (gid:827954)' : null].filter(Boolean);
+    const loaded = [rows1 ? 'Sheet1' : null, rows2 ? 'Sheet2' : null].filter(Boolean);
+    const missing = [!rows1 ? 'Sheet1' : null, !rows2 ? 'Sheet2' : null].filter(Boolean);
     let html = loaded.map(f => `<span style="color:var(--green)">${f} ✓</span>`).join('&nbsp; ');
     if (missing.length) html += '&nbsp; ' + missing.map(f => `<span style="color:var(--red);opacity:0.6">${f} ✗</span>`).join('&nbsp; ');
     el.innerHTML = html;
