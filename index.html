@@ -204,7 +204,7 @@ td.loccol { font-size:0.78rem; color:var(--muted); max-width:160px; overflow:hid
   display:flex; align-items:center; justify-content:space-between; }
 .stat-card-title { font-family:'Bebas Neue',sans-serif; font-size:1.05rem; letter-spacing:0.06em; color:var(--yellow); }
 .stat-card-sub { font-size:0.62rem; color:var(--muted); text-transform:uppercase; letter-spacing:0.08em; }
-.stat-table { width:100%; border-collapse:collapse; font-size:0.72rem; }
+.stat-table { width:100%; border-collapse:collapse; font-size:0.72rem; table-layout:fixed; }
 .stat-table th { padding:6px 7px; text-align:left; font-size:0.54rem; font-weight:700; text-transform:uppercase;
   letter-spacing:0.08em; color:var(--muted); border-bottom:1px solid var(--border); background:var(--blue2); white-space:nowrap; }
 .stat-table th.right { text-align:right; }
@@ -1302,7 +1302,8 @@ function renderDeep() {
     </tr>`;
   });
   cards.push(buildCard('📈 Form & Streaks', 'Last 5 results per age group + current streak',
-    ['Age','Last 5','Streak'], formRows, [null, null, 'right']));
+    ['Age','Last 5','Streak'], formRows, [null, null, 'right'], false,
+    ['width:38px','width:80px','width:48px']));
 
   // ── 4. BOUNCE BACK FACTOR ─────────────────────────────────────────────────
   const ageGroupsBB = [...new Set(chronPool.map(g => g.age))].sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1)));
@@ -1329,7 +1330,8 @@ function renderDeep() {
     </tr>`;
   });
   cards.push(buildCard('💪 Bounce Back Factor', 'Win rate in the game immediately after a loss',
-    ['Age','After Loss','Bounced','Win%'], bbRows, [null,'right','right','right']));
+    ['Age','After Loss','Bounced','Win%'], bbRows, [null,'right','right','right'], false,
+    ['width:38px','width:56px','width:52px','width:44px']));
 
   // ── 5. TOURNAMENT SPECIALIST ──────────────────────────────────────────────
   const tpMap = {};
@@ -1357,7 +1359,8 @@ function renderDeep() {
         <td style="text-align:right;font-family:'Bebas Neue',sans-serif;color:${pctCol(wp)}">${wp}%</td>
       </tr>`;
     }),
-    [null,'right','right','right','right','right','right','right','right']
+    [null,'right','right','right','right','right','right','right','right'], false,
+    ['width:64px','width:24px','width:24px','width:24px','width:24px','width:28px','width:28px','width:38px','width:38px']
   ));
 
   // ── 6. ADVANCED SCORING INSIGHTS ─────────────────────────────────────────
@@ -1394,14 +1397,16 @@ function renderDeep() {
         <td style="text-align:right;color:var(--muted);font-family:'Bebas Neue',sans-serif">${(r.ga/r.n).toFixed(2)}</td>
       </tr>`;
     }),
-    [null,'right','right','right','right','right','right']
+    [null,'right','right','right','right','right','right'], false,
+    ['width:46px','width:36px','width:28px','width:28px','width:32px','width:38px','width:38px']
   ));
 
   // cards: [0]=Referee, [1]=Venue, [2]=Form, [3]=BounceBack, [4]=Tournament, [5]=AdvancedScoring
   grid.innerHTML = `<div class="stats-grid">${cards.join('')}</div>`;
 }
 
-function buildCard(title, sub, headers, rows, headerAligns, compact) {
+function buildCard(title, sub, headers, rows, headerAligns, compact, colWidths) {
+  const colgroup = colWidths ? `<colgroup>${colWidths.map(w => `<col style="${w}">`).join('')}</colgroup>` : '';
   const ths = headers.map((h,i) => {
     let cls = '';
     if (headerAligns && headerAligns[i]) cls = headerAligns[i];
@@ -1409,13 +1414,13 @@ function buildCard(title, sub, headers, rows, headerAligns, compact) {
     return `<th${cls?' class="'+cls+'"':''}>${h}</th>`;
   }).join('');
   const trs = rows.length ? rows.join('') : `<tr><td colspan="${headers.length}" class="no-data">No data</td></tr>`;
-  return `<div class="stat-card${compact?' compact':''}">
+  return `<div class="stat-card">
     <div class="stat-card-header">
       <div class="stat-card-title">${title}</div>
       <div class="stat-card-sub">${sub}</div>
     </div>
     <div class="stat-table-wrap">
-      <table class="stat-table"><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>
+      <table class="stat-table">${colgroup}<thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>
     </div>
   </div>`;
 }
