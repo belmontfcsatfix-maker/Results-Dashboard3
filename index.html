@@ -439,7 +439,12 @@ function getDiv(r) {
   return m ? m[1] : r;
 }
 function getAge(r) {
-  const m = String(r).match(/^U?(\d+)/i);
+  // Extract digits after optional 'U', stopping before the first '.'
+  // e.g. "U11.3 Girls" → "U11",  "13.2" → "U13",  "Girls U10.1" → "U10"
+  const m = String(r).match(/U(\d+)\./i)      // "U11." style
+         || String(r).match(/U(\d+)/i)         // "U11" (no dot)
+         || String(r).match(/(\d+)\./i)         // "13." style (no leading U)
+         || String(r).match(/(\d+)/i);          // bare digits fallback
   return m ? 'U' + m[1] : 'Other';
 }
 
