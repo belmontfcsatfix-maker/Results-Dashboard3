@@ -1264,7 +1264,7 @@ function renderActivityTable() {
   // Apply sort if a sort column is active
   const ageEntries = ageSorted.map(age => {
     const s = ageMap[age];
-    return { age, s, played: s.w + s.d + s.l };
+    return { age, s, played: s.w + s.d + s.l + s.nr };
   });
   if (actSortCol === 'played') {
     ageEntries.sort((a,b) => actSortAsc ? a.played - b.played : b.played - a.played);
@@ -1295,7 +1295,8 @@ function renderActivityTable() {
   }
 
   let html = '';
-  ageEntries.forEach(({ age, s, played }) => {
+  ageEntries.forEach(({ age, s }) => {
+    const played = s.w + s.d + s.l + s.nr;
     html += `<tr class="act-group-row">
       <td class="act-age-cell">${age}</td>
       ${actExpanded ? '<td style="color:var(--muted);font-size:0.75rem;font-style:italic;padding-left:15px">All divisions</td>' : ''}
@@ -1312,7 +1313,7 @@ function renderActivityTable() {
       const divSorted = Object.keys(s.divs).sort((a,b) => parseFloat(a) - parseFloat(b));
       divSorted.forEach(div => {
         const d = s.divs[div];
-        const dplayed = d.w + d.d + d.l;
+        const dplayed = d.w + d.d + d.l + d.nr;
         html += `<tr class="act-div-row">
           <td></td>
           <td class="act-div-cell">↳ ${div}</td>
