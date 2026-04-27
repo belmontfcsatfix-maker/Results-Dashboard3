@@ -1266,17 +1266,28 @@ function renderActivityTable() {
     const s = ageMap[age];
     return { age, s, played: s.w + s.d + s.l + s.nr };
   });
-  if (actSortCol === 'played') {
+  if (actSortCol === 'age') {
+    ageEntries.sort((a,b) => {
+      const na = parseInt(a.age.slice(1)), nb = parseInt(b.age.slice(1));
+      return actSortAsc ? nb - na : na - nb;
+    });
+  } else if (actSortCol === 'played') {
     ageEntries.sort((a,b) => actSortAsc ? a.played - b.played : b.played - a.played);
   } else if (actSortCol === 'np') {
     ageEntries.sort((a,b) => actSortAsc ? a.s.np - b.s.np : b.s.np - a.s.np);
   }
+  // Note: 'div' sort is applied per-age-group on the division sub-rows below
 
-  // Update sort indicators on headers
+  // Update sort indicators on all sortable headers
+  const thAge    = document.getElementById('act-th-age');
+  const thDiv    = document.getElementById('act-th-div');
   const thPlayed = document.getElementById('act-th-played');
   const thNp     = document.getElementById('act-th-np');
-  if (thPlayed) thPlayed.innerHTML = 'Total Played' + (actSortCol==='played' ? (actSortAsc?' ↑':' ↓') : ' ↕');
-  if (thNp)     thNp.innerHTML     = 'Not Played'   + (actSortCol==='np'     ? (actSortAsc?' ↑':' ↓') : ' ↕');
+  const arrow = col => actSortCol === col ? (actSortAsc ? ' ↑' : ' ↓') : ' ↕';
+  if (thAge)    thAge.innerHTML    = 'Age Group'    + arrow('age');
+  if (thDiv)    thDiv.innerHTML    = 'Division'     + arrow('div');
+  if (thPlayed) thPlayed.innerHTML = 'Total Played' + arrow('played');
+  if (thNp)     thNp.innerHTML     = 'Not Played'   + arrow('np');
 
   const tbody = document.getElementById('activityTbody');
   const divTh = document.getElementById('act-th-div');
@@ -1310,7 +1321,14 @@ function renderActivityTable() {
     </tr>`;
 
     if (actExpanded) {
-      const divSorted = Object.keys(s.divs).sort((a,b) => parseFloat(a) - parseFloat(b));
+      const divSorted = Object.keys(s.divs).sort((a,b) => {
+        if (actSortCol === 'div') {
+          return actSortAsc
+            ? String(b).localeCompare(String(a), undefined, {numeric:true})
+            : String(a).localeCompare(String(b), undefined, {numeric:true});
+        }
+        return parseFloat(a) - parseFloat(b);
+      });
       divSorted.forEach(div => {
         const d = s.divs[div];
         const dplayed = d.w + d.d + d.l + d.nr;
@@ -1354,8 +1372,8 @@ window._renderActivity = renderActivity;
         <table id="activityTable" style="min-width:680px;">
           <thead>
             <tr>
-              <th id="act-th-age" style="text-align:left;cursor:default;">Age Group</th>
-              <th id="act-th-div" style="text-align:left;cursor:default;display:none;">Division</th>
+              <th id="act-th-age" style="text-align:left;cursor:pointer;user-select:none;" onclick="if(window._sortActivityBy) window._sortActivityBy('age')" title="Sort by Age Group">Age Group ↕</th>
+              <th id="act-th-div" style="text-align:left;cursor:pointer;user-select:none;display:none;" onclick="if(window._sortActivityBy) window._sortActivityBy('div')" title="Sort by Division">Division ↕</th>
               <th style="text-align:center;">Total Games Scheduled</th>
               <th style="text-align:center;color:var(--green);">Wins</th>
               <th style="text-align:center;">Draws</th>
