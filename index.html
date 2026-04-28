@@ -467,8 +467,8 @@ loadData();
 
 function initDashboard() {
 function getDiv(r) {
-  // Strip optional leading 'U', then capture first run of digits, dots, and slashes
-  const m = String(r).match(/^U?(\d[\d./]*)/i);
+  // Strip optional leading 'U', then capture everything up to the first space
+  const m = String(r).match(/^U?([^\s]+)/i);
   return m ? m[1] : r;
 }
 function getAge(r) {
