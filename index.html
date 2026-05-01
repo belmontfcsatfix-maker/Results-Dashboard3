@@ -1509,7 +1509,11 @@ window._renderActivity = renderActivity;
   function loadOne(id, start, end) {
     var url = BASE + '?start=' + start + '&end=' + end;
     xhrGet(url, function(err, json) {
-      setEl(id, err ? '—' : (json.count || '0'));
+      if (err) { setEl(id, '—'); return; }
+      // GoatCounter returns count as a formatted string e.g. "1 234" (space as thousands sep)
+      var raw = (json.count !== undefined && json.count !== null) ? String(json.count) : '0';
+      var clean = raw.replace(/\s/g, '');          // strip all whitespace / thin-spaces
+      setEl(id, clean === '' ? '0' : clean);
     });
   }
 
