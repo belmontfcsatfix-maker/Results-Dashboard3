@@ -239,35 +239,6 @@ td.loccol { font-size:0.78rem; color:var(--muted); max-width:160px; overflow:hid
 @media(max-width:700px) { .stats-grid { grid-template-columns:1fr; } .tab-bar,.stats-page { padding-left:16px; padding-right:16px; } }
 @media(max-width:1100px) { .stats-grid { grid-template-columns:1fr; } }
 
-/* VISITOR COUNTER */
-.visitor-bar {
-  display:flex; align-items:center; gap:0;
-  padding:7px 32px;
-  background:rgba(0,0,0,0.3);
-  border-bottom:1px solid var(--border);
-  flex-wrap:wrap;
-}
-.visitor-bar-label {
-  font-size:0.58rem; font-weight:700; text-transform:uppercase;
-  letter-spacing:0.14em; color:var(--yellow); opacity:0.75;
-  margin-right:16px; white-space:nowrap;
-}
-.visitor-pills { display:flex; gap:8px; flex-wrap:wrap; }
-.vpill {
-  display:flex; align-items:center; gap:7px;
-  background:var(--card); border:1px solid var(--border);
-  border-radius:8px; padding:5px 12px;
-}
-.vpill .vnum {
-  font-family:'Bebas Neue',sans-serif; font-size:1.1rem;
-  line-height:1; color:var(--yellow);
-}
-.vpill .vlbl {
-  font-size:0.58rem; text-transform:uppercase;
-  letter-spacing:0.1em; color:var(--muted);
-}
-.vpill-icon { font-size:0.85rem; opacity:0.7; }
-
 /* TEAMS ACTIVITY TAB */
 .act-section { margin-bottom:32px; }
 .act-header { display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:14px; }
@@ -308,16 +279,6 @@ td.loccol { font-size:0.78rem; color:var(--muted); max-width:160px; overflow:hid
     <div class="val" id="filesLoaded" style="font-size:0.75rem;letter-spacing:0.03em;color:var(--muted)">—</div>
     <div class="lbl" style="margin-top:8px">Last Updated</div>
     <div class="val" id="lastUpdated">—</div>
-    <div class="lbl" style="margin-top:10px">👥 Visitors (All Time)</div>
-    <div style="display:flex;justify-content:flex-end;margin-top:4px;">
-      <div class="vpill" style="padding:3px 8px;gap:5px;">
-        <img src="https://belmontfc.goatcounter.com/counter/%2F.svg"
-             alt="visitor count"
-             style="height:1.1rem;vertical-align:middle;filter:brightness(0) invert(1);"
-             onerror="this.style.display='none';document.getElementById('vc-fallback').style.display='inline';">
-        <span id="vc-fallback" style="display:none;font-family:'Bebas Neue',sans-serif;font-size:0.95rem;color:var(--yellow);">—</span>
-      </div>
-    </div>
   </div>
 </div>
 
@@ -1455,12 +1416,6 @@ window._renderActivity = renderActivity;
     <div class="stats-grid" id="insightsGrid"></div>
   </div>
 </div>
-
-
-<!-- GoatCounter tracking -->
-<script data-goatcounter="https://belmontfc.goatcounter.com/count"
-        async src="//gc.zgo.at/count.js"></script>
-
 
 </body>
 </html>
