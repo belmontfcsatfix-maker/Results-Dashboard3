@@ -239,6 +239,35 @@ td.loccol { font-size:0.78rem; color:var(--muted); max-width:160px; overflow:hid
 @media(max-width:700px) { .stats-grid { grid-template-columns:1fr; } .tab-bar,.stats-page { padding-left:16px; padding-right:16px; } }
 @media(max-width:1100px) { .stats-grid { grid-template-columns:1fr; } }
 
+/* VISITOR COUNTER */
+.visitor-bar {
+  display:flex; align-items:center; gap:0;
+  padding:7px 32px;
+  background:rgba(0,0,0,0.3);
+  border-bottom:1px solid var(--border);
+  flex-wrap:wrap;
+}
+.visitor-bar-label {
+  font-size:0.58rem; font-weight:700; text-transform:uppercase;
+  letter-spacing:0.14em; color:var(--yellow); opacity:0.75;
+  margin-right:16px; white-space:nowrap;
+}
+.visitor-pills { display:flex; gap:8px; flex-wrap:wrap; }
+.vpill {
+  display:flex; align-items:center; gap:7px;
+  background:var(--card); border:1px solid var(--border);
+  border-radius:8px; padding:5px 12px;
+}
+.vpill .vnum {
+  font-family:'Bebas Neue',sans-serif; font-size:1.1rem;
+  line-height:1; color:var(--yellow);
+}
+.vpill .vlbl {
+  font-size:0.58rem; text-transform:uppercase;
+  letter-spacing:0.1em; color:var(--muted);
+}
+.vpill-icon { font-size:0.85rem; opacity:0.7; }
+
 /* TEAMS ACTIVITY TAB */
 .act-section { margin-bottom:32px; }
 .act-header { display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:12px; margin-bottom:14px; }
@@ -279,6 +308,33 @@ td.loccol { font-size:0.78rem; color:var(--muted); max-width:160px; overflow:hid
     <div class="val" id="filesLoaded" style="font-size:0.75rem;letter-spacing:0.03em;color:var(--muted)">—</div>
     <div class="lbl" style="margin-top:8px">Last Updated</div>
     <div class="val" id="lastUpdated">—</div>
+  </div>
+</div>
+
+<!-- VISITOR COUNTER BAR -->
+<div class="visitor-bar">
+  <div class="visitor-bar-label">👥 Visitors</div>
+  <div class="visitor-pills">
+    <div class="vpill">
+      <span class="vpill-icon">📅</span>
+      <span class="vnum" id="vc-today">—</span>
+      <span class="vlbl">Today</span>
+    </div>
+    <div class="vpill">
+      <span class="vpill-icon">🗓️</span>
+      <span class="vnum" id="vc-month">—</span>
+      <span class="vlbl">This Month</span>
+    </div>
+    <div class="vpill">
+      <span class="vpill-icon">📆</span>
+      <span class="vnum" id="vc-year">—</span>
+      <span class="vlbl">This Year</span>
+    </div>
+    <div class="vpill">
+      <span class="vpill-icon">🏟️</span>
+      <span class="vnum" id="vc-total">—</span>
+      <span class="vlbl">All Time</span>
+    </div>
   </div>
 </div>
 
@@ -1417,5 +1473,65 @@ window._renderActivity = renderActivity;
   </div>
 </div>
 
+
+<!-- GoatCounter tracking -->
+<script data-goatcounter="https://belmontfc.goatcounter.com/count"
+        async src="//gc.zgo.at/count.js"></script>
+
+<script>
+// ── Visitor Counter (GoatCounter API) ───────────────────────────────────────
+(function() {
+  const BASE = 'https://belmontfc.goatcounter.com/api/v0';
+  const fmt  = n => (n || 0).toLocaleString();
+
+  function setEl(id, val) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = val;
+  }
+
+  function isoDate(d) { return d.toISOString().slice(0, 10); }
+
+  const now       = new Date();
+  const todayStr  = isoDate(now);
+  const monthStart = isoDate(new Date(now.getFullYear(), now.getMonth(), 1));
+  const yearStart  = isoDate(new Date(now.getFullYear(), 0, 1));
+  const allStart   = '2020-01-01'; // far enough back to capture all time
+
+  // Fetch a visitor count for a given date range from GoatCounter
+  async function fetchCount(start, end) {
+    const url = `${BASE}/stats/total?start=${start}&end=${end}`;
+    const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    if (!res.ok) return null;
+    const json = await res.json();
+    // GoatCounter returns { total: N, total_unique: N }
+    return json.total_unique ?? json.total ?? null;
+  }
+
+  async function loadCounts() {
+    setEl('vc-today', '…');
+    setEl('vc-month', '…');
+    setEl('vc-year',  '…');
+    setEl('vc-total', '…');
+
+    try {
+      const [today, month, year, total] = await Promise.all([
+        fetchCount(todayStr,  todayStr),
+        fetchCount(monthStart, todayStr),
+        fetchCount(yearStart,  todayStr),
+        fetchCount(allStart,   todayStr),
+      ]);
+      setEl('vc-today', fmt(today));
+      setEl('vc-month', fmt(month));
+      setEl('vc-year',  fmt(year));
+      setEl('vc-total', fmt(total));
+    } catch(e) {
+      ['vc-today','vc-month','vc-year','vc-total'].forEach(id => setEl(id, '—'));
+      console.warn('GoatCounter fetch failed:', e);
+    }
+  }
+
+  loadCounts();
+})();
+</script>
 </body>
 </html>
