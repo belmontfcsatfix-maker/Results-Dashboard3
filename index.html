@@ -285,6 +285,7 @@ td.loccol { font-size:0.78rem; color:var(--muted); max-width:160px; overflow:hid
 <div class="tab-bar">
   <button class="tab-btn active" onclick="switchTab('fixtures',this)">Fixtures</button>
   <button class="tab-btn" onclick="switchTab('insights',this)">Season Insights</button>
+  <button class="tab-btn" onclick="switchTab('performance',this)">Team Performance</button>
   <button class="tab-btn" onclick="switchTab('activity',this)">Teams Activity</button>
 </div>
 
@@ -872,6 +873,7 @@ function switchTab(tab, btn) {
   document.getElementById('tab-' + tab).classList.add('active');
   if (tab === 'insights') renderInsights();
   if (tab === 'activity') renderActivity();
+  if (tab === 'performance') renderPerformance();
 }
 
 /* ════════════════════════════════
@@ -1353,9 +1355,221 @@ function renderActivityTable() {
 }
 window._renderActivity = renderActivity;
 
+/* ════════════════════════════════
+   TEAM PERFORMANCE TAB
+════════════════════════════════ */
+let perfExpanded = false;
+let perfSortCol = null;
+let perfSortAsc = false;
+
+function ppgColor(ppg) {
+  if (ppg >= 2)   return '#2ecc71';
+  if (ppg >= 1)   return '#f1c40f';
+  if (ppg >= 0.5) return '#e67e22';
+  return '#e74c3c';
+}
+
+function togglePerfExpand() {
+  perfExpanded = !perfExpanded;
+  const btn   = document.getElementById('perfExpandBtn');
+  const icon  = document.getElementById('perfExpandIcon');
+  const label = document.getElementById('perfExpandLabel');
+  const divTh = document.getElementById('perf-th-div');
+  if (perfExpanded) {
+    btn.classList.add('expanded');
+    icon.textContent  = '⊟';
+    label.textContent = 'Collapse Divisions';
+    divTh.style.display = '';
+  } else {
+    btn.classList.remove('expanded');
+    icon.textContent  = '⊞';
+    label.textContent = 'Expand by Division';
+    divTh.style.display = 'none';
+  }
+  renderPerfTable();
+}
+window._togglePerfExpand = togglePerfExpand;
+
+function sortPerfBy(col) {
+  if (perfSortCol === col) { perfSortAsc = !perfSortAsc; }
+  else { perfSortCol = col; perfSortAsc = false; }
+  renderPerfTable();
+}
+window._sortPerfBy = sortPerfBy;
+
+function renderPerformance() { renderPerfTable(); }
+window._renderPerformance = renderPerformance;
+
+function renderPerfTable() {
+  // Only games where played === 'Y' (i.e. not NP)
+  const perfGames = ALL.filter(g => g.result_type !== 'np');
+
+  // Aggregate by age + division
+  const ageMap = {};
+  perfGames.forEach(g => {
+    const age = g.age, div = g.division;
+    if (!ageMap[age]) ageMap[age] = { w:0, d:0, l:0, nr:0, divs:{} };
+    if (!ageMap[age].divs[div]) ageMap[age].divs[div] = { w:0, d:0, l:0, nr:0 };
+    const agg = ageMap[age], dag = ageMap[age].divs[div];
+    if      (g.result_type === 'win')  { agg.w++;  dag.w++;  }
+    else if (g.result_type === 'draw') { agg.d++;  dag.d++;  }
+    else if (g.result_type === 'loss') { agg.l++;  dag.l++;  }
+    else if (g.result_type === 'nr')   { agg.nr++; dag.nr++; }
+  });
+
+  // Build sortable entries
+  function calcEntry(s) {
+    const played = s.w + s.d + s.l + s.nr;
+    const pts    = s.w * 3 + s.d * 1;
+    const ppg    = played > 0 ? pts / played : 0;
+    return { played, pts, ppg };
+  }
+
+  let ageEntries = Object.keys(ageMap)
+    .sort((a,b) => parseInt(a.slice(1)) - parseInt(b.slice(1)))
+    .map(age => {
+      const s = ageMap[age];
+      const { played, pts, ppg } = calcEntry(s);
+      return { age, s, played, pts, ppg };
+    });
+
+  // Sort age-level rows
+  const arrow = col => perfSortCol === col ? (perfSortAsc ? ' ↑' : ' ↓') : ' ↕';
+  const thAge = document.getElementById('perf-th-age');
+  const thDiv = document.getElementById('perf-th-div');
+  const thPts = document.getElementById('perf-th-pts');
+  const thPpg = document.getElementById('perf-th-ppg');
+  if (thAge) thAge.innerHTML = 'Age Group'  + arrow('age');
+  if (thDiv) thDiv.innerHTML = 'Division'   + arrow('div');
+  if (thPts) thPts.innerHTML = 'Total Points' + arrow('pts');
+  if (thPpg) thPpg.innerHTML = 'Pts / Game' + arrow('ppg');
+
+  if (perfSortCol === 'age') {
+    ageEntries.sort((a,b) => {
+      const na = parseInt(a.age.slice(1)), nb = parseInt(b.age.slice(1));
+      return perfSortAsc ? nb - na : na - nb;
+    });
+  } else if (perfSortCol === 'pts') {
+    ageEntries.sort((a,b) => perfSortAsc ? a.pts - b.pts : b.pts - a.pts);
+  } else if (perfSortCol === 'ppg') {
+    ageEntries.sort((a,b) => perfSortAsc ? a.ppg - b.ppg : b.ppg - a.ppg);
+  }
+
+  const divTh = document.getElementById('perf-th-div');
+  if (divTh) divTh.style.display = perfExpanded ? '' : 'none';
+
+  function numCell(val, colour) {
+    const style = colour ? `color:${colour}` : '';
+    return `<td style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1rem;${style}">${val > 0 ? val : '<span style="opacity:0.25">–</span>'}</td>`;
+  }
+
+  function ppgCell(ppg, played) {
+    if (played === 0) return `<td style="text-align:center"><span style="opacity:0.25">–</span></td>`;
+    const col   = ppgColor(ppg);
+    const label = ppg.toFixed(2);
+    return `<td style="text-align:center">
+      <span style="display:inline-block;background:${col}22;color:${col};border:1px solid ${col}55;
+        font-family:'Bebas Neue',sans-serif;font-size:1rem;padding:2px 10px;border-radius:6px;min-width:52px;">
+        ${label}
+      </span>
+    </td>`;
+  }
+
+  let html = '';
+  ageEntries.forEach(({ age, s, played, pts, ppg }) => {
+    html += `<tr class="act-group-row">
+      <td class="act-age-cell">${age}</td>
+      ${perfExpanded ? '<td style="color:var(--muted);font-size:0.75rem;font-style:italic;padding-left:15px">All divisions</td>' : ''}
+      ${numCell(played)}
+      ${numCell(s.w, 'var(--green)')}
+      ${numCell(s.d)}
+      ${numCell(s.l, 'var(--red)')}
+      ${numCell(s.nr, 'var(--amber)')}
+      ${numCell(pts, 'var(--yellow)')}
+      ${ppgCell(ppg, played)}
+    </tr>`;
+
+    if (perfExpanded) {
+      let divEntries = Object.keys(s.divs).map(div => {
+        const d = s.divs[div];
+        const { played: dp, pts: dpts, ppg: dppg } = calcEntry(d);
+        return { div, d, played: dp, pts: dpts, ppg: dppg };
+      });
+
+      if (perfSortCol === 'div') {
+        divEntries.sort((a,b) => perfSortAsc
+          ? String(b.div).localeCompare(String(a.div), undefined, {numeric:true})
+          : String(a.div).localeCompare(String(b.div), undefined, {numeric:true}));
+      } else if (perfSortCol === 'pts') {
+        divEntries.sort((a,b) => perfSortAsc ? a.pts - b.pts : b.pts - a.pts);
+      } else if (perfSortCol === 'ppg') {
+        divEntries.sort((a,b) => perfSortAsc ? a.ppg - b.ppg : b.ppg - a.ppg);
+      } else {
+        divEntries.sort((a,b) => parseFloat(a.div) - parseFloat(b.div));
+      }
+
+      divEntries.forEach(({ div, d, played: dp, pts: dpts, ppg: dppg }) => {
+        html += `<tr class="act-div-row">
+          <td></td>
+          <td class="act-div-cell">↳ ${div}</td>
+          ${numCell(dp)}
+          ${numCell(d.w, 'var(--green)')}
+          ${numCell(d.d)}
+          ${numCell(d.l, 'var(--red)')}
+          ${numCell(d.nr, 'var(--amber)')}
+          ${numCell(dpts, 'var(--yellow)')}
+          ${ppgCell(dppg, dp)}
+        </tr>`;
+      });
+    }
+  });
+
+  document.getElementById('perfTbody').innerHTML = html;
+}
+
+
 }
 </script>
 
+</div>
+
+<div id="tab-performance" class="tab-panel">
+  <div class="stats-page">
+    <div class="act-header" style="margin-bottom:14px">
+      <div>
+        <div class="act-title">🏅 Team Performance by Age Group</div>
+        <div class="act-sub">Points-based performance · Played games (Played = Y) only · Wins = 3pts, Draws = 1pt</div>
+      </div>
+      <button id="perfExpandBtn" class="act-expand-btn" onclick="if(window._togglePerfExpand) window._togglePerfExpand()">
+        <span id="perfExpandIcon">⊞</span> <span id="perfExpandLabel">Expand by Division</span>
+      </button>
+    </div>
+    <div class="twrap" style="border-radius:12px;">
+      <table id="perfTable" style="min-width:700px;">
+        <thead>
+          <tr>
+            <th id="perf-th-age" style="text-align:left;cursor:pointer;user-select:none;" onclick="if(window._sortPerfBy) window._sortPerfBy('age')" title="Sort by Age Group">Age Group ↕</th>
+            <th id="perf-th-div" style="text-align:left;cursor:pointer;user-select:none;display:none;" onclick="if(window._sortPerfBy) window._sortPerfBy('div')" title="Sort by Division">Division ↕</th>
+            <th style="text-align:center;">Total Games Played</th>
+            <th style="text-align:center;color:var(--green);">Wins</th>
+            <th style="text-align:center;">Draws</th>
+            <th style="text-align:center;color:var(--red);">Losses</th>
+            <th style="text-align:center;color:var(--amber);">Not Reported</th>
+            <th id="perf-th-pts" style="text-align:center;color:var(--yellow);cursor:pointer;user-select:none;" onclick="if(window._sortPerfBy) window._sortPerfBy('pts')" title="Sort by Total Points">Total Points ↕</th>
+            <th id="perf-th-ppg" style="text-align:center;cursor:pointer;user-select:none;" onclick="if(window._sortPerfBy) window._sortPerfBy('ppg')" title="Sort by Points Per Game">Pts / Game ↕</th>
+          </tr>
+        </thead>
+        <tbody id="perfTbody"></tbody>
+      </table>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:18px;flex-wrap:wrap;align-items:center;padding:0 2px;">
+      <span style="font-size:0.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em">Pts/Game key:</span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:0.7rem;color:var(--muted)"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#2ecc71"></span> ≥ 2.0 Excellent</span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:0.7rem;color:var(--muted)"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#f1c40f"></span> 1.0 – 1.99 Good</span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:0.7rem;color:var(--muted)"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#e67e22"></span> 0.5 – 0.99 Average</span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:0.7rem;color:var(--muted)"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#e74c3c"></span> &lt; 0.5 Poor</span>
+    </div>
+  </div>
 </div>
 
 <div id="tab-activity" class="tab-panel">
