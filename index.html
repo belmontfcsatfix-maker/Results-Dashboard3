@@ -1375,7 +1375,7 @@ function sortPerfBy(col) {
 }
 window._sortPerfBy = sortPerfBy;
 
-function perfFilterChange() { renderPerfTable(); }
+function perfFilterChange() { rebuildPerfDropdowns(); renderPerfTable(); }
 window._perfFilterChange = perfFilterChange;
 
 function resetPerf() {
@@ -1385,6 +1385,7 @@ function resetPerf() {
   if (tpSel) tpSel.value = 'all';
   perfSortCol = 'ppg';
   perfSortAsc = false;
+  rebuildPerfDropdowns();
   renderPerfTable();
 }
 window._resetPerf = resetPerf;
@@ -1392,33 +1393,48 @@ window._resetPerf = resetPerf;
 function renderPerformance() { rebuildPerfDropdowns(); renderPerfTable(); }
 window._renderPerformance = renderPerformance;
 
+// Returns the base pool (no NP) filtered by all keys EXCEPT the one passed in
+function perfPoolExcluding(excludeKey) {
+  const selGroup = document.getElementById('perf-groupSel')?.value || 'all';
+  const selAge   = document.getElementById('perf-ageSel')?.value   || 'all';
+  const selTp    = document.getElementById('perf-tpSel')?.value    || 'all';
+  return ALL.filter(g => {
+    if (g.result_type === 'np') return false;
+    if (excludeKey !== 'group' && selGroup !== 'all' && g.group      !== selGroup) return false;
+    if (excludeKey !== 'age'   && selAge   !== 'all' && g.age        !== selAge)   return false;
+    if (excludeKey !== 'tp'    && selTp    !== 'all' && g.tournament !== selTp)    return false;
+    return true;
+  });
+}
+
 function rebuildPerfDropdowns() {
-  const perfGames = ALL.filter(g => g.result_type !== 'np');
   const groupSel = document.getElementById('perf-groupSel');
   const ageSel   = document.getElementById('perf-ageSel');
-  if (!groupSel || !ageSel) return;
+  const tpSel    = document.getElementById('perf-tpSel');
+  if (!groupSel || !ageSel || !tpSel) return;
 
   const curGroup = groupSel.value;
   const curAge   = ageSel.value;
+  const curTp    = tpSel.value;
 
-  const groups = [...new Set(perfGames.map(g => g.group).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  // Each dropdown's options = values present in the pool that ignores that dropdown's own filter
+  const groupPool = perfPoolExcluding('group');
+  const groups = [...new Set(groupPool.map(g => g.group).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
   groupSel.innerHTML = '<option value="all">All Groups</option>';
   groups.forEach(v => { const o = new Option(v,v); if(v===curGroup) o.selected=true; groupSel.appendChild(o); });
   if (curGroup !== 'all' && !groups.includes(curGroup)) groupSel.value = 'all';
 
-  const ages = [...new Set(perfGames.map(g => g.age))].sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1)));
+  const agePool = perfPoolExcluding('age');
+  const ages = [...new Set(agePool.map(g => g.age))].sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1)));
   ageSel.innerHTML = '<option value="all">All Ages</option>';
   ages.forEach(v => { const o = new Option(v,v); if(v===curAge) o.selected=true; ageSel.appendChild(o); });
   if (curAge !== 'all' && !ages.includes(curAge)) ageSel.value = 'all';
 
-  const tpSel  = document.getElementById('perf-tpSel');
-  if (tpSel) {
-    const curTp = tpSel.value;
-    const tps = [...new Set(perfGames.map(g => g.tournament).filter(Boolean))].sort();
-    tpSel.innerHTML = '<option value="all">All</option>';
-    tps.forEach(v => { const o = new Option(v,v); if(v===curTp) o.selected=true; tpSel.appendChild(o); });
-    if (curTp !== 'all' && !tps.includes(curTp)) tpSel.value = 'all';
-  }
+  const tpPool = perfPoolExcluding('tp');
+  const tps = [...new Set(tpPool.map(g => g.tournament).filter(Boolean))].sort();
+  tpSel.innerHTML = '<option value="all">All</option>';
+  tps.forEach(v => { const o = new Option(v,v); if(v===curTp) o.selected=true; tpSel.appendChild(o); });
+  if (curTp !== 'all' && !tps.includes(curTp)) tpSel.value = 'all';
 }
 
 function renderPerfTable() {
