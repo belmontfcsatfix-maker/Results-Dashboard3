@@ -285,7 +285,7 @@ td.loccol { font-size:0.78rem; color:var(--muted); max-width:160px; overflow:hid
 <div class="tab-bar">
   <button class="tab-btn active" onclick="switchTab('fixtures',this)">Fixtures</button>
   <button class="tab-btn" onclick="switchTab('insights',this)">Season Insights</button>
-  <button class="tab-btn" onclick="switchTab('performance',this)">Teams Performance</button>
+  <button class="tab-btn" onclick="switchTab('performance',this)">Team Performance</button>
   <button class="tab-btn" onclick="switchTab('activity',this)">Teams Activity</button>
 </div>
 
@@ -1465,10 +1465,11 @@ function renderPerfTable() {
 
   // Compute derived fields
   let rows = Object.values(rowMap).map(r => {
-    const played = r.w + r.d + r.l + r.nr;
-    const pts    = r.w * 3 + r.d;
-    const ppg    = played > 0 ? pts / played : 0;
-    return { ...r, played, pts, ppg };
+    const played      = r.w + r.d + r.l + r.nr;
+    const withResult  = r.w + r.d + r.l;   // only games with a scored result
+    const pts         = r.w * 3 + r.d;
+    const ppg         = withResult > 0 ? pts / withResult : 0;
+    return { ...r, played, withResult, pts, ppg };
   });
 
   // Sort
@@ -1532,7 +1533,7 @@ function renderPerfTable() {
       ${numCell(r.l, 'var(--red)')}
       ${numCell(r.nr, 'var(--amber)')}
       ${numCell(r.pts, 'var(--yellow)')}
-      ${ppgCell(r.ppg, r.played)}
+      ${ppgCell(r.ppg, r.withResult)}
     </tr>
   `).join('');
 }
