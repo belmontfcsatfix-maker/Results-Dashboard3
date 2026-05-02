@@ -873,7 +873,7 @@ function switchTab(tab, btn) {
   document.getElementById('tab-' + tab).classList.add('active');
   if (tab === 'insights') renderInsights();
   if (tab === 'activity') renderActivity();
-  if (tab === 'performance') renderPerformance();
+  if (tab === 'performance') { rebuildPerfDropdowns(); renderPerfTable(); }
 }
 
 /* ════════════════════════════════
@@ -1358,9 +1358,8 @@ window._renderActivity = renderActivity;
 /* ════════════════════════════════
    TEAM PERFORMANCE TAB
 ════════════════════════════════ */
-let perfExpanded = false;
-let perfSortCol = null;
-let perfSortAsc = false;
+let perfSortCol = 'ppg';   // default: sort by points per game
+let perfSortAsc = false;   // default: best first (descending)
 
 function ppgColor(ppg) {
   if (ppg >= 2)   return '#2ecc71';
@@ -1369,94 +1368,121 @@ function ppgColor(ppg) {
   return '#e74c3c';
 }
 
-function togglePerfExpand() {
-  perfExpanded = !perfExpanded;
-  const btn   = document.getElementById('perfExpandBtn');
-  const icon  = document.getElementById('perfExpandIcon');
-  const label = document.getElementById('perfExpandLabel');
-  const divTh = document.getElementById('perf-th-div');
-  if (perfExpanded) {
-    btn.classList.add('expanded');
-    icon.textContent  = '⊟';
-    label.textContent = 'Collapse Divisions';
-    divTh.style.display = '';
-  } else {
-    btn.classList.remove('expanded');
-    icon.textContent  = '⊞';
-    label.textContent = 'Expand by Division';
-    divTh.style.display = 'none';
-  }
-  renderPerfTable();
-}
-window._togglePerfExpand = togglePerfExpand;
-
 function sortPerfBy(col) {
   if (perfSortCol === col) { perfSortAsc = !perfSortAsc; }
-  else { perfSortCol = col; perfSortAsc = false; }
+  else { perfSortCol = col; perfSortAsc = col === 'age' || col === 'div'; } // text cols default asc, numeric desc
   renderPerfTable();
 }
 window._sortPerfBy = sortPerfBy;
 
-function renderPerformance() { renderPerfTable(); }
+function perfFilterChange() { renderPerfTable(); }
+window._perfFilterChange = perfFilterChange;
+
+function resetPerf() {
+  document.getElementById('perf-groupSel').value = 'all';
+  document.getElementById('perf-ageSel').value   = 'all';
+  const tpSel = document.getElementById('perf-tpSel');
+  if (tpSel) tpSel.value = 'all';
+  perfSortCol = 'ppg';
+  perfSortAsc = false;
+  renderPerfTable();
+}
+window._resetPerf = resetPerf;
+
+function renderPerformance() { rebuildPerfDropdowns(); renderPerfTable(); }
 window._renderPerformance = renderPerformance;
 
-function renderPerfTable() {
-  // Only games where played === 'Y' (i.e. not NP)
+function rebuildPerfDropdowns() {
   const perfGames = ALL.filter(g => g.result_type !== 'np');
+  const groupSel = document.getElementById('perf-groupSel');
+  const ageSel   = document.getElementById('perf-ageSel');
+  if (!groupSel || !ageSel) return;
 
-  // Aggregate by age + division
-  const ageMap = {};
-  perfGames.forEach(g => {
-    const age = g.age, div = g.division;
-    if (!ageMap[age]) ageMap[age] = { w:0, d:0, l:0, nr:0, divs:{} };
-    if (!ageMap[age].divs[div]) ageMap[age].divs[div] = { w:0, d:0, l:0, nr:0 };
-    const agg = ageMap[age], dag = ageMap[age].divs[div];
-    if      (g.result_type === 'win')  { agg.w++;  dag.w++;  }
-    else if (g.result_type === 'draw') { agg.d++;  dag.d++;  }
-    else if (g.result_type === 'loss') { agg.l++;  dag.l++;  }
-    else if (g.result_type === 'nr')   { agg.nr++; dag.nr++; }
+  const curGroup = groupSel.value;
+  const curAge   = ageSel.value;
+
+  const groups = [...new Set(perfGames.map(g => g.group).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  groupSel.innerHTML = '<option value="all">All Groups</option>';
+  groups.forEach(v => { const o = new Option(v,v); if(v===curGroup) o.selected=true; groupSel.appendChild(o); });
+  if (curGroup !== 'all' && !groups.includes(curGroup)) groupSel.value = 'all';
+
+  const ages = [...new Set(perfGames.map(g => g.age))].sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1)));
+  ageSel.innerHTML = '<option value="all">All Ages</option>';
+  ages.forEach(v => { const o = new Option(v,v); if(v===curAge) o.selected=true; ageSel.appendChild(o); });
+  if (curAge !== 'all' && !ages.includes(curAge)) ageSel.value = 'all';
+
+  const tpSel  = document.getElementById('perf-tpSel');
+  if (tpSel) {
+    const curTp = tpSel.value;
+    const tps = [...new Set(perfGames.map(g => g.tournament).filter(Boolean))].sort();
+    tpSel.innerHTML = '<option value="all">All</option>';
+    tps.forEach(v => { const o = new Option(v,v); if(v===curTp) o.selected=true; tpSel.appendChild(o); });
+    if (curTp !== 'all' && !tps.includes(curTp)) tpSel.value = 'all';
+  }
+}
+
+function renderPerfTable() {
+  const selGroup = document.getElementById('perf-groupSel')?.value || 'all';
+  const selAge   = document.getElementById('perf-ageSel')?.value   || 'all';
+  const selTp    = document.getElementById('perf-tpSel')?.value    || 'all';
+
+  // Only played games (not NP), apply filters
+  const perfGames = ALL.filter(g => {
+    if (g.result_type === 'np') return false;
+    if (selGroup !== 'all' && g.group       !== selGroup) return false;
+    if (selAge   !== 'all' && g.age         !== selAge)   return false;
+    if (selTp    !== 'all' && g.tournament  !== selTp)    return false;
+    return true;
   });
 
-  // Build sortable entries
-  function calcEntry(s) {
-    const played = s.w + s.d + s.l + s.nr;
-    const pts    = s.w * 3 + s.d * 1;
+  // Aggregate flat: one row per age+division combo
+  const rowMap = {};
+  perfGames.forEach(g => {
+    const key = g.age + '||' + g.division;
+    if (!rowMap[key]) rowMap[key] = { age: g.age, div: g.division, w:0, d:0, l:0, nr:0 };
+    const r = rowMap[key];
+    if      (g.result_type === 'win')  r.w++;
+    else if (g.result_type === 'draw') r.d++;
+    else if (g.result_type === 'loss') r.l++;
+    else if (g.result_type === 'nr')   r.nr++;
+  });
+
+  // Compute derived fields
+  let rows = Object.values(rowMap).map(r => {
+    const played = r.w + r.d + r.l + r.nr;
+    const pts    = r.w * 3 + r.d;
     const ppg    = played > 0 ? pts / played : 0;
-    return { played, pts, ppg };
-  }
+    return { ...r, played, pts, ppg };
+  });
 
-  let ageEntries = Object.keys(ageMap)
-    .sort((a,b) => parseInt(a.slice(1)) - parseInt(b.slice(1)))
-    .map(age => {
-      const s = ageMap[age];
-      const { played, pts, ppg } = calcEntry(s);
-      return { age, s, played, pts, ppg };
-    });
+  // Sort
+  rows.sort((a, b) => {
+    let va, vb;
+    if (perfSortCol === 'age') {
+      va = parseInt(a.age.replace(/\D/g,'')); vb = parseInt(b.age.replace(/\D/g,''));
+    } else if (perfSortCol === 'div') {
+      va = a.div; vb = b.div;
+      return perfSortAsc
+        ? String(va).localeCompare(String(vb), undefined, {numeric:true})
+        : String(vb).localeCompare(String(va), undefined, {numeric:true});
+    } else if (perfSortCol === 'pts') {
+      va = a.pts; vb = b.pts;
+    } else { // ppg (default)
+      va = a.ppg; vb = b.ppg;
+    }
+    return perfSortAsc ? va - vb : vb - va;
+  });
 
-  // Sort age-level rows
+  // Update header arrows
   const arrow = col => perfSortCol === col ? (perfSortAsc ? ' ↑' : ' ↓') : ' ↕';
   const thAge = document.getElementById('perf-th-age');
   const thDiv = document.getElementById('perf-th-div');
   const thPts = document.getElementById('perf-th-pts');
   const thPpg = document.getElementById('perf-th-ppg');
-  if (thAge) thAge.innerHTML = 'Age Group'  + arrow('age');
-  if (thDiv) thDiv.innerHTML = 'Division'   + arrow('div');
+  if (thAge) thAge.innerHTML = 'Age Group'    + arrow('age');
+  if (thDiv) thDiv.innerHTML = 'Division'     + arrow('div');
   if (thPts) thPts.innerHTML = 'Total Points' + arrow('pts');
-  if (thPpg) thPpg.innerHTML = 'Pts / Game' + arrow('ppg');
-
-  if (perfSortCol === 'age') {
-    ageEntries.sort((a,b) => {
-      const na = parseInt(a.age.slice(1)), nb = parseInt(b.age.slice(1));
-      return perfSortAsc ? nb - na : na - nb;
-    });
-  } else if (perfSortCol === 'pts') {
-    ageEntries.sort((a,b) => perfSortAsc ? a.pts - b.pts : b.pts - a.pts);
-  } else if (perfSortCol === 'ppg') {
-    ageEntries.sort((a,b) => perfSortAsc ? a.ppg - b.ppg : b.ppg - a.ppg);
-  }
-
-  const divTh = document.getElementById('perf-th-div');
-  if (divTh) divTh.style.display = perfExpanded ? '' : 'none';
+  if (thPpg) thPpg.innerHTML = 'Pts / Game'   + arrow('ppg');
 
   function numCell(val, colour) {
     const style = colour ? `color:${colour}` : '';
@@ -1465,67 +1491,36 @@ function renderPerfTable() {
 
   function ppgCell(ppg, played) {
     if (played === 0) return `<td style="text-align:center"><span style="opacity:0.25">–</span></td>`;
-    const col   = ppgColor(ppg);
-    const label = ppg.toFixed(2);
+    const col = ppgColor(ppg);
     return `<td style="text-align:center">
       <span style="display:inline-block;background:${col}22;color:${col};border:1px solid ${col}55;
         font-family:'Bebas Neue',sans-serif;font-size:1rem;padding:2px 10px;border-radius:6px;min-width:52px;">
-        ${label}
+        ${ppg.toFixed(2)}
       </span>
     </td>`;
   }
 
-  let html = '';
-  ageEntries.forEach(({ age, s, played, pts, ppg }) => {
-    html += `<tr class="act-group-row">
-      <td class="act-age-cell">${age}</td>
-      ${perfExpanded ? '<td style="color:var(--muted);font-size:0.75rem;font-style:italic;padding-left:15px">All divisions</td>' : ''}
-      ${numCell(played)}
-      ${numCell(s.w, 'var(--green)')}
-      ${numCell(s.d)}
-      ${numCell(s.l, 'var(--red)')}
-      ${numCell(s.nr, 'var(--amber)')}
-      ${numCell(pts, 'var(--yellow)')}
-      ${ppgCell(ppg, played)}
-    </tr>`;
+  if (!rows.length) {
+    document.getElementById('perfTbody').innerHTML =
+      `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--muted)">No matches found for the selected filters</td></tr>`;
+    return;
+  }
 
-    if (perfExpanded) {
-      let divEntries = Object.keys(s.divs).map(div => {
-        const d = s.divs[div];
-        const { played: dp, pts: dpts, ppg: dppg } = calcEntry(d);
-        return { div, d, played: dp, pts: dpts, ppg: dppg };
-      });
-
-      if (perfSortCol === 'div') {
-        divEntries.sort((a,b) => perfSortAsc
-          ? String(b.div).localeCompare(String(a.div), undefined, {numeric:true})
-          : String(a.div).localeCompare(String(b.div), undefined, {numeric:true}));
-      } else if (perfSortCol === 'pts') {
-        divEntries.sort((a,b) => perfSortAsc ? a.pts - b.pts : b.pts - a.pts);
-      } else if (perfSortCol === 'ppg') {
-        divEntries.sort((a,b) => perfSortAsc ? a.ppg - b.ppg : b.ppg - a.ppg);
-      } else {
-        divEntries.sort((a,b) => parseFloat(a.div) - parseFloat(b.div));
-      }
-
-      divEntries.forEach(({ div, d, played: dp, pts: dpts, ppg: dppg }) => {
-        html += `<tr class="act-div-row">
-          <td></td>
-          <td class="act-div-cell">↳ ${div}</td>
-          ${numCell(dp)}
-          ${numCell(d.w, 'var(--green)')}
-          ${numCell(d.d)}
-          ${numCell(d.l, 'var(--red)')}
-          ${numCell(d.nr, 'var(--amber)')}
-          ${numCell(dpts, 'var(--yellow)')}
-          ${ppgCell(dppg, dp)}
-        </tr>`;
-      });
-    }
-  });
-
-  document.getElementById('perfTbody').innerHTML = html;
+  document.getElementById('perfTbody').innerHTML = rows.map(r => `
+    <tr style="border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.1s;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background=''">
+      <td style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:var(--yellow);padding:12px 15px;">${r.age}</td>
+      <td style="font-weight:700;color:var(--text);font-size:0.88rem;padding:12px 15px;">${r.div}</td>
+      ${numCell(r.played)}
+      ${numCell(r.w, 'var(--green)')}
+      ${numCell(r.d)}
+      ${numCell(r.l, 'var(--red)')}
+      ${numCell(r.nr, 'var(--amber)')}
+      ${numCell(r.pts, 'var(--yellow)')}
+      ${ppgCell(r.ppg, r.played)}
+    </tr>
+  `).join('');
 }
+
 
 
 }
@@ -1535,21 +1530,28 @@ function renderPerfTable() {
 
 <div id="tab-performance" class="tab-panel">
   <div class="stats-page">
+    <!-- Filters -->
+    <div class="stats-filters" style="margin-bottom:18px;">
+      <span class="flbl">Group</span>
+      <select id="perf-groupSel" onchange="if(window._perfFilterChange) window._perfFilterChange()"><option value="all">All Groups</option></select>
+      <span class="flbl" style="margin-left:8px">Age Group</span>
+      <select id="perf-ageSel" onchange="if(window._perfFilterChange) window._perfFilterChange()"><option value="all">All Ages</option></select>
+      <span class="flbl" style="margin-left:8px">Championship</span>
+      <select id="perf-tpSel" onchange="if(window._perfFilterChange) window._perfFilterChange()"><option value="all">All</option></select>
+      <button onclick="if(window._resetPerf) window._resetPerf()" style="margin-left:auto;background:transparent;border:1px solid rgba(253,184,19,0.4);color:var(--yellow);font-family:'DM Sans',sans-serif;font-size:0.68rem;font-weight:700;padding:4px 10px;border-radius:5px;cursor:pointer;letter-spacing:0.05em;transition:all 0.15s;" onmouseover="this.style.background='rgba(253,184,19,0.1)'" onmouseout="this.style.background='transparent'">↺ Reset</button>
+    </div>
     <div class="act-header" style="margin-bottom:14px">
       <div>
-        <div class="act-title">🏅 Team Performance by Age Group</div>
+        <div class="act-title">🏅 Team Performance by Division</div>
         <div class="act-sub">Points-based performance · Played games (Played = Y) only · Wins = 3pts, Draws = 1pt</div>
       </div>
-      <button id="perfExpandBtn" class="act-expand-btn" onclick="if(window._togglePerfExpand) window._togglePerfExpand()">
-        <span id="perfExpandIcon">⊞</span> <span id="perfExpandLabel">Expand by Division</span>
-      </button>
     </div>
     <div class="twrap" style="border-radius:12px;">
       <table id="perfTable" style="min-width:700px;">
         <thead>
           <tr>
             <th id="perf-th-age" style="text-align:left;cursor:pointer;user-select:none;" onclick="if(window._sortPerfBy) window._sortPerfBy('age')" title="Sort by Age Group">Age Group ↕</th>
-            <th id="perf-th-div" style="text-align:left;cursor:pointer;user-select:none;display:none;" onclick="if(window._sortPerfBy) window._sortPerfBy('div')" title="Sort by Division">Division ↕</th>
+            <th id="perf-th-div" style="text-align:left;cursor:pointer;user-select:none;" onclick="if(window._sortPerfBy) window._sortPerfBy('div')" title="Sort by Division">Division ↕</th>
             <th style="text-align:center;">Total Games Played</th>
             <th style="text-align:center;color:var(--green);">Wins</th>
             <th style="text-align:center;">Draws</th>
