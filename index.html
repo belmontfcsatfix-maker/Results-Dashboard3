@@ -537,7 +537,7 @@ function renderMatchDay() {
   // Initialise selection on first load (preserve existing selection if valid)
   const validFmts = new Set(allDates.map(d => d.fmt));
   if (!window._mdSelectedDates) {
-    window._mdSelectedDates = new Set(allDates.map(d => d.fmt));
+    window._mdSelectedDates = new Set();
   } else {
     // Remove any stale dates no longer in data
     for (const f of [...window._mdSelectedDates]) {
