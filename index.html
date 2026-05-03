@@ -322,7 +322,10 @@ td.loccol { font-size:0.78rem; color:var(--muted); max-width:160px; overflow:hid
   <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;padding:12px 16px;background:var(--fbox);border:1px solid var(--fbox-b);border-radius:10px;">
     <span style="font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.13em;color:var(--yellow);opacity:0.85;white-space:nowrap;">Filter by Date</span>
     <div id="md-date-btns" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"></div>
-    <button id="md-date-all-btn" onclick="mdToggleAllDates()" style="background:var(--blue2);border:1px solid rgba(255,255,255,0.1);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.74rem;padding:5px 10px;border-radius:6px;cursor:pointer;white-space:nowrap;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--yellow)';this.style.color='var(--text)'" onmouseout="mdRefreshAllBtnStyle()">All Dates</button>
+    <div style="display:flex;gap:6px;margin-left:auto;">
+      <button id="md-date-all-btn" onclick="mdToggleAllDates()" style="background:var(--blue2);border:1px solid rgba(255,255,255,0.1);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.74rem;padding:5px 10px;border-radius:6px;cursor:pointer;white-space:nowrap;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--yellow)';this.style.color='var(--text)'" onmouseout="mdRefreshAllBtnStyle()">All Dates</button>
+      <button id="md-date-clear-btn" onclick="mdClearAllDates()" style="background:transparent;border:1px solid rgba(231,76,60,0.35);color:rgba(231,76,60,0.7);font-family:'DM Sans',sans-serif;font-size:0.74rem;padding:5px 10px;border-radius:6px;cursor:pointer;white-space:nowrap;transition:all 0.15s;" onmouseover="this.style.borderColor='#e74c3c';this.style.color='#e74c3c'" onmouseout="this.style.borderColor='rgba(231,76,60,0.35)';this.style.color='rgba(231,76,60,0.7)'">Clear All</button>
+    </div>
   </div>
 
   <!-- ── GAMES TABLE ── -->
@@ -379,25 +382,19 @@ window._mdSelectedDates = null; // null = not yet initialised; Set after first r
 
 function mdToggleAllDates() {
   const allDates = window._mdAllDates || [];
-  const sel = window._mdSelectedDates;
-  // If everything is selected (or nothing), select only nearest upcoming date
-  const todayKey = window._mdTodayKey || 0;
-  const future = allDates.filter(d => d.key >= todayKey);
-  const defaultFmt = future.length ? future[0].fmt : (allDates.length ? allDates[allDates.length-1].fmt : null);
-  if (!sel || sel.size === allDates.length) {
-    // deselect all → select default only
-    window._mdSelectedDates = defaultFmt ? new Set([defaultFmt]) : new Set(allDates.map(d => d.fmt));
-  } else {
-    // select all
-    window._mdSelectedDates = new Set(allDates.map(d => d.fmt));
-  }
+  window._mdSelectedDates = new Set(allDates.map(d => d.fmt));
+  mdApplyDateFilter();
+}
+
+function mdClearAllDates() {
+  window._mdSelectedDates = new Set();
   mdApplyDateFilter();
 }
 
 function mdToggleDate(fmt) {
   const sel = window._mdSelectedDates || new Set();
   if (sel.has(fmt)) {
-    if (sel.size > 1) sel.delete(fmt); // prevent empty selection
+    sel.delete(fmt);
   } else {
     sel.add(fmt);
   }
@@ -540,13 +537,12 @@ function renderMatchDay() {
   // Initialise selection on first load (preserve existing selection if valid)
   const validFmts = new Set(allDates.map(d => d.fmt));
   if (!window._mdSelectedDates) {
-    window._mdSelectedDates = defaultDate ? new Set([defaultDate]) : new Set(allDates.map(d => d.fmt));
+    window._mdSelectedDates = new Set(allDates.map(d => d.fmt));
   } else {
     // Remove any stale dates no longer in data
     for (const f of [...window._mdSelectedDates]) {
       if (!validFmts.has(f)) window._mdSelectedDates.delete(f);
     }
-    if (window._mdSelectedDates.size === 0 && defaultDate) window._mdSelectedDates.add(defaultDate);
   }
 
   // ── Build date filter buttons ──
@@ -591,8 +587,8 @@ function renderMatchDay() {
     ? MD_GAMES.filter(g => sel.has(g.dateFmt))
     : MD_GAMES;
 
-  // Sort descending (newest first)
-  const sortedGames = [...filteredGames].sort((a,b) => b.dateKey - a.dateKey);
+  // Sort ascending (earliest first)
+  const sortedGames = [...filteredGames].sort((a,b) => a.dateKey - b.dateKey);
 
   const tbody = document.getElementById('md-games-tbody');
   tbody.innerHTML = '';
@@ -638,9 +634,9 @@ window._renderMatchDayTables = function() {
   // Determine which dates to show pitches for (descending = same order as games table)
   let datesToShow;
   if (!sel || sel.size === 0 || sel.size === allDates.length) {
-    datesToShow = [...allDates].sort((a,b) => b.key - a.key);
+    datesToShow = [...allDates].sort((a,b) => a.key - b.key);
   } else {
-    datesToShow = allDates.filter(d => sel.has(d.fmt)).sort((a,b) => b.key - a.key);
+    datesToShow = allDates.filter(d => sel.has(d.fmt)).sort((a,b) => a.key - b.key);
   }
 
   /* ── helpers ── */
@@ -921,7 +917,7 @@ window._renderMatchDayFiltered = function() {
 
   const sel = window._mdSelectedDates;
   const filteredGames = sel && sel.size > 0 ? MD_GAMES.filter(g => sel.has(g.dateFmt)) : MD_GAMES;
-  const sortedGames = [...filteredGames].sort((a,b) => b.dateKey - a.dateKey);
+  const sortedGames = [...filteredGames].sort((a,b) => a.dateKey - b.dateKey);
 
   const tbody = document.getElementById('md-games-tbody');
   if (tbody) {
