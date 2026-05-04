@@ -328,16 +328,15 @@ td.loccol { font-size:0.78rem; color:var(--muted); max-width:160px; overflow:hid
       <button id="md-date-clear-btn" onclick="mdClearAllDates()" style="background:transparent;border:1px solid rgba(231,76,60,0.35);color:rgba(231,76,60,0.7);font-family:'DM Sans',sans-serif;font-size:0.74rem;padding:5px 10px;border-radius:6px;cursor:pointer;white-space:nowrap;transition:all 0.15s;" onmouseover="this.style.borderColor='#e74c3c';this.style.color='#e74c3c'" onmouseout="this.style.borderColor='rgba(231,76,60,0.35)';this.style.color='rgba(231,76,60,0.7)'">Clear All</button>
       <div style="width:1px;height:18px;background:rgba(255,255,255,0.1);flex-shrink:0;"></div>
       <div id="md-date-btns" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;flex:1;"></div>
-      <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;">
-        <button onclick="mdPrintFixtures()" style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#1a4a80,#0e2d55);border:1px solid rgba(253,184,19,0.35);color:var(--yellow);font-family:'DM Sans',sans-serif;font-size:0.74rem;font-weight:600;padding:6px 14px;border-radius:6px;cursor:pointer;white-space:nowrap;transition:all 0.18s;" onmouseover="this.style.borderColor='var(--yellow)';this.style.background='linear-gradient(135deg,#1f5a9e,#122f5a)'" onmouseout="this.style.borderColor='rgba(253,184,19,0.35)';this.style.background='linear-gradient(135deg,#1a4a80,#0e2d55)'">
+      <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;">
+        <button id="md-print-btn" onclick="mdPrintFixtures(window._mdPrintMode||'all')" style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#1a4a80,#0e2d55);border:1px solid rgba(253,184,19,0.35);color:var(--yellow);font-family:'DM Sans',sans-serif;font-size:0.74rem;font-weight:600;padding:6px 14px;border-radius:6px;cursor:pointer;white-space:nowrap;transition:all 0.18s;" onmouseover="this.style.borderColor='var(--yellow)';this.style.background='linear-gradient(135deg,#1f5a9e,#122f5a)'" onmouseout="this.style.borderColor='rgba(253,184,19,0.35)';this.style.background='linear-gradient(135deg,#1a4a80,#0e2d55)'">
           <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="7" width="9" height="5" rx="1" stroke="#fdb813" stroke-width="1.2"/><path d="M4 7V4a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v3" stroke="#fdb813" stroke-width="1.2"/><path d="M4 9.5h5" stroke="#fdb813" stroke-width="1.2" stroke-linecap="round"/></svg>
           Print Fixtures
         </button>
-        <div style="display:flex;align-items:center;gap:5px;">
-          <span style="font-size:0.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;white-space:nowrap;">Print:</span>
-          <button id="md-print-mode-games" onclick="mdSetPrintMode('games',this)" style="background:var(--blue2);border:1px solid rgba(255,255,255,0.1);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.68rem;padding:3px 9px;border-radius:5px;cursor:pointer;white-space:nowrap;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--yellow)';this.style.color='var(--text)'" onmouseout="mdRefreshPrintModeBtns()">Games</button>
-          <button id="md-print-mode-pitches" onclick="mdSetPrintMode('pitches',this)" style="background:var(--blue2);border:1px solid rgba(255,255,255,0.1);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.68rem;padding:3px 9px;border-radius:5px;cursor:pointer;white-space:nowrap;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--yellow)';this.style.color='var(--text)'" onmouseout="mdRefreshPrintModeBtns()">Pitches</button>
-          <button id="md-print-mode-all" onclick="mdSetPrintMode('all',this)" style="background:var(--yellow);border:1px solid var(--yellow);color:var(--blue);font-family:'DM Sans',sans-serif;font-size:0.68rem;font-weight:700;padding:3px 9px;border-radius:5px;cursor:pointer;white-space:nowrap;transition:all 0.15s;">All</button>
+        <div style="display:flex;gap:4px;">
+          <button onclick="mdSetPrintMode('games',this)" id="md-print-games-btn" style="font-family:'DM Sans',sans-serif;font-size:0.65rem;padding:3px 9px;border-radius:5px;cursor:pointer;white-space:nowrap;transition:all 0.15s;border:1px solid rgba(255,255,255,0.15);background:var(--blue2);color:var(--muted);">Games</button>
+          <button onclick="mdSetPrintMode('pitches',this)" id="md-print-pitches-btn" style="font-family:'DM Sans',sans-serif;font-size:0.65rem;padding:3px 9px;border-radius:5px;cursor:pointer;white-space:nowrap;transition:all 0.15s;border:1px solid rgba(255,255,255,0.15);background:var(--blue2);color:var(--muted);">Pitches</button>
+          <button onclick="mdSetPrintMode('all',this)" id="md-print-all-btn" style="font-family:'DM Sans',sans-serif;font-size:0.65rem;padding:3px 9px;border-radius:5px;cursor:pointer;white-space:nowrap;transition:all 0.15s;border:1px solid var(--yellow);background:rgba(253,184,19,0.15);color:var(--yellow);font-weight:700;">All</button>
         </div>
       </div>
     </div>
@@ -356,8 +355,8 @@ td.loccol { font-size:0.78rem; color:var(--muted); max-width:160px; overflow:hid
 
   <!-- ── GAMES TABLE ── -->
   <div id="md-games-section">
-  <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:0.06em;color:var(--yellow);">Games</div>
-  <div style="font-size:0.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.12em;margin-top:3px;margin-bottom:10px;">Belmont FC All Games</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:0.06em;color:var(--yellow);">Games</div>
+    <div style="font-size:0.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.12em;margin-top:3px;margin-bottom:10px;">Belmont FC All Games</div>
   <div style="border-radius:12px;border:1px solid var(--border);overflow-x:auto;background:var(--card);margin-bottom:36px;">
     <table id="md-games-table" style="width:100%;border-collapse:collapse;font-size:0.84rem;min-width:800px;">
       <thead>
@@ -375,17 +374,17 @@ td.loccol { font-size:0.78rem; color:var(--muted); max-width:160px; overflow:hid
       <tbody id="md-games-tbody"></tbody>
     </table>
   </div>
+
   </div><!-- end md-games-section -->
 
   <!-- ── PITCHES SECTION ── -->
   <div id="md-pitches-section">
-  <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:0.06em;color:var(--yellow);">Pitches</div>
-  <div style="font-size:0.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.12em;margin-top:3px;margin-bottom:10px;">Belmont FC Home Games</div>
-  <!-- ── OVERLAP WARNING ── -->
-  <div id="md-overlap-warning" style="display:none;margin-bottom:12px;padding:12px 16px;background:rgba(180,30,30,0.18);border:1px solid rgba(231,76,60,0.45);border-radius:10px;color:var(--text);"></div>
-
-  <!-- ── PITCHES TABLES CONTAINER (one per selected date) ── -->
-  <div id="md-pitches-container"></div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:0.06em;color:var(--yellow);">Pitches</div>
+    <div style="font-size:0.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.12em;margin-top:3px;margin-bottom:10px;">Belmont FC Home Games</div>
+    <!-- ── OVERLAP WARNING ── -->
+    <div id="md-overlap-warning" style="display:none;margin-bottom:12px;padding:12px 16px;background:rgba(180,30,30,0.18);border:1px solid rgba(231,76,60,0.45);border-radius:10px;color:var(--text);"></div>
+    <!-- ── PITCHES TABLES CONTAINER (one per selected date) ── -->
+    <div id="md-pitches-container"></div>
   </div><!-- end md-pitches-section -->
 
 </div>
@@ -472,136 +471,103 @@ function mdApplyAgeFilter() {
   if (window._renderMatchDayFiltered) window._renderMatchDayFiltered();
 }
 
-// ── Print Mode ──
-window._mdPrintMode = 'all'; // 'all' | 'games' | 'pitches'
-
+// ── Print mode selector ──
+window._mdPrintMode = 'all';
 function mdSetPrintMode(mode, btn) {
   window._mdPrintMode = mode;
-  mdRefreshPrintModeBtns();
-}
-
-function mdRefreshPrintModeBtns() {
   ['games','pitches','all'].forEach(m => {
-    const b = document.getElementById('md-print-mode-' + m);
+    const b = document.getElementById(`md-print-${m}-btn`);
     if (!b) return;
-    const active = window._mdPrintMode === m;
-    b.style.background   = active ? 'var(--yellow)' : 'var(--blue2)';
-    b.style.borderColor  = active ? 'var(--yellow)' : 'rgba(255,255,255,0.1)';
-    b.style.color        = active ? 'var(--blue)'   : 'var(--muted)';
-    b.style.fontWeight   = active ? '700'           : 'normal';
+    const active = m === mode;
+    b.style.background    = active ? 'rgba(253,184,19,0.15)' : 'var(--blue2)';
+    b.style.borderColor   = active ? 'var(--yellow)'         : 'rgba(255,255,255,0.15)';
+    b.style.color         = active ? 'var(--yellow)'         : 'var(--muted)';
+    b.style.fontWeight    = active ? '700'                   : 'normal';
   });
 }
 
 // ── Print Fixtures ──
-function mdPrintFixtures() {
-  const btn = event.currentTarget || event.target;
-  const origText = btn.innerHTML;
-  btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="#fdb813" stroke-width="1.2" stroke-dasharray="8 4"><animateTransform attributeName="transform" type="rotate" from="0 6.5 6.5" to="360 6.5 6.5" dur="0.8s" repeatCount="indefinite"/></circle></svg> Generating…`;
-  btn.disabled = true;
+function mdPrintFixtures(mode) {
+  mode = mode || window._mdPrintMode || 'all';
+  const btn = document.getElementById('md-print-btn');
+  const origText = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="#fdb813" stroke-width="1.2" stroke-dasharray="8 4"><animateTransform attributeName="transform" type="rotate" from="0 6.5 6.5" to="360 6.5 6.5" dur="0.8s" repeatCount="indefinite"/></circle></svg> Generating…`;
+    btn.disabled = true;
+  }
+
+  // Sections to temporarily hide based on mode
+  const gamesSection   = document.getElementById('md-games-section');
+  const pitchesSection = document.getElementById('md-pitches-section');
+
+  function restore() {
+    if (gamesSection)   gamesSection.style.display   = '';
+    if (pitchesSection) pitchesSection.style.display = '';
+    if (btn) { btn.innerHTML = origText; btn.disabled = false; }
+    // Ensure Match Day tab remains active
+    const mdTab = document.getElementById('tab-match-day');
+    if (mdTab && !mdTab.classList.contains('active')) {
+      document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+      mdTab.classList.add('active');
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.toggle('active', b.getAttribute('onclick') && b.getAttribute('onclick').includes('match-day'));
+      });
+    }
+  }
 
   function doCapture() {
+    // Hide sections based on mode
+    if (mode === 'games'   && pitchesSection) pitchesSection.style.display = 'none';
+    if (mode === 'pitches' && gamesSection)   gamesSection.style.display   = 'none';
+
     const target = document.getElementById('tab-match-day') || document.body;
-    const mode = window._mdPrintMode || 'all';
 
-    // ── Temporarily hide sections based on print mode ──
-    const gamesSection  = document.getElementById('md-games-section');
-    const pitchSection  = document.getElementById('md-pitches-section');
-    let savedGamesDisplay  = '';
-    let savedPitchDisplay  = '';
-    if (mode === 'pitches' && gamesSection)  { savedGamesDisplay = gamesSection.style.display;  gamesSection.style.display  = 'none'; }
-    if (mode === 'games'   && pitchSection)  { savedPitchDisplay = pitchSection.style.display;  pitchSection.style.display  = 'none'; }
-
-    // ── Temporarily remove all width/overflow constraints so the full
-    //    content renders at its natural width (fixes mobile cropping) ──
     const overridden = [];
     function forceWide(el) {
-      const saved = {
-        el,
-        minWidth:   el.style.minWidth,
-        maxWidth:   el.style.maxWidth,
-        width:      el.style.width,
-        overflowX:  el.style.overflowX,
-      };
-      overridden.push(saved);
-      el.style.minWidth  = 'max-content';
-      el.style.maxWidth  = 'none';
-      el.style.width     = 'max-content';
-      el.style.overflowX = 'visible';
+      overridden.push({ el, minWidth: el.style.minWidth, maxWidth: el.style.maxWidth, width: el.style.width, overflowX: el.style.overflowX });
+      el.style.minWidth = 'max-content'; el.style.maxWidth = 'none';
+      el.style.width = 'max-content';    el.style.overflowX = 'visible';
     }
-
-    // Override the target panel and every horizontally-scrollable wrapper inside it
     forceWide(target);
     target.querySelectorAll('*').forEach(el => {
       const cs = getComputedStyle(el);
       if (cs.overflowX === 'auto' || cs.overflowX === 'scroll' ||
-          cs.overflowX === 'hidden' || el.scrollWidth > el.clientWidth + 2) {
-        forceWide(el);
-      }
+          cs.overflowX === 'hidden' || el.scrollWidth > el.clientWidth + 2) forceWide(el);
     });
 
-    // Also temporarily widen the body/html so html2canvas sees the full layout
     const savedBodyWidth    = document.body.style.width;
     const savedBodyOverflow = document.body.style.overflowX;
     const savedHtmlOverflow = document.documentElement.style.overflowX;
-    document.body.style.width      = 'max-content';
-    document.body.style.overflowX  = 'visible';
+    document.body.style.width = 'max-content';
+    document.body.style.overflowX = 'visible';
     document.documentElement.style.overflowX = 'visible';
 
-    // Let the browser reflow, then measure & capture
     requestAnimationFrame(() => {
       const fullWidth  = target.scrollWidth;
       const fullHeight = target.scrollHeight;
 
       html2canvas(target, {
-        backgroundColor: '#0a1628',
-        scale: 2,
-        useCORS: true,
-        allowTaint: true,
-        logging: false,
-        scrollX: 0,
-        scrollY: -window.scrollY,
-        x: 0,
-        y: 0,
-        width: fullWidth,
-        height: fullHeight,
-        windowWidth: fullWidth,
-        windowHeight: fullHeight,
+        backgroundColor: '#0a1628', scale: 2, useCORS: true, allowTaint: true,
+        logging: false, scrollX: 0, scrollY: -window.scrollY, x: 0, y: 0,
+        width: fullWidth, height: fullHeight, windowWidth: fullWidth, windowHeight: fullHeight,
       }).then(canvas => {
-        // Restore everything
-        overridden.forEach(s => {
-          s.el.style.minWidth  = s.minWidth;
-          s.el.style.maxWidth  = s.maxWidth;
-          s.el.style.width     = s.width;
-          s.el.style.overflowX = s.overflowX;
-        });
-        document.body.style.width      = savedBodyWidth;
-        document.body.style.overflowX  = savedBodyOverflow;
+        overridden.forEach(s => { s.el.style.minWidth = s.minWidth; s.el.style.maxWidth = s.maxWidth; s.el.style.width = s.width; s.el.style.overflowX = s.overflowX; });
+        document.body.style.width = savedBodyWidth;
+        document.body.style.overflowX = savedBodyOverflow;
         document.documentElement.style.overflowX = savedHtmlOverflow;
-        if (gamesSection) gamesSection.style.display = savedGamesDisplay;
-        if (pitchSection) pitchSection.style.display = savedPitchDisplay;
-
+        const suffix = mode !== 'all' ? `_${mode}` : '';
         const link = document.createElement('a');
-        link.download = `Belmont_FC_Fixtures_${new Date().toISOString().slice(0,10)}.jpeg`;
+        link.download = `Belmont_FC_Fixtures${suffix}_${new Date().toISOString().slice(0,10)}.jpeg`;
         link.href = canvas.toDataURL('image/jpeg', 0.92);
         link.click();
-        btn.innerHTML = origText;
-        btn.disabled = false;
+        restore();
       }).catch(err => {
-        // Restore on error too
-        overridden.forEach(s => {
-          s.el.style.minWidth  = s.minWidth;
-          s.el.style.maxWidth  = s.maxWidth;
-          s.el.style.width     = s.width;
-          s.el.style.overflowX = s.overflowX;
-        });
-        document.body.style.width      = savedBodyWidth;
-        document.body.style.overflowX  = savedBodyOverflow;
+        overridden.forEach(s => { s.el.style.minWidth = s.minWidth; s.el.style.maxWidth = s.maxWidth; s.el.style.width = s.width; s.el.style.overflowX = s.overflowX; });
+        document.body.style.width = savedBodyWidth;
+        document.body.style.overflowX = savedBodyOverflow;
         document.documentElement.style.overflowX = savedHtmlOverflow;
-        if (gamesSection) gamesSection.style.display = savedGamesDisplay;
-        if (pitchSection) pitchSection.style.display = savedPitchDisplay;
         console.error('Print error:', err);
-        btn.innerHTML = origText;
-        btn.disabled = false;
+        restore();
         alert('Could not generate image. Please try again.');
       });
     });
@@ -613,11 +579,7 @@ function mdPrintFixtures() {
     const script = document.createElement('script');
     script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
     script.onload = doCapture;
-    script.onerror = () => {
-      btn.innerHTML = origText;
-      btn.disabled = false;
-      alert('Could not load print library. Check your internet connection.');
-    };
+    script.onerror = () => { restore(); alert('Could not load print library. Check your internet connection.'); };
     document.head.appendChild(script);
   }
 }
