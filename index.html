@@ -286,7 +286,7 @@ td.loccol { font-size:0.78rem; color:var(--muted); max-width:160px; overflow:hid
   <div class="hdr-r">
     <div class="lbl">Files Loaded</div>
     <div class="val" id="filesLoaded" style="font-size:0.75rem;letter-spacing:0.03em;color:var(--muted)">—</div>
-    <div class="lbl" style="margin-top:8px">Last Updated</div>
+    <div class="lbl" style="margin-top:8px">Results Last Updated</div>
     <div class="val" id="lastUpdated">—</div>
   </div>
 </div>
@@ -295,8 +295,7 @@ td.loccol { font-size:0.78rem; color:var(--muted); max-width:160px; overflow:hid
   <button class="tab-btn" onclick="switchTab('match-day',this)">📋 Match Day</button>
   <button class="tab-btn active" onclick="switchTab('fixtures',this)">🏆 Results</button>
   <button class="tab-btn" onclick="switchTab('insights',this)">💡 Season Insights</button>
-  <button class="tab-btn" onclick="switchTab('performance',this)">📊 Teams Performance</button>
-  <button class="tab-btn" onclick="switchTab('activity',this)">📈 Teams Activity</button>
+  <button class="tab-btn" onclick="switchTab('performance',this)">📊 Performance &amp; Activity</button>
 </div>
 
 <div id="tab-match-day" class="tab-panel">
@@ -305,7 +304,7 @@ td.loccol { font-size:0.78rem; color:var(--muted); max-width:160px; overflow:hid
 
   <!-- Page subtitle -->
   <div style="margin-bottom:20px;">
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:0.06em;color:var(--yellow);">Upcoming Games and Pitches</div>
+    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:0.06em;color:var(--yellow);">Upcoming Fixtures</div>
     <div id="md-subtitle" style="font-size:0.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.12em;margin-top:3px;">Belmont FC Home &amp; Away</div>
   </div>
 
@@ -318,18 +317,47 @@ td.loccol { font-size:0.78rem; color:var(--muted); max-width:160px; overflow:hid
       <span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#e67e22;flex-shrink:0;"><svg width="9" height="9" viewBox="0 0 9 9" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 2.5L6.5 6.5M6.5 2.5L2.5 6.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg></span>Pending</span>
   </div>
 
-  <!-- ── DATE FILTER ── -->
-  <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px;padding:12px 16px;background:var(--fbox);border:1px solid var(--fbox-b);border-radius:10px;">
-    <span style="font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.13em;color:var(--yellow);opacity:0.85;white-space:nowrap;">Filter by Date</span>
-    <div id="md-date-btns" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;"></div>
-    <div style="display:flex;gap:6px;margin-left:auto;">
+  <!-- ── FILTERS BAR ── -->
+  <div id="md-filters-bar" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;padding:12px 16px;background:var(--fbox);border:1px solid var(--fbox-b);border-radius:10px;">
+
+    <!-- Row 1: Date filter + Print button -->
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.13em;color:var(--yellow);opacity:0.85;white-space:nowrap;">Filter by Date</span>
+      <div style="width:1px;height:18px;background:rgba(255,255,255,0.1);flex-shrink:0;"></div>
       <button id="md-date-all-btn" onclick="mdToggleAllDates()" style="background:var(--blue2);border:1px solid rgba(255,255,255,0.1);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.74rem;padding:5px 10px;border-radius:6px;cursor:pointer;white-space:nowrap;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--yellow)';this.style.color='var(--text)'" onmouseout="mdRefreshAllBtnStyle()">All Dates</button>
       <button id="md-date-clear-btn" onclick="mdClearAllDates()" style="background:transparent;border:1px solid rgba(231,76,60,0.35);color:rgba(231,76,60,0.7);font-family:'DM Sans',sans-serif;font-size:0.74rem;padding:5px 10px;border-radius:6px;cursor:pointer;white-space:nowrap;transition:all 0.15s;" onmouseover="this.style.borderColor='#e74c3c';this.style.color='#e74c3c'" onmouseout="this.style.borderColor='rgba(231,76,60,0.35)';this.style.color='rgba(231,76,60,0.7)'">Clear All</button>
+      <div style="width:1px;height:18px;background:rgba(255,255,255,0.1);flex-shrink:0;"></div>
+      <div id="md-date-btns" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;flex:1;"></div>
+      <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;">
+        <button onclick="mdPrintFixtures()" style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#1a4a80,#0e2d55);border:1px solid rgba(253,184,19,0.35);color:var(--yellow);font-family:'DM Sans',sans-serif;font-size:0.74rem;font-weight:600;padding:6px 14px;border-radius:6px;cursor:pointer;white-space:nowrap;transition:all 0.18s;" onmouseover="this.style.borderColor='var(--yellow)';this.style.background='linear-gradient(135deg,#1f5a9e,#122f5a)'" onmouseout="this.style.borderColor='rgba(253,184,19,0.35)';this.style.background='linear-gradient(135deg,#1a4a80,#0e2d55)'">
+          <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="7" width="9" height="5" rx="1" stroke="#fdb813" stroke-width="1.2"/><path d="M4 7V4a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v3" stroke="#fdb813" stroke-width="1.2"/><path d="M4 9.5h5" stroke="#fdb813" stroke-width="1.2" stroke-linecap="round"/></svg>
+          Print Fixtures
+        </button>
+        <div style="display:flex;align-items:center;gap:5px;">
+          <span style="font-size:0.58rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;white-space:nowrap;">Print:</span>
+          <button id="md-print-mode-games" onclick="mdSetPrintMode('games',this)" style="background:var(--blue2);border:1px solid rgba(255,255,255,0.1);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.68rem;padding:3px 9px;border-radius:5px;cursor:pointer;white-space:nowrap;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--yellow)';this.style.color='var(--text)'" onmouseout="mdRefreshPrintModeBtns()">Games</button>
+          <button id="md-print-mode-pitches" onclick="mdSetPrintMode('pitches',this)" style="background:var(--blue2);border:1px solid rgba(255,255,255,0.1);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.68rem;padding:3px 9px;border-radius:5px;cursor:pointer;white-space:nowrap;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--yellow)';this.style.color='var(--text)'" onmouseout="mdRefreshPrintModeBtns()">Pitches</button>
+          <button id="md-print-mode-all" onclick="mdSetPrintMode('all',this)" style="background:var(--yellow);border:1px solid var(--yellow);color:var(--blue);font-family:'DM Sans',sans-serif;font-size:0.68rem;font-weight:700;padding:3px 9px;border-radius:5px;cursor:pointer;white-space:nowrap;transition:all 0.15s;">All</button>
+        </div>
+      </div>
     </div>
+
+    <!-- Row 2: Age Group filter -->
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.13em;color:var(--yellow);opacity:0.85;white-space:nowrap;">Filter by Age Group</span>
+      <div style="width:1px;height:18px;background:rgba(255,255,255,0.1);flex-shrink:0;"></div>
+      <button id="md-age-all-btn" onclick="mdToggleAllAges()" style="background:var(--blue2);border:1px solid rgba(255,255,255,0.1);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.74rem;padding:5px 10px;border-radius:6px;cursor:pointer;white-space:nowrap;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--yellow)';this.style.color='var(--text)'" onmouseout="mdRefreshAgeAllBtnStyle()">All Ages</button>
+      <button onclick="mdClearAllAges()" style="background:transparent;border:1px solid rgba(231,76,60,0.35);color:rgba(231,76,60,0.7);font-family:'DM Sans',sans-serif;font-size:0.74rem;padding:5px 10px;border-radius:6px;cursor:pointer;white-space:nowrap;transition:all 0.15s;" onmouseover="this.style.borderColor='#e74c3c';this.style.color='#e74c3c'" onmouseout="this.style.borderColor='rgba(231,76,60,0.35)';this.style.color='rgba(231,76,60,0.7)'">Clear All</button>
+      <div style="width:1px;height:18px;background:rgba(255,255,255,0.1);flex-shrink:0;"></div>
+      <div id="md-age-btns" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;flex:1;"></div>
+    </div>
+
   </div>
 
   <!-- ── GAMES TABLE ── -->
-  <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:0.06em;color:var(--yellow);margin-bottom:10px;">Games</div>
+  <div id="md-games-section">
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:0.06em;color:var(--yellow);">Games</div>
+  <div style="font-size:0.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.12em;margin-top:3px;margin-bottom:10px;">Belmont FC All Games</div>
   <div style="border-radius:12px;border:1px solid var(--border);overflow-x:auto;background:var(--card);margin-bottom:36px;">
     <table id="md-games-table" style="width:100%;border-collapse:collapse;font-size:0.84rem;min-width:800px;">
       <thead>
@@ -347,14 +375,18 @@ td.loccol { font-size:0.78rem; color:var(--muted); max-width:160px; overflow:hid
       <tbody id="md-games-tbody"></tbody>
     </table>
   </div>
+  </div><!-- end md-games-section -->
 
   <!-- ── PITCHES SECTION ── -->
-  <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:0.06em;color:var(--yellow);margin-bottom:10px;">Pitches — Belmont FC Home Games</div>
+  <div id="md-pitches-section">
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:1rem;letter-spacing:0.06em;color:var(--yellow);">Pitches</div>
+  <div style="font-size:0.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.12em;margin-top:3px;margin-bottom:10px;">Belmont FC Home Games</div>
   <!-- ── OVERLAP WARNING ── -->
   <div id="md-overlap-warning" style="display:none;margin-bottom:12px;padding:12px 16px;background:rgba(180,30,30,0.18);border:1px solid rgba(231,76,60,0.45);border-radius:10px;color:var(--text);"></div>
 
   <!-- ── PITCHES TABLES CONTAINER (one per selected date) ── -->
   <div id="md-pitches-container"></div>
+  </div><!-- end md-pitches-section -->
 
 </div>
 
@@ -389,6 +421,205 @@ function mdToggleAllDates() {
 function mdClearAllDates() {
   window._mdSelectedDates = new Set();
   mdApplyDateFilter();
+}
+
+// ── Age Group filter ──
+window._mdSelectedAges = null; // null = not yet initialised (defaults to empty)
+
+function mdToggleAllAges() {
+  const allAges = window._mdAllAges || [];
+  window._mdSelectedAges = new Set(allAges);
+  mdApplyAgeFilter();
+}
+
+function mdClearAllAges() {
+  window._mdSelectedAges = new Set();
+  mdApplyAgeFilter();
+}
+
+function mdToggleAge(age) {
+  const sel = window._mdSelectedAges || new Set();
+  if (sel.has(age)) { sel.delete(age); } else { sel.add(age); }
+  window._mdSelectedAges = sel;
+  mdApplyAgeFilter();
+}
+
+function mdRefreshAgeAllBtnStyle() {
+  const btn = document.getElementById('md-age-all-btn');
+  if (!btn) return;
+  const allAges = window._mdAllAges || [];
+  const sel = window._mdSelectedAges;
+  const allSelected = sel && sel.size === allAges.length && allAges.length > 0;
+  btn.style.background = allSelected ? 'var(--yellow)' : 'var(--blue2)';
+  btn.style.borderColor = allSelected ? 'var(--yellow)' : 'rgba(255,255,255,0.1)';
+  btn.style.color = allSelected ? 'var(--blue)' : 'var(--muted)';
+  btn.style.fontWeight = allSelected ? '700' : 'normal';
+}
+
+function mdApplyAgeFilter() {
+  mdRefreshAgeAllBtnStyle();
+  const allAges = window._mdAllAges || [];
+  const sel = window._mdSelectedAges || new Set();
+  allAges.forEach(age => {
+    const btn = document.getElementById(`md-age-btn-${age.replace(/[^a-zA-Z0-9]/g,'_')}`);
+    if (!btn) return;
+    const active = sel.has(age);
+    btn.style.background = active ? 'var(--yellow)' : 'var(--blue2)';
+    btn.style.borderColor = active ? 'var(--yellow)' : 'rgba(255,255,255,0.1)';
+    btn.style.color = active ? 'var(--blue)' : 'var(--muted)';
+    btn.style.fontWeight = active ? '700' : 'normal';
+  });
+  if (window._renderMatchDayFiltered) window._renderMatchDayFiltered();
+}
+
+// ── Print Mode ──
+window._mdPrintMode = 'all'; // 'all' | 'games' | 'pitches'
+
+function mdSetPrintMode(mode, btn) {
+  window._mdPrintMode = mode;
+  mdRefreshPrintModeBtns();
+}
+
+function mdRefreshPrintModeBtns() {
+  ['games','pitches','all'].forEach(m => {
+    const b = document.getElementById('md-print-mode-' + m);
+    if (!b) return;
+    const active = window._mdPrintMode === m;
+    b.style.background   = active ? 'var(--yellow)' : 'var(--blue2)';
+    b.style.borderColor  = active ? 'var(--yellow)' : 'rgba(255,255,255,0.1)';
+    b.style.color        = active ? 'var(--blue)'   : 'var(--muted)';
+    b.style.fontWeight   = active ? '700'           : 'normal';
+  });
+}
+
+// ── Print Fixtures ──
+function mdPrintFixtures() {
+  const btn = event.currentTarget || event.target;
+  const origText = btn.innerHTML;
+  btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="#fdb813" stroke-width="1.2" stroke-dasharray="8 4"><animateTransform attributeName="transform" type="rotate" from="0 6.5 6.5" to="360 6.5 6.5" dur="0.8s" repeatCount="indefinite"/></circle></svg> Generating…`;
+  btn.disabled = true;
+
+  function doCapture() {
+    const target = document.getElementById('tab-match-day') || document.body;
+    const mode = window._mdPrintMode || 'all';
+
+    // ── Temporarily hide sections based on print mode ──
+    const gamesSection  = document.getElementById('md-games-section');
+    const pitchSection  = document.getElementById('md-pitches-section');
+    let savedGamesDisplay  = '';
+    let savedPitchDisplay  = '';
+    if (mode === 'pitches' && gamesSection)  { savedGamesDisplay = gamesSection.style.display;  gamesSection.style.display  = 'none'; }
+    if (mode === 'games'   && pitchSection)  { savedPitchDisplay = pitchSection.style.display;  pitchSection.style.display  = 'none'; }
+
+    // ── Temporarily remove all width/overflow constraints so the full
+    //    content renders at its natural width (fixes mobile cropping) ──
+    const overridden = [];
+    function forceWide(el) {
+      const saved = {
+        el,
+        minWidth:   el.style.minWidth,
+        maxWidth:   el.style.maxWidth,
+        width:      el.style.width,
+        overflowX:  el.style.overflowX,
+      };
+      overridden.push(saved);
+      el.style.minWidth  = 'max-content';
+      el.style.maxWidth  = 'none';
+      el.style.width     = 'max-content';
+      el.style.overflowX = 'visible';
+    }
+
+    // Override the target panel and every horizontally-scrollable wrapper inside it
+    forceWide(target);
+    target.querySelectorAll('*').forEach(el => {
+      const cs = getComputedStyle(el);
+      if (cs.overflowX === 'auto' || cs.overflowX === 'scroll' ||
+          cs.overflowX === 'hidden' || el.scrollWidth > el.clientWidth + 2) {
+        forceWide(el);
+      }
+    });
+
+    // Also temporarily widen the body/html so html2canvas sees the full layout
+    const savedBodyWidth    = document.body.style.width;
+    const savedBodyOverflow = document.body.style.overflowX;
+    const savedHtmlOverflow = document.documentElement.style.overflowX;
+    document.body.style.width      = 'max-content';
+    document.body.style.overflowX  = 'visible';
+    document.documentElement.style.overflowX = 'visible';
+
+    // Let the browser reflow, then measure & capture
+    requestAnimationFrame(() => {
+      const fullWidth  = target.scrollWidth;
+      const fullHeight = target.scrollHeight;
+
+      html2canvas(target, {
+        backgroundColor: '#0a1628',
+        scale: 2,
+        useCORS: true,
+        allowTaint: true,
+        logging: false,
+        scrollX: 0,
+        scrollY: -window.scrollY,
+        x: 0,
+        y: 0,
+        width: fullWidth,
+        height: fullHeight,
+        windowWidth: fullWidth,
+        windowHeight: fullHeight,
+      }).then(canvas => {
+        // Restore everything
+        overridden.forEach(s => {
+          s.el.style.minWidth  = s.minWidth;
+          s.el.style.maxWidth  = s.maxWidth;
+          s.el.style.width     = s.width;
+          s.el.style.overflowX = s.overflowX;
+        });
+        document.body.style.width      = savedBodyWidth;
+        document.body.style.overflowX  = savedBodyOverflow;
+        document.documentElement.style.overflowX = savedHtmlOverflow;
+        if (gamesSection) gamesSection.style.display = savedGamesDisplay;
+        if (pitchSection) pitchSection.style.display = savedPitchDisplay;
+
+        const link = document.createElement('a');
+        link.download = `Belmont_FC_Fixtures_${new Date().toISOString().slice(0,10)}.jpeg`;
+        link.href = canvas.toDataURL('image/jpeg', 0.92);
+        link.click();
+        btn.innerHTML = origText;
+        btn.disabled = false;
+      }).catch(err => {
+        // Restore on error too
+        overridden.forEach(s => {
+          s.el.style.minWidth  = s.minWidth;
+          s.el.style.maxWidth  = s.maxWidth;
+          s.el.style.width     = s.width;
+          s.el.style.overflowX = s.overflowX;
+        });
+        document.body.style.width      = savedBodyWidth;
+        document.body.style.overflowX  = savedBodyOverflow;
+        document.documentElement.style.overflowX = savedHtmlOverflow;
+        if (gamesSection) gamesSection.style.display = savedGamesDisplay;
+        if (pitchSection) pitchSection.style.display = savedPitchDisplay;
+        console.error('Print error:', err);
+        btn.innerHTML = origText;
+        btn.disabled = false;
+        alert('Could not generate image. Please try again.');
+      });
+    });
+  }
+
+  if (window.html2canvas) {
+    doCapture();
+  } else {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    script.onload = doCapture;
+    script.onerror = () => {
+      btn.innerHTML = origText;
+      btn.disabled = false;
+      alert('Could not load print library. Check your internet connection.');
+    };
+    document.head.appendChild(script);
+  }
 }
 
 function mdToggleDate(fmt) {
@@ -445,59 +676,22 @@ function renderMatchDay() {
     return '';
   }
 
-  // Parse a date string into a JS Date (handles DD-Mon-YY, DD/MM/YYYY, YYYY-MM-DD, etc.)
-  const MONTHS = { jan:0,feb:1,mar:2,apr:3,may:4,jun:5,jul:6,aug:7,sep:8,oct:9,nov:10,dec:11 };
-  function parseDate(s) {
-    if (!s) return null;
-    s = s.trim();
-    // DD-Mon-YY or DD-Mon-YYYY  e.g. "25-Apr-26" or "25-Apr-2026"
-    let m = s.match(/^(\d{1,2})[-\/\s]([A-Za-z]{3})[-\/\s](\d{2,4})$/);
-    if (m) {
-      const mo = MONTHS[m[2].toLowerCase()];
-      if (mo !== undefined) {
-        let yr = parseInt(m[3]);
-        if (yr < 100) yr += 2000;
-        return new Date(yr, mo, parseInt(m[1]));
-      }
-    }
-    // DD/MM/YYYY
-    m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
-    if (m) return new Date(parseInt(m[3]), parseInt(m[2])-1, parseInt(m[1]));
-    // YYYY-MM-DD
-    m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
-    if (m) return new Date(parseInt(m[1]), parseInt(m[2])-1, parseInt(m[3]));
-    // Try native parse as last resort
-    const d = new Date(s);
-    return isNaN(d) ? null : d;
-  }
-
-  // Format a JS Date as DD-MMM-YY
-  const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  function fmtDate(d) {
-    if (!d) return '';
-    const dd  = String(d.getDate()).padStart(2,'0');
-    const mon = MON[d.getMonth()];
-    const yy  = String(d.getFullYear()).slice(-2);
-    return `${dd}-${mon}-${yy}`;
-  }
-
-  // Sortable key for a date (YYYYMMDD integer)
-  function dateKey(d) {
-    if (!d) return 0;
-    return d.getFullYear()*10000 + (d.getMonth()+1)*100 + d.getDate();
+  // dateKey: YYYYMMDD integer derived directly from Date Sort string
+  function dateKey(ds) {
+    if (!ds) return 0;
+    return parseInt(ds.replace(/-/g, '')) || 0;
   }
 
   // Map raw rows → game objects
   const MD_GAMES = raw.map(r => {
-    const home = fc(r,'Home Team');
-    const away = fc(r,'Away Team');
-    const rawDate = fc(r,'Date');
-    const parsed  = parseDate(rawDate);
+    const home      = fc(r,'Home Team');
+    const away      = fc(r,'Away Team');
+    const dateSort  = fc(r,'Date Sort');   // YYYY-MM-DD — used for sorting only
+    const dateFmt   = fc(r,'Date');        // DD-MMM-YY — used for display
     return {
-      dateRaw:  rawDate,
-      dateFmt:  parsed ? fmtDate(parsed) : rawDate,
-      dateObj:  parsed,
-      dateKey:  dateKey(parsed),
+      dateSort,
+      dateFmt,
+      dateKey:  dateKey(dateSort),
       div:      fc(r,'Division'),
       home,
       hConf:    fc(r,'H Conf'),
@@ -513,18 +707,27 @@ function renderMatchDay() {
     };
   });
 
+  // ── Age group extraction (same logic as Results tab) ──
+  function mdGetAge(divStr) {
+    const s = String(divStr || '');
+    const isGirls = /girls/i.test(s);
+    const m = s.match(/U(\d+)\./i) || s.match(/U(\d+)/i) || s.match(/(\d+)\./i) || s.match(/(\d+)/i);
+    return m ? 'U' + m[1] + (isGirls ? 'G' : '') : 'Other';
+  }
+  MD_GAMES.forEach(g => { g.age = mdGetAge(g.div); });
+
   // Store all games globally for re-renders
   window._mdAllGames = MD_GAMES;
 
   // ── Build sorted date list (ascending for buttons, descending for display) ──
-  const todayKey = dateKey(new Date());
+  const todayKey = dateKey(new Date().toISOString().slice(0,10));
   window._mdTodayKey = todayKey;
 
   const allDates = [...new Map(
-    MD_GAMES.filter(g => g.dateObj)
+    MD_GAMES.filter(g => g.dateKey > 0)
       .sort((a,b) => a.dateKey - b.dateKey)
       .map(g => [g.dateFmt, g])
-  ).values()].map(g => ({ fmt: g.dateFmt, key: g.dateKey, obj: g.dateObj }));
+  ).values()].map(g => ({ fmt: g.dateFmt, key: g.dateKey }));
   window._mdAllDates = allDates;
 
   // Determine "most immediate" date: closest upcoming, or most recent past
@@ -559,6 +762,31 @@ function renderMatchDay() {
   }
   mdRefreshAllBtnStyle();
 
+  // ── Build age group list & buttons ──
+  const allAges = [...new Set(MD_GAMES.map(g => g.age).filter(Boolean))].sort((a,b) => {
+    const na = parseInt(a.replace(/\D/g,'')) || 999;
+    const nb = parseInt(b.replace(/\D/g,'')) || 999;
+    if (na !== nb) return na - nb;
+    return a.localeCompare(b);
+  });
+  window._mdAllAges = allAges;
+
+  if (!window._mdSelectedAges) window._mdSelectedAges = new Set();
+  else { for (const a of [...window._mdSelectedAges]) { if (!allAges.includes(a)) window._mdSelectedAges.delete(a); } }
+
+  const ageBtnsEl = document.getElementById('md-age-btns');
+  if (ageBtnsEl) {
+    ageBtnsEl.innerHTML = allAges.map(age => {
+      const id = `md-age-btn-${age.replace(/[^a-zA-Z0-9]/g,'_')}`;
+      const active = window._mdSelectedAges.has(age);
+      return `<button id="${id}" onclick="mdToggleAge('${age}')"
+        style="background:${active?'var(--yellow)':'var(--blue2)'};border:1px solid ${active?'var(--yellow)':'rgba(255,255,255,0.1)'};color:${active?'var(--blue)':'var(--muted)'};font-family:'DM Sans',sans-serif;font-size:0.74rem;padding:5px 10px;border-radius:6px;cursor:pointer;white-space:nowrap;transition:all 0.15s;font-weight:${active?'700':'normal'};"
+        onmouseover="this.style.borderColor='var(--yellow)';this.style.color=this.style.background==='rgb(253, 184, 19)'?'var(--blue)':'var(--text)'"
+        onmouseout="mdApplyAgeFilter()">${age}</button>`;
+    }).join('');
+  }
+  mdRefreshAgeAllBtnStyle();
+
   /* ── helpers ── */
   function confIcon(val) {
     return val && val.toUpperCase() === 'Y'
@@ -579,13 +807,16 @@ function renderMatchDay() {
   }
 
   // Store helpers globally for re-use in table render
-  window._mdHelpers = { confIcon, highlightBFC, teamCell, refCell, fmtDate, dateKey, timeToMins: null, minsToLabel: null };
+  window._mdHelpers = { confIcon, highlightBFC, teamCell, refCell };
 
-  /* ── Games Table: filtered by selected dates, descending order ── */
+  /* ── Games Table: filtered by selected dates + age groups ── */
   const sel = window._mdSelectedDates;
-  const filteredGames = sel && sel.size > 0
-    ? MD_GAMES.filter(g => sel.has(g.dateFmt))
-    : MD_GAMES;
+  const selAge = window._mdSelectedAges;
+  const filteredGames = MD_GAMES.filter(g => {
+    if (sel && sel.size > 0 && !sel.has(g.dateFmt)) return false;
+    if (selAge && selAge.size > 0 && !selAge.has(g.age)) return false;
+    return true;
+  });
 
   // Sort ascending (earliest first)
   const sortedGames = [...filteredGames].sort((a,b) => a.dateKey - b.dateKey);
@@ -598,14 +829,19 @@ function renderMatchDay() {
   } else if (!sortedGames.length) {
     tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--muted);">No games for the selected date(s)</td></tr>`;
   } else {
+    let dateGroupIdx = -1;
+    let lastDateKey = null;
     sortedGames.forEach((g, i) => {
+      if (g.dateKey !== lastDateKey) { dateGroupIdx++; lastDateKey = g.dateKey; }
+      const isAlt = dateGroupIdx % 2 === 1;
+      const rowBg = isAlt ? 'rgba(253,184,19,0.04)' : '';
       const dc = mdDivColor(g.div);
       const tr = document.createElement('tr');
-      tr.style.cssText = `border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.1s;${i%2===1?'background:rgba(255,255,255,0.02)':''}`;
-      tr.onmouseover = () => tr.style.background = 'rgba(255,255,255,0.04)';
-      tr.onmouseout  = () => tr.style.background = i%2===1 ? 'rgba(255,255,255,0.02)' : '';
+      tr.style.cssText = `border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.1s;${rowBg?`background:${rowBg}`:''}`;
+      tr.onmouseover = () => tr.style.background = 'rgba(255,255,255,0.06)';
+      tr.onmouseout  = () => tr.style.background = rowBg;
       tr.innerHTML = `
-        <td style="padding:10px 14px;font-size:0.75rem;color:var(--muted);white-space:nowrap;">${g.dateFmt}</td>
+        <td style="padding:10px 14px;font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--muted);white-space:nowrap;">${g.dateFmt}</td>
         <td style="padding:10px 14px;white-space:nowrap;"><span style="font-size:0.72rem;font-weight:700;padding:3px 8px;border-radius:4px;background:${dc}22;color:${dc};border:1px solid ${dc}44;">${g.div}</span></td>
         ${teamCell(g.home, g.hConf)}
         ${teamCell(g.away, g.aConf)}
@@ -622,7 +858,7 @@ function renderMatchDay() {
   window._renderMatchDayTables();
 }
 
-// ── Render pitches tables (one per selected date, in same order as Games table = descending) ──
+// ── Render pitches tables (one per selected date, in same order as Games table) ──
 window._renderMatchDayTables = function() {
   const MD_GAMES = window._mdAllGames || [];
   const sel = window._mdSelectedDates;
@@ -654,7 +890,12 @@ window._renderMatchDayTables = function() {
 
   datesToShow.forEach(dateEntry => {
     const dateFmt = dateEntry.fmt;
-    const homeGames = MD_GAMES.filter(g => g.belHome && g.pitch && g.dateFmt === dateFmt)
+    const selAge2 = window._mdSelectedAges;
+    const homeGames = MD_GAMES.filter(g => {
+      if (!g.belHome || !g.pitch || g.dateFmt !== dateFmt) return false;
+      if (selAge2 && selAge2.size > 0 && !selAge2.has(g.age)) return false;
+      return true;
+    })
       .sort((a,b) => a.pitch.localeCompare(b.pitch));
     const pitches = [...new Set(homeGames.map(g => g.pitch))].sort();
 
@@ -891,12 +1132,7 @@ window._renderMatchDayFiltered = function() {
   const MD_GAMES = window._mdAllGames || [];
   if (!MD_GAMES.length) return;
 
-  // Helpers (reuse stored or inline)
-  const MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  function fmtDate(d) {
-    if (!d) return '';
-    return `${String(d.getDate()).padStart(2,'0')}-${MON[d.getMonth()]}-${String(d.getFullYear()).slice(-2)}`;
-  }
+  // Helpers
   function confIcon(val) {
     return val && val.toUpperCase() === 'Y'
       ? `<span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#27ae60;flex-shrink:0;vertical-align:middle;"><svg width="9" height="9" viewBox="0 0 9 9" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1.5 4.5L3.5 6.5L7.5 2.5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`
@@ -916,7 +1152,12 @@ window._renderMatchDayFiltered = function() {
   }
 
   const sel = window._mdSelectedDates;
-  const filteredGames = sel && sel.size > 0 ? MD_GAMES.filter(g => sel.has(g.dateFmt)) : MD_GAMES;
+  const selAge = window._mdSelectedAges;
+  const filteredGames = MD_GAMES.filter(g => {
+    if (sel && sel.size > 0 && !sel.has(g.dateFmt)) return false;
+    if (selAge && selAge.size > 0 && !selAge.has(g.age)) return false;
+    return true;
+  });
   const sortedGames = [...filteredGames].sort((a,b) => a.dateKey - b.dateKey);
 
   const tbody = document.getElementById('md-games-tbody');
@@ -925,14 +1166,19 @@ window._renderMatchDayFiltered = function() {
     if (!sortedGames.length) {
       tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--muted);">No games for the selected date(s)</td></tr>`;
     } else {
+      let dateGroupIdx = -1;
+      let lastDateKey = null;
       sortedGames.forEach((g, i) => {
+        if (g.dateKey !== lastDateKey) { dateGroupIdx++; lastDateKey = g.dateKey; }
+        const isAlt = dateGroupIdx % 2 === 1;
+        const rowBg = isAlt ? 'rgba(253,184,19,0.04)' : '';
         const dc = mdDivColor(g.div);
         const tr = document.createElement('tr');
-        tr.style.cssText = `border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.1s;${i%2===1?'background:rgba(255,255,255,0.02)':''}`;
-        tr.onmouseover = () => tr.style.background = 'rgba(255,255,255,0.04)';
-        tr.onmouseout  = () => tr.style.background = i%2===1 ? 'rgba(255,255,255,0.02)' : '';
+        tr.style.cssText = `border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.1s;${rowBg?`background:${rowBg}`:''}`;
+        tr.onmouseover = () => tr.style.background = 'rgba(255,255,255,0.06)';
+        tr.onmouseout  = () => tr.style.background = rowBg;
         tr.innerHTML = `
-          <td style="padding:10px 14px;font-size:0.75rem;color:var(--muted);white-space:nowrap;">${g.dateFmt}</td>
+          <td style="padding:10px 14px;font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--muted);white-space:nowrap;">${g.dateFmt}</td>
           <td style="padding:10px 14px;white-space:nowrap;"><span style="font-size:0.72rem;font-weight:700;padding:3px 8px;border-radius:4px;background:${dc}22;color:${dc};border:1px solid ${dc}44;">${g.div}</span></td>
           ${teamCell(g.home, g.hConf)}
           ${teamCell(g.away, g.aConf)}
@@ -1546,7 +1792,6 @@ function switchTab(tab, btn) {
   btn.classList.add('active');
   document.getElementById('tab-' + tab).classList.add('active');
   if (tab === 'insights') renderInsights();
-  if (tab === 'activity') renderActivity();
   if (tab === 'performance') { rebuildPerfDropdowns(); renderPerfTable(); }
   if (tab === 'match-day' && typeof window._renderMatchDay === 'function') window._renderMatchDay();
 }
@@ -2117,7 +2362,7 @@ function renderPerfTable() {
   const selAge   = document.getElementById('perf-ageSel')?.value   || 'all';
   const selTp    = document.getElementById('perf-tpSel')?.value    || 'all';
 
-  // Only played games (not NP), apply filters
+  // Played games (not NP) for performance stats
   const perfGames = ALL.filter(g => {
     if (g.result_type === 'np') return false;
     if (selGroup !== 'all' && g.group       !== selGroup) return false;
@@ -2126,25 +2371,43 @@ function renderPerfTable() {
     return true;
   });
 
-  // Aggregate flat: one row per age+division combo
+  // ALL games (including NP) for cancelled count — same filters
+  const allGames = ALL.filter(g => {
+    if (selGroup !== 'all' && g.group       !== selGroup) return false;
+    if (selAge   !== 'all' && g.age         !== selAge)   return false;
+    if (selTp    !== 'all' && g.tournament  !== selTp)    return false;
+    return true;
+  });
+
+  // Aggregate per age+division
   const rowMap = {};
   perfGames.forEach(g => {
     const key = g.age + '||' + g.division;
-    if (!rowMap[key]) rowMap[key] = { age: g.age, div: g.division, w:0, d:0, l:0, nr:0 };
+    if (!rowMap[key]) rowMap[key] = { age: g.age, div: g.division, w:0, d:0, l:0, nr:0, np:0, total:0 };
     const r = rowMap[key];
     if      (g.result_type === 'win')  r.w++;
     else if (g.result_type === 'draw') r.d++;
     else if (g.result_type === 'loss') r.l++;
     else if (g.result_type === 'nr')   r.nr++;
+    r.total++;
+  });
+
+  // Add cancelled (NP) counts from allGames
+  allGames.filter(g => g.result_type === 'np').forEach(g => {
+    const key = g.age + '||' + g.division;
+    if (!rowMap[key]) rowMap[key] = { age: g.age, div: g.division, w:0, d:0, l:0, nr:0, np:0, total:0 };
+    rowMap[key].np++;
   });
 
   // Compute derived fields
   let rows = Object.values(rowMap).map(r => {
-    const played      = r.w + r.d + r.l + r.nr;
-    const withResult  = r.w + r.d + r.l;   // only games with a scored result
-    const pts         = r.w * 3 + r.d;
-    const ppg         = withResult > 0 ? pts / withResult : 0;
-    return { ...r, played, withResult, pts, ppg };
+    const played     = r.w + r.d + r.l + r.nr;
+    const withResult = r.w + r.d + r.l;
+    const pts        = r.w * 3 + r.d;
+    const ppg        = withResult > 0 ? pts / withResult : 0;
+    const scheduled  = played + r.np;
+    const npPct      = scheduled > 0 ? Math.round((r.np / scheduled) * 100) : 0;
+    return { ...r, played, withResult, pts, ppg, scheduled, npPct };
   });
 
   // Sort
@@ -2159,6 +2422,8 @@ function renderPerfTable() {
         : String(vb).localeCompare(String(va), undefined, {numeric:true});
     } else if (perfSortCol === 'pts') {
       va = a.pts; vb = b.pts;
+    } else if (perfSortCol === 'np') {
+      va = a.np; vb = b.np;
     } else { // ppg (default)
       va = a.ppg; vb = b.ppg;
     }
@@ -2171,14 +2436,24 @@ function renderPerfTable() {
   const thDiv = document.getElementById('perf-th-div');
   const thPts = document.getElementById('perf-th-pts');
   const thPpg = document.getElementById('perf-th-ppg');
-  if (thAge) thAge.innerHTML = 'Age Group'    + arrow('age');
-  if (thDiv) thDiv.innerHTML = 'Division'     + arrow('div');
-  if (thPts) thPts.innerHTML = 'Total Points' + arrow('pts');
-  if (thPpg) thPpg.innerHTML = 'Pts / Game'   + arrow('ppg');
+  const thNp  = document.getElementById('perf-th-np');
+  if (thAge) thAge.innerHTML = 'Age Group'       + arrow('age');
+  if (thDiv) thDiv.innerHTML = 'Division'        + arrow('div');
+  if (thPts) thPts.innerHTML = 'Total Points'    + arrow('pts');
+  if (thPpg) thPpg.innerHTML = 'Pts / Game'      + arrow('ppg');
+  if (thNp)  thNp.innerHTML  = 'Total Cancelled' + arrow('np');
 
   function numCell(val, colour) {
     const style = colour ? `color:${colour}` : '';
     return `<td style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1rem;${style}">${val > 0 ? val : '<span style="opacity:0.25">–</span>'}</td>`;
+  }
+
+  function npCell(np, scheduled) {
+    if (np === 0) return `<td style="text-align:center"><span style="opacity:0.25">–</span></td>`;
+    const pct = scheduled > 0 ? Math.round((np / scheduled) * 100) : 0;
+    return `<td style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--muted);">
+      ${np} <span style="font-size:0.72rem;opacity:0.7">(${pct}%)</span>
+    </td>`;
   }
 
   function ppgCell(ppg, played) {
@@ -2192,13 +2467,16 @@ function renderPerfTable() {
     </td>`;
   }
 
+  const tbody = document.getElementById('perfTbody');
+  const tfoot = document.getElementById('perfTfoot');
+
   if (!rows.length) {
-    document.getElementById('perfTbody').innerHTML =
-      `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--muted)">No matches found for the selected filters</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--muted)">No matches found for the selected filters</td></tr>`;
+    if (tfoot) tfoot.innerHTML = '';
     return;
   }
 
-  document.getElementById('perfTbody').innerHTML = rows.map(r => `
+  tbody.innerHTML = rows.map(r => `
     <tr style="border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.1s;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background=''">
       <td style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:var(--yellow);padding:12px 15px;">${r.age}</td>
       <td style="font-weight:700;color:var(--text);font-size:0.88rem;padding:12px 15px;">${r.div}</td>
@@ -2209,8 +2487,54 @@ function renderPerfTable() {
       ${numCell(r.nr, 'var(--amber)')}
       ${numCell(r.pts, 'var(--yellow)')}
       ${ppgCell(r.ppg, r.withResult)}
+      ${npCell(r.np, r.scheduled)}
     </tr>
   `).join('');
+
+  // ── Totals row ──
+  if (tfoot) {
+    const tot = rows.reduce((acc, r) => {
+      acc.played     += r.played;
+      acc.w          += r.w;
+      acc.d          += r.d;
+      acc.l          += r.l;
+      acc.nr         += r.nr;
+      acc.pts        += r.pts;
+      acc.withResult += r.withResult;
+      acc.np         += r.np;
+      acc.scheduled  += r.scheduled;
+      return acc;
+    }, { played:0, w:0, d:0, l:0, nr:0, pts:0, withResult:0, np:0, scheduled:0 });
+
+    const totPpg = tot.withResult > 0 ? tot.pts / tot.withResult : 0;
+    const totPpgCol = ppgColor(totPpg);
+    const totNpPct = tot.scheduled > 0 ? Math.round((tot.np / tot.scheduled) * 100) : 0;
+
+    const totCell = (val, colour) => {
+      const style = colour ? `color:${colour}` : 'color:var(--text)';
+      return `<td style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.05rem;font-weight:700;${style};padding:11px 15px;">${val > 0 ? val : '–'}</td>`;
+    };
+
+    tfoot.innerHTML = `
+      <tr style="border-top:2px solid rgba(253,184,19,0.3);background:rgba(253,184,19,0.06);">
+        <td colspan="2" style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--yellow);padding:11px 15px;letter-spacing:0.06em;">TOTALS</td>
+        ${totCell(tot.played)}
+        ${totCell(tot.w, 'var(--green)')}
+        ${totCell(tot.d)}
+        ${totCell(tot.l, 'var(--red)')}
+        ${totCell(tot.nr, 'var(--amber)')}
+        ${totCell(tot.pts, 'var(--yellow)')}
+        <td style="text-align:center;padding:11px 15px;">
+          <span style="display:inline-block;background:${totPpgCol}22;color:${totPpgCol};border:1px solid ${totPpgCol}55;
+            font-family:'Bebas Neue',sans-serif;font-size:1.05rem;padding:2px 10px;border-radius:6px;min-width:52px;font-weight:700;">
+            ${totPpg.toFixed(2)}
+          </span>
+        </td>
+        <td style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.05rem;font-weight:700;color:var(--muted);padding:11px 15px;">
+          ${tot.np > 0 ? `${tot.np} <span style="font-size:0.72rem;opacity:0.7">(${totNpPct}%)</span>` : '–'}
+        </td>
+      </tr>`;
+  }
 }
 
 
@@ -2234,12 +2558,12 @@ function renderPerfTable() {
     </div>
     <div class="act-header" style="margin-bottom:14px">
       <div>
-        <div class="act-title">🏅 Team Performance by Division</div>
+        <div class="act-title">🏅 Team Performance & Activity by Division</div>
         <div class="act-sub">Points-based performance · Played games (Played = Y) only · Wins = 3pts, Draws = 1pt</div>
       </div>
     </div>
     <div class="twrap" style="border-radius:12px;">
-      <table id="perfTable" style="min-width:700px;">
+      <table id="perfTable" style="min-width:800px;">
         <thead>
           <tr>
             <th id="perf-th-age" style="text-align:left;cursor:pointer;user-select:none;" onclick="if(window._sortPerfBy) window._sortPerfBy('age')" title="Sort by Age Group">Age Group ↕</th>
@@ -2251,9 +2575,11 @@ function renderPerfTable() {
             <th style="text-align:center;color:var(--amber);">Not Reported</th>
             <th id="perf-th-pts" style="text-align:center;color:var(--yellow);cursor:pointer;user-select:none;" onclick="if(window._sortPerfBy) window._sortPerfBy('pts')" title="Sort by Total Points">Total Points ↕</th>
             <th id="perf-th-ppg" style="text-align:center;cursor:pointer;user-select:none;" onclick="if(window._sortPerfBy) window._sortPerfBy('ppg')" title="Sort by Points Per Game">Pts / Game ↕</th>
+            <th id="perf-th-np" style="text-align:center;color:var(--muted);cursor:pointer;user-select:none;" onclick="if(window._sortPerfBy) window._sortPerfBy('np')" title="Sort by Cancelled">Total Cancelled ↕</th>
           </tr>
         </thead>
         <tbody id="perfTbody"></tbody>
+        <tfoot id="perfTfoot"></tfoot>
       </table>
     </div>
     <div style="margin-top:14px;display:flex;gap:18px;flex-wrap:wrap;align-items:center;padding:0 2px;">
@@ -2266,39 +2592,6 @@ function renderPerfTable() {
   </div>
 </div>
 
-<div id="tab-activity" class="tab-panel">
-  <div class="stats-page">
-    <div class="act-section">
-      <div class="act-header">
-        <div>
-          <div class="act-title">📋 Activity by Age Group &amp; Division</div>
-          <div class="act-sub">All games including not played and not reported</div>
-        </div>
-        <button id="actExpandBtn" class="act-expand-btn" onclick="if(window._toggleActivityExpand) window._toggleActivityExpand()">
-          <span id="actExpandIcon">⊞</span> <span id="actExpandLabel">Expand by Division</span>
-        </button>
-      </div>
-      <div class="twrap" style="border-radius:12px;">
-        <table id="activityTable" style="min-width:680px;">
-          <thead>
-            <tr>
-              <th id="act-th-age" style="text-align:left;cursor:pointer;user-select:none;" onclick="if(window._sortActivityBy) window._sortActivityBy('age')" title="Sort by Age Group">Age Group ↕</th>
-              <th id="act-th-div" style="text-align:left;cursor:pointer;user-select:none;display:none;" onclick="if(window._sortActivityBy) window._sortActivityBy('div')" title="Sort by Division">Division ↕</th>
-              <th style="text-align:center;">Total Games Scheduled</th>
-              <th style="text-align:center;color:var(--green);">Wins</th>
-              <th style="text-align:center;">Draws</th>
-              <th style="text-align:center;color:var(--red);">Losses</th>
-              <th style="text-align:center;color:var(--amber);">Not Reported</th>
-              <th id="act-th-played" style="text-align:center;color:var(--text);cursor:pointer;user-select:none;" onclick="if(window._sortActivityBy) window._sortActivityBy('played')" title="Sort by Total Played">Total Played ↕</th>
-              <th id="act-th-np" style="text-align:center;color:var(--muted);cursor:pointer;user-select:none;" onclick="if(window._sortActivityBy) window._sortActivityBy('np')" title="Sort by Not Played">Not Played ↕</th>
-            </tr>
-          </thead>
-          <tbody id="activityTbody"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-</div>
 
 <div id="tab-insights" class="tab-panel">
   <div class="stats-page">
