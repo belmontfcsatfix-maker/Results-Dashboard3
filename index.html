@@ -291,13 +291,13 @@ td.loccol { font-size:0.78rem; color:var(--muted); max-width:160px; overflow:hid
 </div>
 
 <div class="tab-bar">
-  <button class="tab-btn active" onclick="switchTab('match-day',this)">📋 Match Day</button>
-  <button class="tab-btn" onclick="switchTab('fixtures',this)">🏆 Results</button>
+  <button class="tab-btn" onclick="switchTab('match-day',this)">📋 Match Day</button>
+  <button class="tab-btn active" onclick="switchTab('fixtures',this)">🏆 Results</button>
   <button class="tab-btn" onclick="switchTab('insights',this)">💡 Season Insights</button>
   <button class="tab-btn" onclick="switchTab('performance',this)">📊 Performance &amp; Activity</button>
 </div>
 
-<div id="tab-match-day" class="tab-panel active">
+<div id="tab-match-day" class="tab-panel">
 <!-- ═══════════ MATCH DAY TAB — NEW ═══════════ -->
 <div style="padding:24px 20px 48px;">
 
@@ -353,13 +353,13 @@ td.loccol { font-size:0.78rem; color:var(--muted); max-width:160px; overflow:hid
       <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding-bottom:2px;">
         <span style="font-size:0.58rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--muted);">Division Status:</span>
         <span style="display:flex;align-items:center;gap:5px;font-size:0.7rem;color:#8ba2c1;">
-          <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(46,204,113,0.35);border:1px solid rgba(46,204,113,0.6);flex-shrink:0;"></span>Confirmed
+          <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(46,204,113,0.32);border:1px solid rgba(46,204,113,0.65);flex-shrink:0;"></span>Confirmed
         </span>
         <span style="display:flex;align-items:center;gap:5px;font-size:0.7rem;color:#8ba2c1;">
-          <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(253,184,19,0.18);border:1px solid rgba(253,184,19,0.45);flex-shrink:0;"></span>Pending
+          <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(243,156,18,0.28);border:1px solid rgba(243,156,18,0.6);flex-shrink:0;"></span>Pending
         </span>
         <span style="display:flex;align-items:center;gap:5px;font-size:0.7rem;color:#8ba2c1;">
-          <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(231,76,60,0.28);border:1px solid rgba(231,76,60,0.6);flex-shrink:0;"></span>Declined
+          <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(231,76,60,0.32);border:1px solid rgba(231,76,60,0.65);flex-shrink:0;"></span>Declined
         </span>
       </div>
     </div>
@@ -501,6 +501,10 @@ function mdPrintFixtures(mode) {
     btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="#fdb813" stroke-width="1.2" stroke-dasharray="8 4"><animateTransform attributeName="transform" type="rotate" from="0 6.5 6.5" to="360 6.5 6.5" dur="0.8s" repeatCount="indefinite"/></circle></svg> Generating…`;
     btn.disabled = true;
   }
+
+  // Sections to temporarily hide based on mode
+  const gamesSection   = document.getElementById('md-games-section');
+  const pitchesSection = document.getElementById('md-pitches-section');
 
   let restoreHidden = () => {};
 
@@ -687,6 +691,13 @@ function renderMatchDay() {
   ).values()].map(g => ({ fmt: g.dateFmt, key: g.dateKey }));
   window._mdAllDates = allDates;
 
+  // Determine "most immediate" date: closest upcoming, or most recent past
+  let defaultDate = null;
+  if (allDates.length) {
+    const future = allDates.filter(d => d.key >= todayKey);
+    defaultDate = future.length ? future[0].fmt : allDates[allDates.length-1].fmt;
+  }
+
   // Initialise selection on first load (preserve existing selection if valid)
   const validFmts = new Set(allDates.map(d => d.fmt));
   if (!window._mdSelectedDates) {
@@ -739,18 +750,14 @@ function renderMatchDay() {
 
   /* ── helpers ── */
   function confIcon(val) {
-    if (val && val.toUpperCase() === 'Y')
+    const v = (val || '').toUpperCase();
+    if (v === 'Y') {
       return `<span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#27ae60;flex-shrink:0;vertical-align:middle;"><svg width="9" height="9" viewBox="0 0 9 9" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1.5 4.5L3.5 6.5L7.5 2.5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`;
-    if (val && val.toUpperCase() === 'N')
+    } else if (v === 'N') {
       return `<span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#e74c3c;flex-shrink:0;vertical-align:middle;"><svg width="9" height="9" viewBox="0 0 9 9" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 2.5L6.5 6.5M6.5 2.5L2.5 6.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg></span>`;
-    return `<span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#e67e22;flex-shrink:0;vertical-align:middle;"></span>`;
-  }
-  function confCellStyle(hConf, aConf) {
-    const hY = hConf && hConf.toUpperCase() === 'Y', aY = aConf && aConf.toUpperCase() === 'Y';
-    const hN = hConf && hConf.toUpperCase() === 'N', aN = aConf && aConf.toUpperCase() === 'N';
-    if (hN || aN) return { bg:'rgba(231,76,60,0.10)',   border:'rgba(231,76,60,0.25)' };
-    if (hY && aY) return { bg:'rgba(46,204,113,0.08)',  border:'rgba(46,204,113,0.20)' };
-    return              { bg:'rgba(253,184,19,0.06)',  border:'rgba(253,184,19,0.18)' };
+    } else {
+      return `<span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#e67e22;flex-shrink:0;vertical-align:middle;"></span>`;
+    }
   }
   function highlightBFC(name) {
     return /belmont fc/i.test(name)
@@ -766,7 +773,7 @@ function renderMatchDay() {
   }
 
   // Store helpers globally for re-use in table render
-  window._mdHelpers = { confIcon, confCellStyle, highlightBFC, teamCell, refCell };
+  window._mdHelpers = { confIcon, highlightBFC, teamCell, refCell };
 
   /* ── Games Table: filtered by selected dates + age groups ── */
   const sel = window._mdSelectedDates;
@@ -786,16 +793,16 @@ function renderMatchDay() {
   // ── Synthetic test games (shown when no real data is loaded) ──
   const MD_TEST_GAMES = [
     {
+      dateFmt:'10-May-25', dateKey:20250510, div:'U12. Div 1',    age:'U12',
+      home:'Belmont FC',   hConf:'Y',  away:'Leinster FC',  aConf:'Y',
+      ko:'10:00', ref:'J. Murphy', refConf:'Y', comments:'Test game A', pitch:'Pitch 1',
+      gameLen:60, belHome:true,
+    },
+    {
       dateFmt:'10-May-25', dateKey:20250510, div:'U14G. Div 2',   age:'U14G',
       home:'Shelbourne FC',hConf:'Y',  away:'Belmont FC',   aConf:'',
       ko:'11:30', ref:'',           refConf:'',  comments:'Test game B', pitch:'Pitch 2',
       gameLen:70, belHome:false,
-    },
-    {
-      dateFmt:'10-May-25', dateKey:20250510, div:'U15. Div 1',    age:'U15',
-      home:'Belmont FC',   hConf:'Y',  away:'Crumlin United', aConf:'N',
-      ko:'13:00', ref:'S. Kelly',   refConf:'Y', comments:'Opponents declined', pitch:'Pitch 1',
-      gameLen:75, belHome:true,
     },
     {
       dateFmt:'17-May-25', dateKey:20250517, div:'U16. Div 3',    age:'U16',
@@ -852,9 +859,9 @@ function renderMatchDay() {
       const rowBg = isAlt ? 'rgba(253,184,19,0.04)' : '';
       const dc = mdDivColor(g.div);
       const bothConf = g.hConf && g.hConf.toUpperCase() === 'Y' && g.aConf && g.aConf.toUpperCase() === 'Y';
-      const hasDeclined = (g.hConf && g.hConf.toUpperCase() === 'N') || (g.aConf && g.aConf.toUpperCase() === 'N');
-      const cBg  = hasDeclined ? 'rgba(231,76,60,0.10)' : bothConf ? 'rgba(46,204,113,0.08)' : 'rgba(253,184,19,0.06)';
-      const cBrd = hasDeclined ? 'rgba(231,76,60,0.25)'  : bothConf ? 'rgba(46,204,113,0.20)' : 'rgba(253,184,19,0.18)';
+      const hasDecl = g.hConf.toUpperCase() === 'N' || g.aConf.toUpperCase() === 'N';
+      const cBg  = hasDecl ? 'rgba(231,76,60,0.32)' : bothConf ? 'rgba(46,204,113,0.32)' : 'rgba(243,156,18,0.28)';
+      const cBrd = hasDecl ? 'rgba(231,76,60,0.65)' : bothConf ? 'rgba(46,204,113,0.65)' : 'rgba(243,156,18,0.6)';
       return `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.1s;${rowBg?`background:${rowBg}`:''};"
         onmouseover="this.style.background='rgba(255,255,255,0.06)'"
         onmouseout="this.style.background='${rowBg}'">
@@ -881,14 +888,17 @@ function renderMatchDay() {
       const isAlt = dateGroupIdx % 2 === 1;
       const rowBg = isAlt ? 'rgba(253,184,19,0.04)' : '';
       const dc = mdDivColor(g.div);
-      const ccs = confCellStyle(g.hConf, g.aConf);
+      const bothConfirmed = g.hConf && g.hConf.toUpperCase() === 'Y' && g.aConf && g.aConf.toUpperCase() === 'Y';
+      const hasDeclined = g.hConf.toUpperCase() === 'N' || g.aConf.toUpperCase() === 'N';
+      const confCellBg = hasDeclined ? 'rgba(231,76,60,0.32)' : bothConfirmed ? 'rgba(46,204,113,0.32)' : 'rgba(243,156,18,0.28)';
+      const confCellBorder = hasDeclined ? 'rgba(231,76,60,0.65)' : bothConfirmed ? 'rgba(46,204,113,0.65)' : 'rgba(243,156,18,0.6)';
       const tr = document.createElement('tr');
       tr.style.cssText = `border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.1s;${rowBg?`background:${rowBg}`:''}`;
       tr.onmouseover = () => tr.style.background = 'rgba(255,255,255,0.06)';
       tr.onmouseout  = () => tr.style.background = rowBg;
       tr.innerHTML = `
         <td style="padding:10px 14px;font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--muted);white-space:nowrap;">${g.dateFmt}</td>
-        <td style="padding:10px 14px;white-space:nowrap;background:${ccs.bg};border-left:3px solid ${ccs.border};"><span style="font-size:0.72rem;font-weight:700;padding:3px 8px;border-radius:4px;background:${dc}22;color:${dc};border:1px solid ${dc}44;">${g.div}</span></td>
+        <td style="padding:10px 14px;white-space:nowrap;background:${confCellBg};border-left:3px solid ${confCellBorder};"><span style="font-size:0.72rem;font-weight:700;padding:3px 8px;border-radius:4px;background:${dc}22;color:${dc};border:1px solid ${dc}44;">${g.div}</span></td>
         ${teamCell(g.home, g.hConf)}
         ${teamCell(g.away, g.aConf)}
         <td style="padding:10px 14px;text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--yellow);">${g.ko}</td>
@@ -930,6 +940,7 @@ window._renderMatchDayTables = function() {
   function minsToLabel(m) {
     return `${Math.floor(m/60)}:${String(m%60).padStart(2,'0')}`;
   }
+
   // Collect ALL overlap warnings across all dates
   const allOverlapWarnings = [];
 
@@ -1179,18 +1190,14 @@ window._renderMatchDayFiltered = function() {
 
   // Helpers
   function confIcon(val) {
-    if (val && val.toUpperCase() === 'Y')
+    const v = (val || '').toUpperCase();
+    if (v === 'Y') {
       return `<span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#27ae60;flex-shrink:0;vertical-align:middle;"><svg width="9" height="9" viewBox="0 0 9 9" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1.5 4.5L3.5 6.5L7.5 2.5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`;
-    if (val && val.toUpperCase() === 'N')
+    } else if (v === 'N') {
       return `<span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#e74c3c;flex-shrink:0;vertical-align:middle;"><svg width="9" height="9" viewBox="0 0 9 9" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 2.5L6.5 6.5M6.5 2.5L2.5 6.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg></span>`;
-    return `<span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#e67e22;flex-shrink:0;vertical-align:middle;"></span>`;
-  }
-  function confCellStyle(hConf, aConf) {
-    const hY = hConf && hConf.toUpperCase() === 'Y', aY = aConf && aConf.toUpperCase() === 'Y';
-    const hN = hConf && hConf.toUpperCase() === 'N', aN = aConf && aConf.toUpperCase() === 'N';
-    if (hN || aN) return { bg:'rgba(231,76,60,0.10)',   border:'rgba(231,76,60,0.25)' };
-    if (hY && aY) return { bg:'rgba(46,204,113,0.08)',  border:'rgba(46,204,113,0.20)' };
-    return              { bg:'rgba(253,184,19,0.06)',  border:'rgba(253,184,19,0.18)' };
+    } else {
+      return `<span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#e67e22;flex-shrink:0;vertical-align:middle;"></span>`;
+    }
   }
   function highlightBFC(name) {
     return /belmont fc/i.test(name)
@@ -1227,14 +1234,16 @@ window._renderMatchDayFiltered = function() {
         const isAlt = dateGroupIdx % 2 === 1;
         const rowBg = isAlt ? 'rgba(253,184,19,0.04)' : '';
         const dc = mdDivColor(g.div);
-        const ccs = confCellStyle(g.hConf, g.aConf);
+        const bothConfirmed = g.hConf && g.hConf.toUpperCase() === 'Y' && g.aConf && g.aConf.toUpperCase() === 'Y';
+        const confCellBg = bothConfirmed ? 'rgba(46,204,113,0.18)' : 'rgba(230,126,34,0.18)';
+        const confCellBorder = bothConfirmed ? 'rgba(46,204,113,0.35)' : 'rgba(230,126,34,0.35)';
         const tr = document.createElement('tr');
         tr.style.cssText = `border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.1s;${rowBg?`background:${rowBg}`:''}`;
         tr.onmouseover = () => tr.style.background = 'rgba(255,255,255,0.06)';
         tr.onmouseout  = () => tr.style.background = rowBg;
         tr.innerHTML = `
           <td style="padding:10px 14px;font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--muted);white-space:nowrap;">${g.dateFmt}</td>
-          <td style="padding:10px 14px;white-space:nowrap;background:${ccs.bg};border-left:3px solid ${ccs.border};"><span style="font-size:0.72rem;font-weight:700;padding:3px 8px;border-radius:4px;background:${dc}22;color:${dc};border:1px solid ${dc}44;">${g.div}</span></td>
+          <td style="padding:10px 14px;white-space:nowrap;background:${confCellBg};border-left:3px solid ${confCellBorder};"><span style="font-size:0.72rem;font-weight:700;padding:3px 8px;border-radius:4px;background:${dc}22;color:${dc};border:1px solid ${dc}44;">${g.div}</span></td>
           ${teamCell(g.home, g.hConf)}
           ${teamCell(g.away, g.aConf)}
           <td style="padding:10px 14px;text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--yellow);">${g.ko}</td>
@@ -1252,7 +1261,7 @@ window._renderMatchDayFiltered = function() {
 </script>
 </div>
 
-<div id="tab-fixtures" class="tab-panel">
+<div id="tab-fixtures" class="tab-panel active">
 <div id="statsRow" class="stats"></div>
 
 <div class="filters-bar">
@@ -1709,9 +1718,10 @@ function renderStats(filtered) {
   // Active state: pill is highlighted if its result_type is in the filter AND not all selected
   const isAllSt = filters.st.size === ALL_ST.length;
   const act = v => (!isAllSt && filters.st.has(v)) ? 'active-pill' : '';
+  const totalAct = isAllSt ? '' : 'active-pill'; // total pill active when filtering
 
   document.getElementById('statsRow').innerHTML = `
-    <button class="pill ${isAllSt ? '' : 'active-pill'}" onclick="selectOnlySt(null)" style="flex:0 1 126px;min-width:0;">
+    <button class="pill ${isAllSt?'':'' }" onclick="selectOnlySt(null)" style="flex:0 1 126px;min-width:0;">
       <div class="v">${total}</div>
       <div class="l">Total Games</div>
       <div style="display:flex;gap:6px;margin-top:6px;color:var(--muted);font-size:0.65rem;white-space:nowrap">
@@ -1846,14 +1856,8 @@ function switchTab(tab, btn) {
   btn.classList.add('active');
   document.getElementById('tab-' + tab).classList.add('active');
   if (tab === 'insights') renderInsights();
-  if (tab === 'performance') { rebuildPerfDropdowns(); renderPerfTable(); renderActivityTable(); }
-  if (tab === 'match-day') {
-    if (window._mdAllGames && window._mdAllGames.length && typeof window._renderMatchDayFiltered === 'function') {
-      window._renderMatchDayFiltered();
-    } else if (typeof window._renderMatchDay === 'function') {
-      window._renderMatchDay();
-    }
-  }
+  if (tab === 'performance') { rebuildPerfDropdowns(); renderPerfTable(); }
+  if (tab === 'match-day' && typeof window._renderMatchDay === 'function') window._renderMatchDay();
 }
 
 /* ════════════════════════════════
@@ -1877,7 +1881,7 @@ function barFill(val, max, colour='') {
   return `<div class="bar-wrap"><div class="bar-bg"><div class="bar-fill ${colour}" style="width:${pct}%"></div></div></div>`;
 }
 
-// esc() defined in the fixtures section above is reused here
+function esc2(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
 function insFilters() {
   return {
@@ -1977,6 +1981,4 @@ function renderInsights() {
   rebuildInsDropdowns();
   const pool = insPool();
   const grid = document.getElementById('insightsGrid');
-  if (!grid) return;
-
-  if (!pool.length) 
+  
