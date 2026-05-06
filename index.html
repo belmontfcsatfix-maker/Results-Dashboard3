@@ -2617,6 +2617,290 @@ function renderPerfTable() {
 
 
 
+
+/* ════════════════════════════════
+   HOME & AWAY ANALYSIS TAB
+════════════════════════════════ */
+(function(){
+  let haSortCol = 'age', haSortAsc = true;
+  let haDateList = [];
+
+  window.haSortBy = function(col) {
+    if (haSortCol === col) { haSortAsc = !haSortAsc; }
+    else { haSortCol = col; haSortAsc = (col === 'age' || col === 'div'); }
+    haRender();
+  };
+
+  window.haRebuildDropdowns = function() {
+    const dates = [...new Set(ALL.map(g => g.date_sort).filter(Boolean))].sort();
+    haDateList = dates;
+    const startEl = document.getElementById('ha-date-start');
+    const endEl   = document.getElementById('ha-date-end');
+    if (startEl) { startEl.max = Math.max(0, dates.length - 1); startEl.value = 0; }
+    if (endEl)   { endEl.max   = Math.max(0, dates.length - 1); endEl.value   = Math.max(0, dates.length - 1); }
+    haUpdateSliderFill();
+    haUpdateDateLabels();
+    haRebuildSelects();
+  };
+
+  function haGetFilters() {
+    const selGroup  = document.getElementById('ha-groupSel')?.value  || 'all';
+    const selAge    = document.getElementById('ha-ageSel')?.value    || 'all';
+    const selDiv    = document.getElementById('ha-divSel')?.value    || 'all';
+    const selPlayed = document.getElementById('ha-playedSel')?.value || 'all';
+    const selTp     = document.getElementById('ha-tpSel')?.value     || 'all';
+    const selView   = document.getElementById('ha-viewBySel')?.value || 'division';
+    let startDate = null, endDate = null;
+    const startEl = document.getElementById('ha-date-start');
+    const endEl   = document.getElementById('ha-date-end');
+    if (startEl && endEl && haDateList.length) {
+      const si = Math.min(parseInt(startEl.value), parseInt(endEl.value));
+      const ei = Math.max(parseInt(startEl.value), parseInt(endEl.value));
+      startDate = haDateList[si] || null;
+      endDate   = haDateList[ei] || null;
+    }
+    return { selGroup, selAge, selDiv, selPlayed, selTp, selView, startDate, endDate };
+  }
+
+  function haMatchGame(g, f, excludeKey) {
+    if (excludeKey !== 'group'  && f.selGroup !== 'all'  && g.group      !== f.selGroup)  return false;
+    if (excludeKey !== 'age'    && f.selAge   !== 'all'  && g.age        !== f.selAge)    return false;
+    if (excludeKey !== 'div'    && f.selDiv   !== 'all'  && g.division   !== f.selDiv)    return false;
+    if (excludeKey !== 'tp'     && f.selTp    !== 'all'  && g.tournament !== f.selTp)     return false;
+    if (excludeKey !== 'played') {
+      if (f.selPlayed === 'Y' && g.played !== 'Y') return false;
+      if (f.selPlayed === 'N' && g.played !== 'N') return false;
+    }
+    if (f.startDate && g.date_sort && g.date_sort < f.startDate) return false;
+    if (f.endDate   && g.date_sort && g.date_sort > f.endDate)   return false;
+    return true;
+  }
+
+  function haRebuildSelects() {
+    const f = haGetFilters();
+    const groupSel = document.getElementById('ha-groupSel');
+    if (groupSel) {
+      const cur = groupSel.value;
+      const opts = [...new Set(ALL.filter(g => haMatchGame(g, f, 'group')).map(g => g.group).filter(Boolean))].sort();
+      groupSel.innerHTML = '<option value="all">All Groups</option>';
+      opts.forEach(v => { const o = new Option(v,v); if(v===cur) o.selected=true; groupSel.appendChild(o); });
+    }
+    const ageSel = document.getElementById('ha-ageSel');
+    if (ageSel) {
+      const cur = ageSel.value;
+      const opts = [...new Set(ALL.filter(g => haMatchGame(g, f, 'age')).map(g => g.age).filter(Boolean))]
+        .sort((a,b) => parseInt(a.replace(/\D/g,'')) - parseInt(b.replace(/\D/g,'')));
+      ageSel.innerHTML = '<option value="all">All Ages</option>';
+      opts.forEach(v => { const o = new Option(v,v); if(v===cur) o.selected=true; ageSel.appendChild(o); });
+    }
+    const divSel = document.getElementById('ha-divSel');
+    if (divSel) {
+      const cur = divSel.value;
+      const opts = [...new Set(ALL.filter(g => haMatchGame(g, f, 'div')).map(g => g.division).filter(Boolean))]
+        .sort((a,b) => String(a).localeCompare(String(b), undefined, {numeric:true}));
+      divSel.innerHTML = '<option value="all">All Divisions</option>';
+      opts.forEach(v => { const o = new Option(v,v); if(v===cur) o.selected=true; divSel.appendChild(o); });
+    }
+    const tpSel = document.getElementById('ha-tpSel');
+    if (tpSel) {
+      const cur = tpSel.value;
+      const opts = [...new Set(ALL.filter(g => haMatchGame(g, f, 'tp')).map(g => g.tournament).filter(Boolean))].sort();
+      tpSel.innerHTML = '<option value="all">All</option>';
+      opts.forEach(v => { const o = new Option(v,v); if(v===cur) o.selected=true; tpSel.appendChild(o); });
+    }
+  }
+
+  function haUpdateSliderFill() {
+    const startEl = document.getElementById('ha-date-start');
+    const endEl   = document.getElementById('ha-date-end');
+    const fill    = document.getElementById('ha-slider-fill');
+    if (!startEl || !endEl || !fill) return;
+    const max = parseInt(startEl.max) || 1;
+    const si  = Math.min(parseInt(startEl.value), parseInt(endEl.value));
+    const ei  = Math.max(parseInt(startEl.value), parseInt(endEl.value));
+    fill.style.left  = (si / max * 100) + '%';
+    fill.style.width = ((ei - si) / max * 100) + '%';
+  }
+
+  function haUpdateDateLabels() {
+    const startEl  = document.getElementById('ha-date-start');
+    const endEl    = document.getElementById('ha-date-end');
+    const startLbl = document.getElementById('ha-date-start-lbl');
+    const endLbl   = document.getElementById('ha-date-end-lbl');
+    if (!startEl || !endEl || !haDateList.length) return;
+    const si  = Math.min(parseInt(startEl.value), parseInt(endEl.value));
+    const ei  = Math.max(parseInt(startEl.value), parseInt(endEl.value));
+    const fmt = ds => {
+      if (!ds) return '—';
+      const [y,m,d] = ds.split('-');
+      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      return `${d}-${months[parseInt(m)-1]}-${y.slice(2)}`;
+    };
+    if (startLbl) startLbl.textContent = fmt(haDateList[si]);
+    if (endLbl)   endLbl.textContent   = fmt(haDateList[ei]);
+  }
+
+  window.haSliderInput = function() {
+    haUpdateSliderFill();
+    haUpdateDateLabels();
+  };
+
+  window.haOnFilter = function() {
+    haRebuildSelects();
+    haUpdateSliderFill();
+    haUpdateDateLabels();
+    haRender();
+  };
+
+  window.haResetFilters = function() {
+    ['ha-groupSel','ha-ageSel','ha-divSel','ha-playedSel','ha-tpSel'].forEach(id => {
+      const el = document.getElementById(id); if(el) el.value = 'all';
+    });
+    const vb = document.getElementById('ha-viewBySel');
+    if (vb) vb.value = 'division';
+    const startEl = document.getElementById('ha-date-start');
+    const endEl   = document.getElementById('ha-date-end');
+    if (startEl) startEl.value = 0;
+    if (endEl)   endEl.value   = endEl.max;
+    haUpdateSliderFill();
+    haUpdateDateLabels();
+    haRebuildSelects();
+    haRender();
+  };
+
+  function haRender() {
+    const f        = haGetFilters();
+    const filtered = ALL.filter(g => haMatchGame(g, f, null));
+
+    const rcEl = document.getElementById('ha-rcount');
+    if (rcEl) rcEl.innerHTML = `<span style="color:var(--yellow);font-weight:700;">${filtered.length}</span> games`;
+
+    const subEl = document.getElementById('ha-table-sub');
+    if (subEl) subEl.textContent = `by ${f.selView === 'age' ? 'Age Group' : 'Division'} · all filters applied`;
+
+    const total   = filtered.length;
+    const homeCnt = filtered.filter(g => g.is_home).length;
+    const awayCnt = filtered.filter(g => !g.is_home).length;
+    const homePct = total > 0 ? Math.round(homeCnt / total * 100) : 0;
+    const awayPct = total > 0 ? Math.round(awayCnt / total * 100) : 0;
+
+    const pillsEl = document.getElementById('ha-summary-pills');
+    if (pillsEl) {
+      pillsEl.innerHTML = `
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 20px;display:flex;flex-direction:column;gap:4px;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;line-height:1;">${total}</div>
+          <div style="font-size:0.62rem;text-transform:uppercase;color:var(--muted);letter-spacing:0.1em;">Total Games</div>
+        </div>
+        <div style="background:var(--card);border:1px solid rgba(116,185,255,0.3);border-radius:12px;padding:14px 20px;display:flex;flex-direction:column;gap:4px;">
+          <div style="display:flex;align-items:baseline;gap:8px;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;line-height:1;color:#74b9ff;">${homeCnt}</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:rgba(116,185,255,0.6);">${homePct}%</div>
+          </div>
+          <div style="font-size:0.62rem;text-transform:uppercase;color:#74b9ff;letter-spacing:0.1em;opacity:0.8;">🏠 Home Games</div>
+        </div>
+        <div style="background:var(--card);border:1px solid rgba(253,121,168,0.3);border-radius:12px;padding:14px 20px;display:flex;flex-direction:column;gap:4px;">
+          <div style="display:flex;align-items:baseline;gap:8px;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;line-height:1;color:#fd79a8;">${awayCnt}</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:rgba(253,121,168,0.6);">${awayPct}%</div>
+          </div>
+          <div style="font-size:0.62rem;text-transform:uppercase;color:#fd79a8;letter-spacing:0.1em;opacity:0.8;">✈️ Away Games</div>
+        </div>`;
+    }
+
+    const keyFn = f.selView === 'age'
+      ? g => g.age
+      : g => g.age + '||' + g.division;
+
+    const rowMap = {};
+    filtered.forEach(g => {
+      const key = keyFn(g);
+      if (!rowMap[key]) rowMap[key] = { age: g.age, div: f.selView === 'age' ? g.age : g.division, home: 0, away: 0, total: 0 };
+      rowMap[key].total++;
+      if (g.is_home) rowMap[key].home++; else rowMap[key].away++;
+    });
+
+    let rows = Object.values(rowMap).map(r => ({
+      ...r,
+      homePct: r.total > 0 ? Math.round(r.home / r.total * 100) : 0,
+      awayPct: r.total > 0 ? Math.round(r.away / r.total * 100) : 0,
+    }));
+
+    rows.sort((a, b) => {
+      let va, vb;
+      if (haSortCol === 'age') {
+        va = parseInt(a.age.replace(/\D/g,'')||0); vb = parseInt(b.age.replace(/\D/g,'')||0);
+        if (va !== vb) return haSortAsc ? va - vb : vb - va;
+        return haSortAsc ? String(a.div).localeCompare(String(b.div),undefined,{numeric:true})
+                         : String(b.div).localeCompare(String(a.div),undefined,{numeric:true});
+      } else if (haSortCol === 'div') {
+        return haSortAsc ? String(a.div).localeCompare(String(b.div),undefined,{numeric:true})
+                         : String(b.div).localeCompare(String(a.div),undefined,{numeric:true});
+      } else if (haSortCol === 'total') { va = a.total; vb = b.total; }
+      else if   (haSortCol === 'home')  { va = a.home;  vb = b.home; }
+      else if   (haSortCol === 'away')  { va = a.away;  vb = b.away; }
+      else { va = a.total; vb = b.total; }
+      return haSortAsc ? va - vb : vb - va;
+    });
+
+    const arrow = col => haSortCol === col ? (haSortAsc ? ' ↑' : ' ↓') : ' ↕';
+    ['age','div','total','home','away'].forEach(c => {
+      const th = document.getElementById(`ha-th-${c}`);
+      const labels = {age:'Age Group',div:'Division',total:'Total',home:'Home',away:'Away'};
+      if (th) th.innerHTML = labels[c] + arrow(c);
+    });
+
+    const tbody = document.getElementById('ha-tbody');
+    const tfoot = document.getElementById('ha-tfoot');
+    if (!tbody) return;
+
+    function pctBar(pct, colour) {
+      return `<div style="display:flex;align-items:center;gap:5px;">
+        <div style="flex:1;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;min-width:30px;max-width:54px;overflow:hidden;">
+          <div style="width:${pct}%;height:100%;background:${colour};border-radius:2px;"></div>
+        </div>
+        <span style="font-family:'Bebas Neue',sans-serif;font-size:0.88rem;color:${colour};min-width:28px;">${pct}%</span>
+      </div>`;
+    }
+
+    if (!rows.length) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted)">No games match the selected filters</td></tr>`;
+      if (tfoot) tfoot.innerHTML = '';
+      return;
+    }
+
+    tbody.innerHTML = rows.map(r => {
+      const showBoth = f.selView !== 'age';
+      return `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background=''">
+        <td style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:var(--yellow);padding:12px 15px;">${r.age}</td>
+        <td style="font-weight:700;color:var(--text);font-size:0.88rem;padding:12px 15px;">${showBoth ? r.div : '<span style="opacity:0.25">—</span>'}</td>
+        <td style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1rem;padding:12px 15px;">${r.total}</td>
+        <td style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#74b9ff;padding:12px 15px;">${r.home > 0 ? r.home : '<span style="opacity:0.25">–</span>'}</td>
+        <td style="padding:12px 15px;">${pctBar(r.homePct,'#74b9ff')}</td>
+        <td style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#fd79a8;padding:12px 15px;">${r.away > 0 ? r.away : '<span style="opacity:0.25">–</span>'}</td>
+        <td style="padding:12px 15px;">${pctBar(r.awayPct,'#fd79a8')}</td>
+      </tr>`;
+    }).join('');
+
+    if (tfoot) {
+      const totHome = rows.reduce((s,r) => s+r.home,  0);
+      const totAway = rows.reduce((s,r) => s+r.away,  0);
+      const totAll  = rows.reduce((s,r) => s+r.total, 0);
+      const tHomePct = totAll > 0 ? Math.round(totHome / totAll * 100) : 0;
+      const tAwayPct = totAll > 0 ? Math.round(totAway / totAll * 100) : 0;
+      tfoot.innerHTML = `<tr style="border-top:2px solid rgba(253,184,19,0.3);background:rgba(253,184,19,0.06);">
+        <td colspan="2" style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--yellow);padding:11px 15px;letter-spacing:0.06em;">TOTALS</td>
+        <td style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.05rem;font-weight:700;padding:11px 15px;">${totAll}</td>
+        <td style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:#74b9ff;padding:11px 15px;">${totHome}</td>
+        <td style="padding:11px 15px;">${pctBar(tHomePct,'#74b9ff')}</td>
+        <td style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:#fd79a8;padding:11px 15px;">${totAway}</td>
+        <td style="padding:11px 15px;">${pctBar(tAwayPct,'#fd79a8')}</td>
+      </tr>`;
+    }
+  }
+  window.haRender = haRender;
+
+})(); // end H&A IIFE
+
 }
 </script>
 
@@ -2819,358 +3103,6 @@ function renderPerfTable() {
   cursor:pointer;
 }
 </style>
-
-<script>
-/* ════════════════════════════════
-   HOME & AWAY ANALYSIS TAB
-════════════════════════════════ */
-(function(){
-
-// sort state
-let haSortCol = 'age', haSortAsc = true;
-
-// date index list (sorted YYYY-MM-DD strings), built once per data load
-let haDateList = [];   // ["2024-09-01", ...]
-
-// ── Exposed functions (need to be global for onclick) ──
-window.haOnFilter     = haOnFilter;
-window.haResetFilters = haResetFilters;
-window.haSliderInput  = haSliderInput;
-window.haSortBy       = haSortBy;
-
-function haSortBy(col) {
-  if (haSortCol === col) { haSortAsc = !haSortAsc; }
-  else { haSortCol = col; haSortAsc = (col === 'age' || col === 'div'); }
-  haRender();
-}
-
-/* Called when switchTab activates this tab */
-window.haRebuildDropdowns = function() {
-  const data = (window.ALL_DATA || []);
-
-  // Build sorted date list from all data
-  const dates = [...new Set(data.map(g => g.date_sort).filter(Boolean))].sort();
-  haDateList = dates;
-
-  // Init sliders to full range
-  const startEl = document.getElementById('ha-date-start');
-  const endEl   = document.getElementById('ha-date-end');
-  if (startEl) { startEl.max = Math.max(0, dates.length - 1); startEl.value = 0; }
-  if (endEl)   { endEl.max   = Math.max(0, dates.length - 1); endEl.value   = Math.max(0, dates.length - 1); }
-
-  haUpdateSliderFill();
-  haUpdateDateLabels();
-  haRebuildSelects();
-};
-
-function haGetFilters() {
-  const selGroup  = document.getElementById('ha-groupSel')?.value  || 'all';
-  const selAge    = document.getElementById('ha-ageSel')?.value    || 'all';
-  const selDiv    = document.getElementById('ha-divSel')?.value    || 'all';
-  const selPlayed = document.getElementById('ha-playedSel')?.value || 'all';
-  const selTp     = document.getElementById('ha-tpSel')?.value     || 'all';
-  const selView   = document.getElementById('ha-viewBySel')?.value || 'division';
-
-  // Date range from sliders
-  let startDate = null, endDate = null;
-  const startEl = document.getElementById('ha-date-start');
-  const endEl   = document.getElementById('ha-date-end');
-  if (startEl && endEl && haDateList.length) {
-    const si = Math.min(parseInt(startEl.value), parseInt(endEl.value));
-    const ei = Math.max(parseInt(startEl.value), parseInt(endEl.value));
-    startDate = haDateList[si] || null;
-    endDate   = haDateList[ei] || null;
-  }
-
-  return { selGroup, selAge, selDiv, selPlayed, selTp, selView, startDate, endDate };
-}
-
-function haMatchGame(g, f, excludeKey) {
-  if (excludeKey !== 'group'  && f.selGroup  !== 'all' && g.group      !== f.selGroup)  return false;
-  if (excludeKey !== 'age'    && f.selAge    !== 'all' && g.age        !== f.selAge)    return false;
-  if (excludeKey !== 'div'    && f.selDiv    !== 'all' && g.division   !== f.selDiv)    return false;
-  if (excludeKey !== 'tp'     && f.selTp     !== 'all' && g.tournament !== f.selTp)     return false;
-  if (excludeKey !== 'played') {
-    if (f.selPlayed === 'Y' && g.played !== 'Y') return false;
-    if (f.selPlayed === 'N' && g.played !== 'N') return false;
-  }
-  // Date range
-  if (f.startDate && g.date_sort && g.date_sort < f.startDate) return false;
-  if (f.endDate   && g.date_sort && g.date_sort > f.endDate)   return false;
-  return true;
-}
-
-function haRebuildSelects() {
-  const data = (window.ALL_DATA || []);
-  const f = haGetFilters();
-
-  // Groups
-  const groupSel = document.getElementById('ha-groupSel');
-  if (groupSel) {
-    const cur = groupSel.value;
-    const opts = [...new Set(data.filter(g => haMatchGame(g, f, 'group')).map(g => g.group).filter(Boolean))].sort();
-    groupSel.innerHTML = '<option value="all">All Groups</option>';
-    opts.forEach(v => { const o = new Option(v,v); if(v===cur) o.selected=true; groupSel.appendChild(o); });
-  }
-
-  // Ages
-  const ageSel = document.getElementById('ha-ageSel');
-  if (ageSel) {
-    const cur = ageSel.value;
-    const opts = [...new Set(data.filter(g => haMatchGame(g, f, 'age')).map(g => g.age).filter(Boolean))]
-      .sort((a,b) => parseInt(a.replace(/\D/g,'')) - parseInt(b.replace(/\D/g,'')));
-    ageSel.innerHTML = '<option value="all">All Ages</option>';
-    opts.forEach(v => { const o = new Option(v,v); if(v===cur) o.selected=true; ageSel.appendChild(o); });
-  }
-
-  // Divisions
-  const divSel = document.getElementById('ha-divSel');
-  if (divSel) {
-    const cur = divSel.value;
-    const opts = [...new Set(data.filter(g => haMatchGame(g, f, 'div')).map(g => g.division).filter(Boolean))]
-      .sort((a,b) => String(a).localeCompare(String(b), undefined, {numeric:true}));
-    divSel.innerHTML = '<option value="all">All Divisions</option>';
-    opts.forEach(v => { const o = new Option(v,v); if(v===cur) o.selected=true; divSel.appendChild(o); });
-  }
-
-  // Tournament / Championship
-  const tpSel = document.getElementById('ha-tpSel');
-  if (tpSel) {
-    const cur = tpSel.value;
-    const opts = [...new Set(data.filter(g => haMatchGame(g, f, 'tp')).map(g => g.tournament).filter(Boolean))].sort();
-    tpSel.innerHTML = '<option value="all">All</option>';
-    opts.forEach(v => { const o = new Option(v,v); if(v===cur) o.selected=true; tpSel.appendChild(o); });
-  }
-}
-
-function haSliderInput() {
-  haUpdateSliderFill();
-  haUpdateDateLabels();
-}
-
-function haUpdateSliderFill() {
-  const startEl = document.getElementById('ha-date-start');
-  const endEl   = document.getElementById('ha-date-end');
-  const fill    = document.getElementById('ha-slider-fill');
-  if (!startEl || !endEl || !fill) return;
-  const max = parseInt(startEl.max) || 1;
-  const si  = Math.min(parseInt(startEl.value), parseInt(endEl.value));
-  const ei  = Math.max(parseInt(startEl.value), parseInt(endEl.value));
-  fill.style.left  = (si / max * 100) + '%';
-  fill.style.width = ((ei - si) / max * 100) + '%';
-}
-
-function haUpdateDateLabels() {
-  const startEl  = document.getElementById('ha-date-start');
-  const endEl    = document.getElementById('ha-date-end');
-  const startLbl = document.getElementById('ha-date-start-lbl');
-  const endLbl   = document.getElementById('ha-date-end-lbl');
-  if (!startEl || !endEl || !haDateList.length) return;
-  const si  = Math.min(parseInt(startEl.value), parseInt(endEl.value));
-  const ei  = Math.max(parseInt(startEl.value), parseInt(endEl.value));
-  const fmt = ds => {
-    if (!ds) return '—';
-    // Parse YYYY-MM-DD and format as DD-MMM-YY
-    const [y,m,d] = ds.split('-');
-    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    return `${d}-${months[parseInt(m)-1]}-${y.slice(2)}`;
-  };
-  if (startLbl) startLbl.textContent = fmt(haDateList[si]);
-  if (endLbl)   endLbl.textContent   = fmt(haDateList[ei]);
-}
-
-function haOnFilter() {
-  haRebuildSelects();
-  haUpdateSliderFill();
-  haUpdateDateLabels();
-  haRender();
-}
-
-function haResetFilters() {
-  const els = ['ha-groupSel','ha-ageSel','ha-divSel','ha-playedSel','ha-tpSel'];
-  els.forEach(id => { const el = document.getElementById(id); if(el) el.value = 'all'; });
-  // Reset view to division
-  const vb = document.getElementById('ha-viewBySel');
-  if (vb) vb.value = 'division';
-  // Reset sliders
-  const startEl = document.getElementById('ha-date-start');
-  const endEl   = document.getElementById('ha-date-end');
-  if (startEl) startEl.value = 0;
-  if (endEl)   endEl.value   = endEl.max;
-  haUpdateSliderFill();
-  haUpdateDateLabels();
-  haRebuildSelects();
-  haRender();
-}
-
-window.haRender = function haRender() {
-  const data = (window.ALL_DATA || []);
-  const f    = haGetFilters();
-
-  // Filter data
-  const filtered = data.filter(g => haMatchGame(g, f, null));
-
-  // Update rcount
-  const rcEl = document.getElementById('ha-rcount');
-  if (rcEl) rcEl.innerHTML = `<span style="color:var(--yellow);font-weight:700;">${filtered.length}</span> games`;
-
-  // Update table subtitle
-  const subEl = document.getElementById('ha-table-sub');
-  if (subEl) subEl.textContent = `by ${f.selView === 'age' ? 'Age Group' : 'Division'} · all filters applied`;
-
-  // ── Summary pills ──
-  const total  = filtered.length;
-  const homeGames = filtered.filter(g => g.is_home);
-  const awayGames = filtered.filter(g => !g.is_home);
-  const homeCnt   = homeGames.length;
-  const awayCnt   = awayGames.length;
-  const homePct   = total > 0 ? Math.round(homeCnt / total * 100) : 0;
-  const awayPct   = total > 0 ? Math.round(awayCnt / total * 100) : 0;
-
-  const pillsEl = document.getElementById('ha-summary-pills');
-  if (pillsEl) {
-    pillsEl.innerHTML = `
-      <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 20px;display:flex;flex-direction:column;gap:4px;">
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;line-height:1;">${total}</div>
-        <div style="font-size:0.62rem;text-transform:uppercase;color:var(--muted);letter-spacing:0.1em;">Total Games</div>
-      </div>
-      <div style="background:var(--card);border:1px solid rgba(116,185,255,0.3);border-radius:12px;padding:14px 20px;display:flex;flex-direction:column;gap:4px;">
-        <div style="display:flex;align-items:baseline;gap:8px;">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;line-height:1;color:#74b9ff;">${homeCnt}</div>
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:rgba(116,185,255,0.6);">${homePct}%</div>
-        </div>
-        <div style="font-size:0.62rem;text-transform:uppercase;color:#74b9ff;letter-spacing:0.1em;opacity:0.8;">🏠 Home Games</div>
-      </div>
-      <div style="background:var(--card);border:1px solid rgba(253,121,168,0.3);border-radius:12px;padding:14px 20px;display:flex;flex-direction:column;gap:4px;">
-        <div style="display:flex;align-items:baseline;gap:8px;">
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;line-height:1;color:#fd79a8;">${awayCnt}</div>
-          <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:rgba(253,121,168,0.6);">${awayPct}%</div>
-        </div>
-        <div style="font-size:0.62rem;text-transform:uppercase;color:#fd79a8;letter-spacing:0.1em;opacity:0.8;">✈️ Away Games</div>
-      </div>
-    `;
-  }
-
-  // ── Build breakdown table ──
-  // Group key
-  const keyFn = f.selView === 'age'
-    ? g => g.age + '||' + g.age
-    : g => g.age + '||' + g.division;
-
-  const rowMap = {};
-  filtered.forEach(g => {
-    const key = keyFn(g);
-    if (!rowMap[key]) {
-      rowMap[key] = {
-        age: g.age,
-        div: f.selView === 'age' ? g.age : g.division,
-        home: 0, away: 0, total: 0
-      };
-    }
-    const r = rowMap[key];
-    r.total++;
-    if (g.is_home) r.home++; else r.away++;
-  });
-
-  let rows = Object.values(rowMap).map(r => ({
-    ...r,
-    homePct: r.total > 0 ? Math.round(r.home / r.total * 100) : 0,
-    awayPct: r.total > 0 ? Math.round(r.away / r.total * 100) : 0,
-  }));
-
-  // Sort
-  rows.sort((a, b) => {
-    let va, vb;
-    if (haSortCol === 'age') {
-      va = parseInt(a.age.replace(/\D/g,'')||0); vb = parseInt(b.age.replace(/\D/g,'')||0);
-      if (va !== vb) return haSortAsc ? va - vb : vb - va;
-      return haSortAsc ? a.div.localeCompare(b.div, undefined, {numeric:true})
-                       : b.div.localeCompare(a.div, undefined, {numeric:true});
-    } else if (haSortCol === 'div') {
-      return haSortAsc
-        ? String(a.div).localeCompare(String(b.div), undefined, {numeric:true})
-        : String(b.div).localeCompare(String(a.div), undefined, {numeric:true});
-    } else if (haSortCol === 'total') { va = a.total; vb = b.total; }
-    else if (haSortCol === 'home')  { va = a.home;  vb = b.home; }
-    else if (haSortCol === 'away')  { va = a.away;  vb = b.away; }
-    else { va = a.total; vb = b.total; }
-    return haSortAsc ? va - vb : vb - va;
-  });
-
-  // Update header arrows
-  const arrow = col => haSortCol === col ? (haSortAsc ? ' ↑' : ' ↓') : ' ↕';
-  ['age','div','total','home','away'].forEach(c => {
-    const th = document.getElementById(`ha-th-${c}`);
-    const labels = {age:'Age Group',div:'Division',total:'Total',home:'Home',away:'Away'};
-    if (th) th.innerHTML = labels[c] + arrow(c);
-  });
-
-  const tbody = document.getElementById('ha-tbody');
-  const tfoot = document.getElementById('ha-tfoot');
-  if (!tbody) return;
-
-  function pctBar(pct, colour) {
-    return `<div style="display:flex;align-items:center;gap:5px;">
-      <div style="flex:1;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;min-width:30px;max-width:54px;overflow:hidden;">
-        <div style="width:${pct}%;height:100%;background:${colour};border-radius:2px;transition:width 0.3s;"></div>
-      </div>
-      <span style="font-family:'Bebas Neue',sans-serif;font-size:0.88rem;color:${colour};min-width:28px;">${pct}%</span>
-    </div>`;
-  }
-
-  if (!rows.length) {
-    tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted)">No games match the selected filters</td></tr>`;
-    if (tfoot) tfoot.innerHTML = '';
-    return;
-  }
-
-  tbody.innerHTML = rows.map(r => {
-    const showAge = f.selView !== 'age';
-    const ageCell = showAge
-      ? `<td style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:var(--yellow);padding:12px 15px;">${r.age}</td>`
-      : `<td style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:var(--yellow);padding:12px 15px;">${r.div}</td>`;
-    const divCell = showAge
-      ? `<td style="font-weight:700;color:var(--text);font-size:0.88rem;padding:12px 15px;">${r.div}</td>`
-      : `<td style="padding:12px 15px;opacity:0.3;font-size:0.75rem;">—</td>`;
-    return `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background=''">
-      ${ageCell}
-      ${divCell}
-      <td style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1rem;padding:12px 15px;">${r.total}</td>
-      <td style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#74b9ff;padding:12px 15px;">${r.home > 0 ? r.home : '<span style="opacity:0.25">–</span>'}</td>
-      <td style="padding:12px 15px;">${pctBar(r.homePct,'#74b9ff')}</td>
-      <td style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#fd79a8;padding:12px 15px;">${r.away > 0 ? r.away : '<span style="opacity:0.25">–</span>'}</td>
-      <td style="padding:12px 15px;">${pctBar(r.awayPct,'#fd79a8')}</td>
-    </tr>`;
-  }).join('');
-
-  // Totals row
-  if (tfoot) {
-    const totHome = rows.reduce((s,r) => s+r.home,  0);
-    const totAway = rows.reduce((s,r) => s+r.away,  0);
-    const totAll  = rows.reduce((s,r) => s+r.total, 0);
-    const tHomePct = totAll > 0 ? Math.round(totHome / totAll * 100) : 0;
-    const tAwayPct = totAll > 0 ? Math.round(totAway / totAll * 100) : 0;
-    function pctBarTot(pct, colour) {
-      return `<div style="display:flex;align-items:center;gap:5px;">
-        <div style="flex:1;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;min-width:30px;max-width:54px;overflow:hidden;">
-          <div style="width:${pct}%;height:100%;background:${colour};border-radius:2px;"></div>
-        </div>
-        <span style="font-family:'Bebas Neue',sans-serif;font-size:0.88rem;color:${colour};min-width:28px;">${pct}%</span>
-      </div>`;
-    }
-    tfoot.innerHTML = `<tr style="border-top:2px solid rgba(253,184,19,0.3);background:rgba(253,184,19,0.06);">
-      <td colspan="2" style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--yellow);padding:11px 15px;letter-spacing:0.06em;">TOTALS</td>
-      <td style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.05rem;font-weight:700;padding:11px 15px;">${totAll}</td>
-      <td style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:#74b9ff;padding:11px 15px;">${totHome}</td>
-      <td style="padding:11px 15px;">${pctBarTot(tHomePct,'#74b9ff')}</td>
-      <td style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:#fd79a8;padding:11px 15px;">${totAway}</td>
-      <td style="padding:11px 15px;">${pctBarTot(tAwayPct,'#fd79a8')}</td>
-    </tr>`;
-  }
-};
-
-})(); // end IIFE
-</script>
 
 </body>
 </html>
