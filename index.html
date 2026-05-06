@@ -2865,8 +2865,180 @@ function renderPerfTable() {
         <td style="padding:11px 15px;">${pctBar(tAwayPct,'#fd79a8')}</td>
       </tr>`;
     }
+    // ── Render timeline chart ──
+    haRenderChart(filtered);
   }
+
+  function haRenderChart(filtered) {
+    const canvas = document.getElementById('ha-timeline-canvas');
+    if (!canvas) return;
+
+    // Group by date_sort
+    const byDate = {};
+    filtered.forEach(g => {
+      const ds = g.date_sort;
+      if (!ds) return;
+      if (!byDate[ds]) byDate[ds] = { ds, label: haFmtDate(ds), home: 0, away: 0, total: 0 };
+      byDate[ds].total++;
+      if (g.is_home) byDate[ds].home++; else byDate[ds].away++;
+    });
+    const points = Object.values(byDate).sort((a,b) => a.ds.localeCompare(b.ds));
+
+    const ctx = canvas.getContext('2d');
+    // Responsive width
+    const W = canvas.parentElement.clientWidth || 800;
+    canvas.width  = W;
+    canvas.height = 160;
+    const H = 160;
+
+    const PAD_L = 36, PAD_R = 16, PAD_T = 14, PAD_B = 38;
+    const chartW = W - PAD_L - PAD_R;
+    const chartH = H - PAD_T - PAD_B;
+
+    ctx.clearRect(0, 0, W, H);
+
+    if (!points.length) {
+      ctx.fillStyle = 'rgba(139,162,193,0.4)';
+      ctx.font = '13px DM Sans, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('No data', W / 2, H / 2);
+      return;
+    }
+
+    const n = points.length;
+    const barW = Math.max(4, Math.min(36, chartW / n - 3));
+    const step = n > 1 ? chartW / n : chartW;
+
+    // Grid lines at 0, 25, 50, 75, 100%
+    [0, 25, 50, 75, 100].forEach(pct => {
+      const y = PAD_T + chartH - (pct / 100) * chartH;
+      ctx.beginPath();
+      ctx.strokeStyle = pct === 50 ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.05)';
+      ctx.lineWidth = pct === 50 ? 1 : 0.5;
+      ctx.setLineDash(pct === 50 ? [4, 4] : []);
+      ctx.moveTo(PAD_L, y);
+      ctx.lineTo(W - PAD_R, y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(139,162,193,0.5)';
+      ctx.font = '9px DM Sans, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(pct + '%', PAD_L - 4, y + 3);
+    });
+
+    // Store bar positions for tooltip hit-testing
+    const barRects = [];
+
+    points.forEach((pt, i) => {
+      const homePct = pt.total > 0 ? pt.home / pt.total : 0;
+      const awayPct = pt.total > 0 ? pt.away / pt.total : 0;
+
+      const cx = PAD_L + i * step + step / 2;
+      const x  = cx - barW / 2;
+
+      const homeH = homePct * chartH;
+      const awayH = awayPct * chartH;
+
+      // Stacked bar: home (bottom), away (top)
+      const homeY = PAD_T + chartH - homeH;
+      const awayY = homeY - awayH;
+
+      // Home segment
+      ctx.fillStyle = 'rgba(116,185,255,0.75)';
+      ctx.beginPath();
+      const r = 3;
+      if (awayH < 1) {
+        // rounded top on home if no away
+        ctx.moveTo(x + r, homeY);
+        ctx.lineTo(x + barW - r, homeY);
+        ctx.quadraticCurveTo(x + barW, homeY, x + barW, homeY + r);
+        ctx.lineTo(x + barW, PAD_T + chartH);
+        ctx.lineTo(x, PAD_T + chartH);
+        ctx.lineTo(x, homeY + r);
+        ctx.quadraticCurveTo(x, homeY, x + r, homeY);
+      } else {
+        ctx.rect(x, homeY, barW, homeH);
+      }
+      ctx.fill();
+
+      // Away segment (on top)
+      if (awayH > 0) {
+        ctx.fillStyle = 'rgba(253,121,168,0.75)';
+        ctx.beginPath();
+        ctx.moveTo(x + r, awayY);
+        ctx.lineTo(x + barW - r, awayY);
+        ctx.quadraticCurveTo(x + barW, awayY, x + barW, awayY + r);
+        ctx.lineTo(x + barW, homeY);
+        ctx.lineTo(x, homeY);
+        ctx.lineTo(x, awayY + r);
+        ctx.quadraticCurveTo(x, awayY, x + r, awayY);
+        ctx.fill();
+      }
+
+      barRects.push({ x, y: awayH > 0 ? awayY : homeY, w: barW, h: homeH + awayH, pt, cx });
+
+      // X-axis label — show every Nth label to avoid crowding
+      const labelEvery = Math.ceil(n / Math.floor(chartW / 56));
+      if (i % labelEvery === 0 || i === n - 1) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(139,162,193,0.7)';
+        ctx.font = '9px DM Sans, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.translate(cx, H - PAD_B + 14);
+        ctx.rotate(-Math.PI / 5);
+        ctx.fillText(pt.label, 0, 0);
+        ctx.restore();
+      }
+    });
+
+    // Tooltip interaction
+    const tooltip = document.getElementById('ha-chart-tooltip');
+    const handleMove = function(e) {
+      const rect = canvas.getBoundingClientRect();
+      const mx = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+      const my = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+      let hit = null;
+      for (const b of barRects) {
+        if (mx >= b.x - 4 && mx <= b.x + b.w + 4 && my >= PAD_T && my <= PAD_T + chartH) { hit = b; break; }
+      }
+      if (hit && tooltip) {
+        const hp = hit.pt.total > 0 ? Math.round(hit.pt.home / hit.pt.total * 100) : 0;
+        const ap = hit.pt.total > 0 ? Math.round(hit.pt.away / hit.pt.total * 100) : 0;
+        tooltip.innerHTML =
+          `<div style="font-family:'Bebas Neue',sans-serif;font-size:0.95rem;color:var(--yellow);margin-bottom:3px;">${hit.pt.label}</div>` +
+          `<div style="color:var(--text);">Total: <strong>${hit.pt.total}</strong></div>` +
+          `<div style="color:#74b9ff;">🏠 Home: ${hit.pt.home} <span style="opacity:0.7">(${hp}%)</span></div>` +
+          `<div style="color:#fd79a8;">✈️ Away: ${hit.pt.away} <span style="opacity:0.7">(${ap}%)</span></div>`;
+        const ex = e.touches ? e.touches[0].clientX : e.clientX;
+        const ey = e.touches ? e.touches[0].clientY : e.clientY;
+        tooltip.style.display = 'block';
+        tooltip.style.left = (ex + 14) + 'px';
+        tooltip.style.top  = (ey - 10) + 'px';
+      } else if (tooltip) {
+        tooltip.style.display = 'none';
+      }
+    };
+    const handleLeave = () => { if (tooltip) tooltip.style.display = 'none'; };
+    canvas.onmousemove  = handleMove;
+    canvas.onmouseleave = handleLeave;
+    canvas.ontouchmove  = handleMove;
+    canvas.ontouchend   = handleLeave;
+  }
+
   window.haRender = haRender;
+
+  // Redraw chart on resize
+  if (typeof ResizeObserver !== 'undefined') {
+    const ro = new ResizeObserver(() => {
+      const canvas = document.getElementById('ha-timeline-canvas');
+      if (canvas && canvas.closest('#tab-ha-analysis.active')) haRender();
+    });
+    // Observe once the DOM is ready
+    setTimeout(() => {
+      const panel = document.getElementById('tab-ha-analysis');
+      if (panel) ro.observe(panel);
+    }, 0);
+  }
 
 })(); // end H&A IIFE
 
@@ -2989,6 +3161,21 @@ function renderPerfTable() {
     </select>
 
     <button onclick="haResetFilters()" style="margin-left:auto;background:transparent;border:1px solid rgba(253,184,19,0.4);color:var(--yellow);font-family:'DM Sans',sans-serif;font-size:0.68rem;font-weight:700;padding:4px 10px;border-radius:5px;cursor:pointer;letter-spacing:0.05em;transition:all 0.15s;" onmouseover="this.style.background='rgba(253,184,19,0.1)'" onmouseout="this.style.background='transparent'">↺ Reset</button>
+  </div>
+
+  <!-- ── Timeline Chart ── -->
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin-bottom:20px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+      <div>
+        <div class="act-title">Home vs Away by Match Day</div>
+        <div class="act-sub">% of games per date · home <span style="color:#74b9ff;">■</span> away <span style="color:#fd79a8;">■</span></div>
+      </div>
+      <div id="ha-chart-legend" style="display:flex;gap:16px;align-items:center;font-size:0.68rem;color:var(--muted);"></div>
+    </div>
+    <div style="position:relative;width:100%;overflow-x:auto;">
+      <canvas id="ha-timeline-canvas" height="160" style="display:block;min-width:300px;width:100%;cursor:crosshair;"></canvas>
+      <div id="ha-chart-tooltip" style="position:fixed;pointer-events:none;display:none;background:rgba(5,13,26,0.97);border:1px solid rgba(253,184,19,0.35);border-radius:8px;padding:9px 13px;font-size:0.72rem;line-height:1.7;z-index:999;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.5);"></div>
+    </div>
   </div>
 
   <!-- ── Summary Pills + Table row ── -->
