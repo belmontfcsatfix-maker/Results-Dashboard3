@@ -1981,4 +1981,707 @@ function renderInsights() {
   rebuildInsDropdowns();
   const pool = insPool();
   const grid = document.getElementById('insightsGrid');
-  
+  if (!grid) return;
+
+  if (!pool.length) { grid.innerHTML = '<div class="no-data" style="grid-column:1/-1;padding:40px;font-size:0.9rem;">No played games match the selected filters.</div>'; return; }
+
+  const cards = [];
+
+  /* ── 1. Biggest Wins (by margin) ── */
+  const wins = pool.filter(g => {
+    const me = g.is_home ? g.h_goals : g.a_goals, them = g.is_home ? g.a_goals : g.h_goals;
+    return me > them;
+  }).map(g => {
+    const me = g.is_home ? g.h_goals : g.a_goals, them = g.is_home ? g.a_goals : g.h_goals;
+    return { ...g, margin: me - them };
+  }).sort((a,b) => b.margin - a.margin || (b.h_goals+b.a_goals) - (a.h_goals+a.a_goals)).slice(0,10);
+  cards.push(buildCard('🏆 Biggest Wins', 'By goal margin',
+    ['#','Opponent','Score','Margin'],
+    wins.map((g,i) => {
+      const opp = g.is_home ? g.away : g.home;
+      return `<tr>
+        <td>${rankIcon(i)}</td>
+        <td class="opp"><div class="team-name">${esc2(opp)}</div><div style="font-size:0.65rem;color:var(--muted)">${g.date} · ${g.division}</div></td>
+        <td>${scoreChip(g.h_goals, g.a_goals, g.is_home)}</td>
+        <td><span style="color:var(--green);font-family:'Bebas Neue',sans-serif;font-size:1rem">+${g.margin}</span></td>
+      </tr>`;
+    }),
+    [null,null,null,null],true
+  ));
+
+  /* ── 2. Biggest Defeats ── */
+  const losses = pool.filter(g => {
+    const me = g.is_home ? g.h_goals : g.a_goals, them = g.is_home ? g.a_goals : g.h_goals;
+    return me < them;
+  }).map(g => {
+    const me = g.is_home ? g.h_goals : g.a_goals, them = g.is_home ? g.a_goals : g.h_goals;
+    return { ...g, margin: them - me };
+  }).sort((a,b) => b.margin - a.margin || (b.h_goals+b.a_goals) - (a.h_goals+a.a_goals)).slice(0,10);
+  cards.push(buildCard('💔 Biggest Defeats', 'By goal margin',
+    ['#','Opponent','Score','Margin'],
+    losses.map((g,i) => {
+      const opp = g.is_home ? g.away : g.home;
+      return `<tr>
+        <td>${rankIcon(i)}</td>
+        <td class="opp"><div class="team-name">${esc2(opp)}</div><div style="font-size:0.65rem;color:var(--muted)">${g.date} · ${g.division}</div></td>
+        <td>${scoreChip(g.h_goals, g.a_goals, g.is_home)}</td>
+        <td><span style="color:var(--red);font-family:'Bebas Neue',sans-serif;font-size:1rem">-${g.margin}</span></td>
+      </tr>`;
+    }),
+    [null,null,null,null],true
+  ));
+
+  /* ── 3. Highest Scoring Games ── */
+  const highScore = [...pool].sort((a,b) => (b.h_goals+b.a_goals) - (a.h_goals+a.a_goals)).slice(0,10);
+  cards.push(buildCard('🔥 Highest Scoring Games', 'Total goals in match',
+    ['#','Opponent','Score','Goals'],
+    highScore.map((g,i) => {
+      const opp = g.is_home ? g.away : g.home;
+      const tot = g.h_goals + g.a_goals;
+      return `<tr>
+        <td>${rankIcon(i)}</td>
+        <td class="opp"><div class="team-name">${esc2(opp)}</div><div style="font-size:0.65rem;color:var(--muted)">${g.date} · ${g.division}</div></td>
+        <td>${scoreChip(g.h_goals, g.a_goals, g.is_home)}</td>
+        <td><span style="color:var(--yellow);font-family:'Bebas Neue',sans-serif;font-size:1rem">${tot}</span></td>
+      </tr>`;
+    }),
+    [null,null,null,null],true
+  ));
+
+  /* ── 4. Most Goals Scored by Belmont ── */
+  const mostScored = [...pool].map(g => ({ ...g, bfc_goals: g.is_home ? g.h_goals : g.a_goals }))
+    .sort((a,b) => b.bfc_goals - a.bfc_goals).slice(0,10);
+  cards.push(buildCard('⚽ Most Goals Scored', 'Goals scored by Belmont FC',
+    ['#','Opponent','Score','Goals'],
+    mostScored.map((g,i) => {
+      const opp = g.is_home ? g.away : g.home;
+      return `<tr>
+        <td>${rankIcon(i)}</td>
+        <td class="opp"><div class="team-name">${esc2(opp)}</div><div style="font-size:0.65rem;color:var(--muted)">${g.date} · ${g.division}</div></td>
+        <td>${scoreChip(g.h_goals, g.a_goals, g.is_home)}</td>
+        <td><span style="color:var(--green);font-family:'Bebas Neue',sans-serif;font-size:1rem">${g.bfc_goals}</span></td>
+      </tr>`;
+    }),
+    [null,null,null,null],true
+  ));
+
+  /* ── 5. Opponents Belmont Scored Most Against ── */
+  const oppScoreMap = {};
+  pool.forEach(g => {
+    const opp = g.is_home ? g.away : g.home;
+    const bfcG = g.is_home ? g.h_goals : g.a_goals;
+    if (!oppScoreMap[opp]) oppScoreMap[opp] = { goals:0, games:0 };
+    oppScoreMap[opp].goals += bfcG; oppScoreMap[opp].games++;
+  });
+  const topScoredVs = Object.entries(oppScoreMap).sort((a,b)=>b[1].goals-a[1].goals).slice(0,10);
+  const maxVsGoals = topScoredVs[0]?.[1].goals || 1;
+  cards.push(buildCard('🎯 Top Scoring vs Opponents', 'Belmont FC goals scored against each team',
+    ['#','Opponent','Goals','Games'],
+    topScoredVs.map(([opp,s],i) => `<tr>
+      <td>${rankIcon(i)}</td>
+      <td class="opp"><span class="team-name">${esc2(opp)}</span></td>
+      <td>${barFill(s.goals,maxVsGoals,'green')}<span style="color:var(--green)">${s.goals}</span></td>
+      <td style="color:var(--muted);font-size:0.78rem;white-space:nowrap">${s.games}</td>
+    </tr>`), null, true
+  ));
+
+  /* ── 6. Toughest Opponents ── */
+  const concededMap = {};
+  pool.forEach(g => {
+    const opp = g.is_home ? g.away : g.home;
+    const oppG = g.is_home ? g.a_goals : g.h_goals;
+    if (!concededMap[opp]) concededMap[opp] = { goals:0, games:0 };
+    concededMap[opp].goals += oppG; concededMap[opp].games++;
+  });
+  const topConceded = Object.entries(concededMap).sort((a,b)=>b[1].goals-a[1].goals).slice(0,10);
+  const maxConcG = topConceded[0]?.[1].goals || 1;
+  cards.push(buildCard('🛡 Toughest Opponents', 'Goals conceded by Belmont FC against each team',
+    ['#','Opponent','Conceded','Games'],
+    topConceded.map(([opp,s],i) => `<tr>
+      <td>${rankIcon(i)}</td>
+      <td class="opp"><span class="team-name">${esc2(opp)}</span></td>
+      <td>${barFill(s.goals,maxConcG,'red')}<span style="color:var(--red)">${s.goals}</span></td>
+      <td style="color:var(--muted);font-size:0.78rem;white-space:nowrap">${s.games}</td>
+    </tr>`), null, true
+  ));
+
+  /* ── 7. Performance by Age Group ── */
+  const ageMap = {};
+  pool.forEach(g => {
+    if (!ageMap[g.age]) ageMap[g.age] = { w:0, d:0, l:0, gf:0, ga:0 };
+    const me = g.is_home ? g.h_goals : g.a_goals, them = g.is_home ? g.a_goals : g.h_goals;
+    ageMap[g.age].gf += me; ageMap[g.age].ga += them;
+    if (me>them) ageMap[g.age].w++; else if (me===them) ageMap[g.age].d++; else ageMap[g.age].l++;
+  });
+  const ageSorted = Object.entries(ageMap).sort((a,b)=>parseInt(a[0].slice(1))-parseInt(b[0].slice(1)));
+  cards.push(buildCard('📊 Performance by Age Group', 'Played games with score only',
+    ['Age','W','D','L','GF','GA','GD'],
+    ageSorted.map(([age,s]) => {
+      const gd = s.gf - s.ga;
+      const gdStr = gd>0?`<span style="color:var(--green)">+${gd}</span>`:gd<0?`<span style="color:var(--red)">${gd}</span>`:`<span style="color:var(--muted)">0</span>`;
+      return `<tr>
+        <td style="font-family:'Bebas Neue',sans-serif;color:var(--yellow);white-space:nowrap">${age}</td>
+        <td style="text-align:center;color:var(--green);font-family:'Bebas Neue',sans-serif">${s.w}</td>
+        <td style="text-align:center;font-family:'Bebas Neue',sans-serif">${s.d}</td>
+        <td style="text-align:center;color:var(--red);font-family:'Bebas Neue',sans-serif">${s.l}</td>
+        <td style="text-align:center;color:var(--muted);font-family:'Bebas Neue',sans-serif">${s.gf}</td>
+        <td style="text-align:center;color:var(--muted);font-family:'Bebas Neue',sans-serif">${s.ga}</td>
+        <td style="text-align:center;font-family:'Bebas Neue',sans-serif">${gdStr}</td>
+      </tr>`;
+    }),
+    [null,'center','center','center','center','center','center']
+  ));
+
+  /* ── 8. Results by Match Day ── */
+  const monthOrder = ['17-Jan','24-Jan','31-Jan','7-Feb','14-Feb','15-Feb','21-Feb','28-Feb','7-Mar','14-Mar','21-Mar','28-Mar','11-Apr'];
+  const monthMap = {};
+  pool.forEach(g => {
+    if (!monthMap[g.date]) monthMap[g.date] = { w:0, d:0, l:0 };
+    const me = g.is_home ? g.h_goals : g.a_goals, them = g.is_home ? g.a_goals : g.h_goals;
+    if (me>them) monthMap[g.date].w++; else if (me===them) monthMap[g.date].d++; else monthMap[g.date].l++;
+  });
+  const dateSorted = Object.entries(monthMap).sort((a,b)=>{
+    const ia=monthOrder.indexOf(a[0]),ib=monthOrder.indexOf(b[0]);
+    return (ia===-1?99:ia)-(ib===-1?99:ib);
+  });
+  cards.push(buildCard('📅 Results by Match Day', 'Win/Draw/Loss per fixture date',
+    ['Date','W','D','L','Games','Win%'],
+    dateSorted.map(([date,s]) => {
+      const tot = s.w+s.d+s.l;
+      const pct = tot>0?Math.round(s.w/tot*100):0;
+      const pctCol = pct>=60?'var(--green)':pct>=40?'var(--yellow)':'var(--red)';
+      return `<tr>
+        <td style="font-family:'Bebas Neue',sans-serif;color:var(--muted);white-space:nowrap">${date}</td>
+        <td style="text-align:center;color:var(--green);font-family:'Bebas Neue',sans-serif">${s.w}</td>
+        <td style="text-align:center;font-family:'Bebas Neue',sans-serif">${s.d}</td>
+        <td style="text-align:center;color:var(--red);font-family:'Bebas Neue',sans-serif">${s.l}</td>
+        <td style="text-align:center;color:var(--muted);font-family:'Bebas Neue',sans-serif">${tot}</td>
+        <td style="text-align:center;font-family:'Bebas Neue',sans-serif;color:${pctCol}">${pct}%</td>
+      </tr>`;
+    }),
+    [null,'center','center','center','center','center']
+  ));
+
+  grid.innerHTML = cards.join('');
+}
+
+function buildCard(title, sub, headers, rows, headerAligns, ranked) {
+  const ths = headers.map((h,i) => {
+    let cls = '';
+    if (headerAligns && headerAligns[i]) cls = headerAligns[i];
+    else if (i > 1) cls = 'right';
+    return `<th${cls?' class="'+cls+'"':''}>${h}</th>`;
+  }).join('');
+  const trs = rows.length ? rows.join('') : `<tr><td colspan="${headers.length}" class="no-data">No data</td></tr>`;
+  return `<div class="stat-card${ranked?' stat-card--ranked':''}">
+    <div class="stat-card-header">
+      <div class="stat-card-title">${title}</div>
+      <div class="stat-card-sub">${sub}</div>
+    </div>
+    <div class="stat-table-wrap">
+      <table class="stat-table"><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>
+    </div>
+  </div>`;
+}
+
+/* ════════════════════════════════
+   TEAMS ACTIVITY TAB (inside initDashboard so ALL is in scope)
+════════════════════════════════ */
+let actExpanded = false;
+let actSortCol = null; // 'played' | 'np' | null
+let actSortAsc = false;
+
+function toggleActivityExpand() {
+  actExpanded = !actExpanded;
+  const btn = document.getElementById('actExpandBtn');
+  const icon = document.getElementById('actExpandIcon');
+  const label = document.getElementById('actExpandLabel');
+  const divTh = document.getElementById('act-th-div');
+
+  if (actExpanded) {
+    btn.classList.add('expanded');
+    icon.textContent = '⊟';
+    label.textContent = 'Collapse Divisions';
+    divTh.style.display = '';
+  } else {
+    btn.classList.remove('expanded');
+    icon.textContent = '⊞';
+    label.textContent = 'Expand by Division';
+    divTh.style.display = 'none';
+  }
+  renderActivityTable();
+}
+window._toggleActivityExpand = toggleActivityExpand;
+
+function sortActivityBy(col) {
+  if (actSortCol === col) {
+    actSortAsc = !actSortAsc;
+  } else {
+    actSortCol = col;
+    actSortAsc = false; // default: highest first
+  }
+  renderActivityTable();
+}
+window._sortActivityBy = sortActivityBy;
+
+function renderActivity() {
+  renderActivityTable();
+}
+
+function renderActivityTable() {
+  const ageMap = {};
+  ALL.forEach(g => {
+    const age = g.age;
+    const div = g.division;
+    if (!ageMap[age]) ageMap[age] = { total:0, w:0, d:0, l:0, nr:0, np:0, divs:{} };
+    if (!ageMap[age].divs[div]) ageMap[age].divs[div] = { total:0, w:0, d:0, l:0, nr:0, np:0 };
+
+    const agg = ageMap[age];
+    const dag = ageMap[age].divs[div];
+
+    agg.total++; dag.total++;
+    if (g.result_type === 'win')       { agg.w++;  dag.w++;  }
+    else if (g.result_type === 'draw') { agg.d++;  dag.d++;  }
+    else if (g.result_type === 'loss') { agg.l++;  dag.l++;  }
+    else if (g.result_type === 'nr')   { agg.nr++; dag.nr++; }
+    else if (g.result_type === 'np')   { agg.np++; dag.np++; }
+  });
+
+  const ageSorted = Object.keys(ageMap).sort((a,b) => parseInt(a.slice(1)) - parseInt(b.slice(1)));
+
+  // Apply sort if a sort column is active
+  const ageEntries = ageSorted.map(age => {
+    const s = ageMap[age];
+    return { age, s, played: s.w + s.d + s.l + s.nr };
+  });
+  if (actSortCol === 'age') {
+    ageEntries.sort((a,b) => {
+      const na = parseInt(a.age.slice(1)), nb = parseInt(b.age.slice(1));
+      return actSortAsc ? nb - na : na - nb;
+    });
+  } else if (actSortCol === 'played') {
+    ageEntries.sort((a,b) => actSortAsc ? a.played - b.played : b.played - a.played);
+  } else if (actSortCol === 'np') {
+    ageEntries.sort((a,b) => actSortAsc ? a.s.np - b.s.np : b.s.np - a.s.np);
+  }
+  // Note: 'div' sort is applied per-age-group on the division sub-rows below
+
+  // Update sort indicators on all sortable headers
+  const thAge    = document.getElementById('act-th-age');
+  const thDiv    = document.getElementById('act-th-div');
+  const thPlayed = document.getElementById('act-th-played');
+  const thNp     = document.getElementById('act-th-np');
+  const arrow = col => actSortCol === col ? (actSortAsc ? ' ↑' : ' ↓') : ' ↕';
+  if (thAge)    thAge.innerHTML    = 'Age Group'    + arrow('age');
+  if (thDiv)    thDiv.innerHTML    = 'Division'     + arrow('div');
+  if (thPlayed) thPlayed.innerHTML = 'Total Played' + arrow('played');
+  if (thNp)     thNp.innerHTML     = 'Not Played'   + arrow('np');
+
+  const tbody = document.getElementById('activityTbody');
+  const divTh = document.getElementById('act-th-div');
+  if (divTh) divTh.style.display = actExpanded ? '' : 'none';
+
+  function numCell(val, colour) {
+    const style = colour ? `color:${colour}` : '';
+    return `<td class="act-num" style="text-align:center;${style}">${val > 0 ? val : '<span style="opacity:0.25">–</span>'}</td>`;
+  }
+
+  function pctCell(val, total, colour) {
+    const pct = total > 0 ? Math.round((val / total) * 100) : 0;
+    const style = colour ? `color:${colour}` : '';
+    if (val === 0) return `<td class="act-num" style="text-align:center;${style}"><span style="opacity:0.25">–</span></td>`;
+    return `<td class="act-num" style="text-align:center;${style}">${val} <span style="font-size:0.72rem;opacity:0.7">(${pct}%)</span></td>`;
+  }
+
+  let html = '';
+  ageEntries.forEach(({ age, s }) => {
+    const played = s.w + s.d + s.l + s.nr;
+    html += `<tr class="act-group-row">
+      <td class="act-age-cell">${age}</td>
+      ${actExpanded ? '<td style="color:var(--muted);font-size:0.75rem;font-style:italic;padding-left:15px">All divisions</td>' : ''}
+      ${numCell(s.total)}
+      ${numCell(s.w, 'var(--green)')}
+      ${numCell(s.d)}
+      ${numCell(s.l, 'var(--red)')}
+      ${numCell(s.nr, 'var(--amber)')}
+      ${pctCell(played, s.total, 'var(--text)')}
+      ${pctCell(s.np, s.total, 'var(--muted)')}
+    </tr>`;
+
+    if (actExpanded) {
+      const divSorted = Object.keys(s.divs).sort((a,b) => {
+        if (actSortCol === 'div') {
+          return actSortAsc
+            ? String(a).localeCompare(String(b), undefined, {numeric:true})
+            : String(b).localeCompare(String(a), undefined, {numeric:true});
+        }
+        return parseFloat(a) - parseFloat(b);
+      });
+      divSorted.forEach(div => {
+        const d = s.divs[div];
+        const dplayed = d.w + d.d + d.l + d.nr;
+        html += `<tr class="act-div-row">
+          <td></td>
+          <td class="act-div-cell">↳ ${div}</td>
+          ${numCell(d.total)}
+          ${numCell(d.w, 'var(--green)')}
+          ${numCell(d.d)}
+          ${numCell(d.l, 'var(--red)')}
+          ${numCell(d.nr, 'var(--amber)')}
+          ${pctCell(dplayed, d.total, 'var(--text)')}
+          ${pctCell(d.np, d.total, 'var(--muted)')}
+        </tr>`;
+      });
+    }
+  });
+
+  tbody.innerHTML = html;
+}
+window._renderActivity = renderActivity;
+
+/* ════════════════════════════════
+   TEAM PERFORMANCE TAB
+════════════════════════════════ */
+let perfSortCol = 'ppg';   // default: sort by points per game
+let perfSortAsc = false;   // default: best first (descending)
+
+function ppgColor(ppg) {
+  if (ppg >= 2)   return '#2ecc71';
+  if (ppg >= 1)   return '#f1c40f';
+  if (ppg >= 0.5) return '#e67e22';
+  return '#e74c3c';
+}
+
+function sortPerfBy(col) {
+  if (perfSortCol === col) { perfSortAsc = !perfSortAsc; }
+  else { perfSortCol = col; perfSortAsc = col === 'age' || col === 'div'; } // text cols default asc, numeric desc
+  renderPerfTable();
+}
+window._sortPerfBy = sortPerfBy;
+
+function perfFilterChange() { rebuildPerfDropdowns(); renderPerfTable(); }
+window._perfFilterChange = perfFilterChange;
+
+function resetPerf() {
+  document.getElementById('perf-groupSel').value = 'all';
+  document.getElementById('perf-ageSel').value   = 'all';
+  const tpSel = document.getElementById('perf-tpSel');
+  if (tpSel) tpSel.value = 'all';
+  perfSortCol = 'ppg';
+  perfSortAsc = false;
+  rebuildPerfDropdowns();
+  renderPerfTable();
+}
+window._resetPerf = resetPerf;
+
+function renderPerformance() { rebuildPerfDropdowns(); renderPerfTable(); }
+window._renderPerformance = renderPerformance;
+
+// Returns the base pool (no NP) filtered by all keys EXCEPT the one passed in
+function perfPoolExcluding(excludeKey) {
+  const selGroup = document.getElementById('perf-groupSel')?.value || 'all';
+  const selAge   = document.getElementById('perf-ageSel')?.value   || 'all';
+  const selTp    = document.getElementById('perf-tpSel')?.value    || 'all';
+  return ALL.filter(g => {
+    if (g.result_type === 'np') return false;
+    if (excludeKey !== 'group' && selGroup !== 'all' && g.group      !== selGroup) return false;
+    if (excludeKey !== 'age'   && selAge   !== 'all' && g.age        !== selAge)   return false;
+    if (excludeKey !== 'tp'    && selTp    !== 'all' && g.tournament !== selTp)    return false;
+    return true;
+  });
+}
+
+function rebuildPerfDropdowns() {
+  const groupSel = document.getElementById('perf-groupSel');
+  const ageSel   = document.getElementById('perf-ageSel');
+  const tpSel    = document.getElementById('perf-tpSel');
+  if (!groupSel || !ageSel || !tpSel) return;
+
+  const curGroup = groupSel.value;
+  const curAge   = ageSel.value;
+  const curTp    = tpSel.value;
+
+  // Each dropdown's options = values present in the pool that ignores that dropdown's own filter
+  const groupPool = perfPoolExcluding('group');
+  const groups = [...new Set(groupPool.map(g => g.group).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+  groupSel.innerHTML = '<option value="all">All Groups</option>';
+  groups.forEach(v => { const o = new Option(v,v); if(v===curGroup) o.selected=true; groupSel.appendChild(o); });
+  if (curGroup !== 'all' && !groups.includes(curGroup)) groupSel.value = 'all';
+
+  const agePool = perfPoolExcluding('age');
+  const ages = [...new Set(agePool.map(g => g.age))].sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1)));
+  ageSel.innerHTML = '<option value="all">All Ages</option>';
+  ages.forEach(v => { const o = new Option(v,v); if(v===curAge) o.selected=true; ageSel.appendChild(o); });
+  if (curAge !== 'all' && !ages.includes(curAge)) ageSel.value = 'all';
+
+  const tpPool = perfPoolExcluding('tp');
+  const tps = [...new Set(tpPool.map(g => g.tournament).filter(Boolean))].sort();
+  tpSel.innerHTML = '<option value="all">All</option>';
+  tps.forEach(v => { const o = new Option(v,v); if(v===curTp) o.selected=true; tpSel.appendChild(o); });
+  if (curTp !== 'all' && !tps.includes(curTp)) tpSel.value = 'all';
+}
+
+function renderPerfTable() {
+  const selGroup = document.getElementById('perf-groupSel')?.value || 'all';
+  const selAge   = document.getElementById('perf-ageSel')?.value   || 'all';
+  const selTp    = document.getElementById('perf-tpSel')?.value    || 'all';
+
+  // Played games (not NP) for performance stats
+  const perfGames = ALL.filter(g => {
+    if (g.result_type === 'np') return false;
+    if (selGroup !== 'all' && g.group       !== selGroup) return false;
+    if (selAge   !== 'all' && g.age         !== selAge)   return false;
+    if (selTp    !== 'all' && g.tournament  !== selTp)    return false;
+    return true;
+  });
+
+  // ALL games (including NP) for cancelled count — same filters
+  const allGames = ALL.filter(g => {
+    if (selGroup !== 'all' && g.group       !== selGroup) return false;
+    if (selAge   !== 'all' && g.age         !== selAge)   return false;
+    if (selTp    !== 'all' && g.tournament  !== selTp)    return false;
+    return true;
+  });
+
+  // Aggregate per age+division
+  const rowMap = {};
+  perfGames.forEach(g => {
+    const key = g.age + '||' + g.division;
+    if (!rowMap[key]) rowMap[key] = { age: g.age, div: g.division, w:0, d:0, l:0, nr:0, np:0, total:0 };
+    const r = rowMap[key];
+    if      (g.result_type === 'win')  r.w++;
+    else if (g.result_type === 'draw') r.d++;
+    else if (g.result_type === 'loss') r.l++;
+    else if (g.result_type === 'nr')   r.nr++;
+    r.total++;
+  });
+
+  // Add cancelled (NP) counts from allGames
+  allGames.filter(g => g.result_type === 'np').forEach(g => {
+    const key = g.age + '||' + g.division;
+    if (!rowMap[key]) rowMap[key] = { age: g.age, div: g.division, w:0, d:0, l:0, nr:0, np:0, total:0 };
+    rowMap[key].np++;
+  });
+
+  // Compute derived fields
+  let rows = Object.values(rowMap).map(r => {
+    const played     = r.w + r.d + r.l + r.nr;
+    const withResult = r.w + r.d + r.l;
+    const pts        = r.w * 3 + r.d;
+    const ppg        = withResult > 0 ? pts / withResult : 0;
+    const scheduled  = played + r.np;
+    const npPct      = scheduled > 0 ? Math.round((r.np / scheduled) * 100) : 0;
+    return { ...r, played, withResult, pts, ppg, scheduled, npPct };
+  });
+
+  // Sort
+  rows.sort((a, b) => {
+    let va, vb;
+    if (perfSortCol === 'age') {
+      va = parseInt(a.age.replace(/\D/g,'')); vb = parseInt(b.age.replace(/\D/g,''));
+    } else if (perfSortCol === 'div') {
+      va = a.div; vb = b.div;
+      return perfSortAsc
+        ? String(va).localeCompare(String(vb), undefined, {numeric:true})
+        : String(vb).localeCompare(String(va), undefined, {numeric:true});
+    } else if (perfSortCol === 'pts') {
+      va = a.pts; vb = b.pts;
+    } else if (perfSortCol === 'np') {
+      va = a.np; vb = b.np;
+    } else { // ppg (default)
+      va = a.ppg; vb = b.ppg;
+    }
+    return perfSortAsc ? va - vb : vb - va;
+  });
+
+  // Update header arrows
+  const arrow = col => perfSortCol === col ? (perfSortAsc ? ' ↑' : ' ↓') : ' ↕';
+  const thAge = document.getElementById('perf-th-age');
+  const thDiv = document.getElementById('perf-th-div');
+  const thPts = document.getElementById('perf-th-pts');
+  const thPpg = document.getElementById('perf-th-ppg');
+  const thNp  = document.getElementById('perf-th-np');
+  if (thAge) thAge.innerHTML = 'Age Group'       + arrow('age');
+  if (thDiv) thDiv.innerHTML = 'Division'        + arrow('div');
+  if (thPts) thPts.innerHTML = 'Total Points'    + arrow('pts');
+  if (thPpg) thPpg.innerHTML = 'Pts / Game'      + arrow('ppg');
+  if (thNp)  thNp.innerHTML  = 'Total Cancelled' + arrow('np');
+
+  function numCell(val, colour) {
+    const style = colour ? `color:${colour}` : '';
+    return `<td style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1rem;${style}">${val > 0 ? val : '<span style="opacity:0.25">–</span>'}</td>`;
+  }
+
+  function npCell(np, scheduled) {
+    if (np === 0) return `<td style="text-align:center"><span style="opacity:0.25">–</span></td>`;
+    const pct = scheduled > 0 ? Math.round((np / scheduled) * 100) : 0;
+    return `<td style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--muted);">
+      ${np} <span style="font-size:0.72rem;opacity:0.7">(${pct}%)</span>
+    </td>`;
+  }
+
+  function ppgCell(ppg, played) {
+    if (played === 0) return `<td style="text-align:center"><span style="opacity:0.25">–</span></td>`;
+    const col = ppgColor(ppg);
+    return `<td style="text-align:center">
+      <span style="display:inline-block;background:${col}22;color:${col};border:1px solid ${col}55;
+        font-family:'Bebas Neue',sans-serif;font-size:1rem;padding:2px 10px;border-radius:6px;min-width:52px;">
+        ${ppg.toFixed(2)}
+      </span>
+    </td>`;
+  }
+
+  const tbody = document.getElementById('perfTbody');
+  const tfoot = document.getElementById('perfTfoot');
+
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;padding:40px;color:var(--muted)">No matches found for the selected filters</td></tr>`;
+    if (tfoot) tfoot.innerHTML = '';
+    return;
+  }
+
+  tbody.innerHTML = rows.map(r => `
+    <tr style="border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.1s;" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background=''">
+      <td style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:var(--yellow);padding:12px 15px;">${r.age}</td>
+      <td style="font-weight:700;color:var(--text);font-size:0.88rem;padding:12px 15px;">${r.div}</td>
+      ${numCell(r.played)}
+      ${numCell(r.w, 'var(--green)')}
+      ${numCell(r.d)}
+      ${numCell(r.l, 'var(--red)')}
+      ${numCell(r.nr, 'var(--amber)')}
+      ${numCell(r.pts, 'var(--yellow)')}
+      ${ppgCell(r.ppg, r.withResult)}
+      ${npCell(r.np, r.scheduled)}
+    </tr>
+  `).join('');
+
+  // ── Totals row ──
+  if (tfoot) {
+    const tot = rows.reduce((acc, r) => {
+      acc.played     += r.played;
+      acc.w          += r.w;
+      acc.d          += r.d;
+      acc.l          += r.l;
+      acc.nr         += r.nr;
+      acc.pts        += r.pts;
+      acc.withResult += r.withResult;
+      acc.np         += r.np;
+      acc.scheduled  += r.scheduled;
+      return acc;
+    }, { played:0, w:0, d:0, l:0, nr:0, pts:0, withResult:0, np:0, scheduled:0 });
+
+    const totPpg = tot.withResult > 0 ? tot.pts / tot.withResult : 0;
+    const totPpgCol = ppgColor(totPpg);
+    const totNpPct = tot.scheduled > 0 ? Math.round((tot.np / tot.scheduled) * 100) : 0;
+
+    const totCell = (val, colour) => {
+      const style = colour ? `color:${colour}` : 'color:var(--text)';
+      return `<td style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.05rem;font-weight:700;${style};padding:11px 15px;">${val > 0 ? val : '–'}</td>`;
+    };
+
+    tfoot.innerHTML = `
+      <tr style="border-top:2px solid rgba(253,184,19,0.3);background:rgba(253,184,19,0.06);">
+        <td colspan="2" style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--yellow);padding:11px 15px;letter-spacing:0.06em;">TOTALS</td>
+        ${totCell(tot.played)}
+        ${totCell(tot.w, 'var(--green)')}
+        ${totCell(tot.d)}
+        ${totCell(tot.l, 'var(--red)')}
+        ${totCell(tot.nr, 'var(--amber)')}
+        ${totCell(tot.pts, 'var(--yellow)')}
+        <td style="text-align:center;padding:11px 15px;">
+          <span style="display:inline-block;background:${totPpgCol}22;color:${totPpgCol};border:1px solid ${totPpgCol}55;
+            font-family:'Bebas Neue',sans-serif;font-size:1.05rem;padding:2px 10px;border-radius:6px;min-width:52px;font-weight:700;">
+            ${totPpg.toFixed(2)}
+          </span>
+        </td>
+        <td style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.05rem;font-weight:700;color:var(--muted);padding:11px 15px;">
+          ${tot.np > 0 ? `${tot.np} <span style="font-size:0.72rem;opacity:0.7">(${totNpPct}%)</span>` : '–'}
+        </td>
+      </tr>`;
+  }
+}
+
+
+
+}
+</script>
+
+</div>
+
+<div id="tab-performance" class="tab-panel">
+  <div class="stats-page">
+    <!-- Filters -->
+    <div class="stats-filters" style="margin-bottom:18px;">
+      <span class="flbl">Group</span>
+      <select id="perf-groupSel" onchange="if(window._perfFilterChange) window._perfFilterChange()"><option value="all">All Groups</option></select>
+      <span class="flbl" style="margin-left:8px">Age Group</span>
+      <select id="perf-ageSel" onchange="if(window._perfFilterChange) window._perfFilterChange()"><option value="all">All Ages</option></select>
+      <span class="flbl" style="margin-left:8px">Championship</span>
+      <select id="perf-tpSel" onchange="if(window._perfFilterChange) window._perfFilterChange()"><option value="all">All</option></select>
+      <button onclick="if(window._resetPerf) window._resetPerf()" style="margin-left:auto;background:transparent;border:1px solid rgba(253,184,19,0.4);color:var(--yellow);font-family:'DM Sans',sans-serif;font-size:0.68rem;font-weight:700;padding:4px 10px;border-radius:5px;cursor:pointer;letter-spacing:0.05em;transition:all 0.15s;" onmouseover="this.style.background='rgba(253,184,19,0.1)'" onmouseout="this.style.background='transparent'">↺ Reset</button>
+    </div>
+    <div class="act-header" style="margin-bottom:14px">
+      <div>
+        <div class="act-title">🏅 Team Performance & Activity by Division</div>
+        <div class="act-sub">Points-based performance · Played games (Played = Y) only · Wins = 3pts, Draws = 1pt</div>
+      </div>
+    </div>
+    <div class="twrap" style="border-radius:12px;">
+      <table id="perfTable" style="min-width:800px;">
+        <thead>
+          <tr>
+            <th id="perf-th-age" style="text-align:left;cursor:pointer;user-select:none;" onclick="if(window._sortPerfBy) window._sortPerfBy('age')" title="Sort by Age Group">Age Group ↕</th>
+            <th id="perf-th-div" style="text-align:left;cursor:pointer;user-select:none;" onclick="if(window._sortPerfBy) window._sortPerfBy('div')" title="Sort by Division">Division ↕</th>
+            <th style="text-align:center;">Total Games Played</th>
+            <th style="text-align:center;color:var(--green);">Wins</th>
+            <th style="text-align:center;">Draws</th>
+            <th style="text-align:center;color:var(--red);">Losses</th>
+            <th style="text-align:center;color:var(--amber);">Not Reported</th>
+            <th id="perf-th-pts" style="text-align:center;color:var(--yellow);cursor:pointer;user-select:none;" onclick="if(window._sortPerfBy) window._sortPerfBy('pts')" title="Sort by Total Points">Total Points ↕</th>
+            <th id="perf-th-ppg" style="text-align:center;cursor:pointer;user-select:none;" onclick="if(window._sortPerfBy) window._sortPerfBy('ppg')" title="Sort by Points Per Game">Pts / Game ↕</th>
+            <th id="perf-th-np" style="text-align:center;color:var(--muted);cursor:pointer;user-select:none;" onclick="if(window._sortPerfBy) window._sortPerfBy('np')" title="Sort by Cancelled">Total Cancelled ↕</th>
+          </tr>
+        </thead>
+        <tbody id="perfTbody"></tbody>
+        <tfoot id="perfTfoot"></tfoot>
+      </table>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:18px;flex-wrap:wrap;align-items:center;padding:0 2px;">
+      <span style="font-size:0.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em">Pts/Game key:</span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:0.7rem;color:var(--muted)"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#2ecc71"></span> ≥ 2.0 Excellent</span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:0.7rem;color:var(--muted)"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#f1c40f"></span> 1.0 – 1.99 Good</span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:0.7rem;color:var(--muted)"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#e67e22"></span> 0.5 – 0.99 Average</span>
+      <span style="display:flex;align-items:center;gap:5px;font-size:0.7rem;color:var(--muted)"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:#e74c3c"></span> &lt; 0.5 Poor</span>
+    </div>
+  </div>
+</div>
+
+
+<div id="tab-insights" class="tab-panel">
+  <div class="stats-page">
+    <!-- Filters -->
+    <div class="stats-filters">
+      <span class="flbl">Group</span>
+      <select id="ins-groupSel" onchange="insFilterChange('group',this.value)"><option value="all">All Groups</option></select>
+      <span class="flbl" style="margin-left:8px">Age Group</span>
+      <select id="ins-ageSel" onchange="insFilterChange('age',this.value)"><option value="all">All Ages</option></select>
+      <span class="flbl" style="margin-left:8px">Division</span>
+      <select id="ins-divSel" onchange="insFilterChange('div',this.value)"><option value="all">All Divisions</option></select>
+      <span class="flbl" style="margin-left:8px">Championship</span>
+      <select id="ins-tpSel" onchange="insFilterChange('tp',this.value)">
+        <option value="all">All</option>
+      </select>
+      <span class="flbl" style="margin-left:8px">H / A</span>
+      <select id="ins-haSel" onchange="insFilterChange('ha',this.value)">
+        <option value="all">All</option>
+      </select>
+      <button onclick="resetInsights()" style="margin-left:auto;background:transparent;border:1px solid rgba(253,184,19,0.4);color:var(--yellow);font-family:'DM Sans',sans-serif;font-size:0.68rem;font-weight:700;padding:4px 10px;border-radius:5px;cursor:pointer;letter-spacing:0.05em;transition:all 0.15s;" onmouseover="this.style.background='rgba(253,184,19,0.1)'" onmouseout="this.style.background='transparent'">↺ Reset</button>
+    </div>
+    <!-- Cards grid -->
+    <div class="stats-grid" id="insightsGrid"></div>
+  </div>
+</div>
+
+
+</body>
+</html>
