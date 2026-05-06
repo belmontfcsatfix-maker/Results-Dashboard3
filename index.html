@@ -2631,17 +2631,34 @@ function renderPerfTable() {
     haRender();
   };
 
+  // Format YYYY-MM-DD → dd-Mmm-yy
+  function haFmtDate(ds) {
+    if (!ds) return '—';
+    const [y,m,d] = ds.split('-');
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    return `${d}-${months[parseInt(m)-1]}-${y.slice(2)}`;
+  }
+
   window.haRebuildDropdowns = function() {
-    const dates = [...new Set(ALL.map(g => g.date_sort).filter(Boolean))].sort();
-    haDateList = dates;
-    const startEl = document.getElementById('ha-date-start');
-    const endEl   = document.getElementById('ha-date-end');
-    if (startEl) { startEl.max = Math.max(0, dates.length - 1); startEl.value = 0; }
-    if (endEl)   { endEl.max   = Math.max(0, dates.length - 1); endEl.value   = Math.max(0, dates.length - 1); }
-    haUpdateSliderFill();
-    haUpdateDateLabels();
+    haDateList = [...new Set(ALL.map(g => g.date_sort).filter(Boolean))].sort();
+    haRebuildDateSelects();
     haRebuildSelects();
   };
+
+  function haRebuildDateSelects() {
+    const fromSel = document.getElementById('ha-date-from');
+    const toSel   = document.getElementById('ha-date-to');
+    if (!fromSel || !toSel) return;
+    const curFrom = fromSel.value;
+    const curTo   = toSel.value;
+    fromSel.innerHTML = '<option value="all">All Dates</option>';
+    toSel.innerHTML   = '<option value="all">All Dates</option>';
+    haDateList.forEach(ds => {
+      const label = haFmtDate(ds);
+      const oF = new Option(label, ds); if (ds === curFrom) oF.selected = true; fromSel.appendChild(oF);
+      const oT = new Option(label, ds); if (ds === curTo)   oT.selected = true; toSel.appendChild(oT);
+    });
+  }
 
   function haGetFilters() {
     const selGroup  = document.getElementById('ha-groupSel')?.value  || 'all';
@@ -2650,15 +2667,10 @@ function renderPerfTable() {
     const selPlayed = document.getElementById('ha-playedSel')?.value || 'all';
     const selTp     = document.getElementById('ha-tpSel')?.value     || 'all';
     const selView   = document.getElementById('ha-viewBySel')?.value || 'division';
-    let startDate = null, endDate = null;
-    const startEl = document.getElementById('ha-date-start');
-    const endEl   = document.getElementById('ha-date-end');
-    if (startEl && endEl && haDateList.length) {
-      const si = Math.min(parseInt(startEl.value), parseInt(endEl.value));
-      const ei = Math.max(parseInt(startEl.value), parseInt(endEl.value));
-      startDate = haDateList[si] || null;
-      endDate   = haDateList[ei] || null;
-    }
+    const fromVal   = document.getElementById('ha-date-from')?.value || 'all';
+    const toVal     = document.getElementById('ha-date-to')?.value   || 'all';
+    const startDate = fromVal !== 'all' ? fromVal : null;
+    const endDate   = toVal   !== 'all' ? toVal   : null;
     return { selGroup, selAge, selDiv, selPlayed, selTp, selView, startDate, endDate };
   }
 
@@ -2710,60 +2722,17 @@ function renderPerfTable() {
     }
   }
 
-  function haUpdateSliderFill() {
-    const startEl = document.getElementById('ha-date-start');
-    const endEl   = document.getElementById('ha-date-end');
-    const fill    = document.getElementById('ha-slider-fill');
-    if (!startEl || !endEl || !fill) return;
-    const max = parseInt(startEl.max) || 1;
-    const si  = Math.min(parseInt(startEl.value), parseInt(endEl.value));
-    const ei  = Math.max(parseInt(startEl.value), parseInt(endEl.value));
-    fill.style.left  = (si / max * 100) + '%';
-    fill.style.width = ((ei - si) / max * 100) + '%';
-  }
-
-  function haUpdateDateLabels() {
-    const startEl  = document.getElementById('ha-date-start');
-    const endEl    = document.getElementById('ha-date-end');
-    const startLbl = document.getElementById('ha-date-start-lbl');
-    const endLbl   = document.getElementById('ha-date-end-lbl');
-    if (!startEl || !endEl || !haDateList.length) return;
-    const si  = Math.min(parseInt(startEl.value), parseInt(endEl.value));
-    const ei  = Math.max(parseInt(startEl.value), parseInt(endEl.value));
-    const fmt = ds => {
-      if (!ds) return '—';
-      const [y,m,d] = ds.split('-');
-      const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-      return `${d}-${months[parseInt(m)-1]}-${y.slice(2)}`;
-    };
-    if (startLbl) startLbl.textContent = fmt(haDateList[si]);
-    if (endLbl)   endLbl.textContent   = fmt(haDateList[ei]);
-  }
-
-  window.haSliderInput = function() {
-    haUpdateSliderFill();
-    haUpdateDateLabels();
-  };
-
   window.haOnFilter = function() {
     haRebuildSelects();
-    haUpdateSliderFill();
-    haUpdateDateLabels();
     haRender();
   };
 
   window.haResetFilters = function() {
-    ['ha-groupSel','ha-ageSel','ha-divSel','ha-playedSel','ha-tpSel'].forEach(id => {
+    ['ha-groupSel','ha-ageSel','ha-divSel','ha-playedSel','ha-tpSel','ha-date-from','ha-date-to'].forEach(id => {
       const el = document.getElementById(id); if(el) el.value = 'all';
     });
     const vb = document.getElementById('ha-viewBySel');
     if (vb) vb.value = 'division';
-    const startEl = document.getElementById('ha-date-start');
-    const endEl   = document.getElementById('ha-date-end');
-    if (startEl) startEl.value = 0;
-    if (endEl)   endEl.value   = endEl.max;
-    haUpdateSliderFill();
-    haUpdateDateLabels();
     haRebuildSelects();
     haRender();
   };
@@ -2997,28 +2966,11 @@ function renderPerfTable() {
     <span class="flbl" style="margin-left:6px">Division</span>
     <select id="ha-divSel" onchange="haOnFilter()"><option value="all">All Divisions</option></select>
 
-    <!-- Date range slider -->
-    <span class="flbl" style="margin-left:6px">Date Range</span>
-    <div id="ha-date-range-wrap" style="display:flex;flex-direction:column;gap:4px;min-width:260px;">
-      <div style="display:flex;gap:8px;align-items:center;">
-        <div style="position:relative;flex:1;height:28px;display:flex;align-items:center;">
-          <div id="ha-slider-track" style="position:relative;width:100%;height:4px;background:rgba(255,255,255,0.1);border-radius:2px;">
-            <div id="ha-slider-fill" style="position:absolute;top:0;height:4px;background:var(--yellow);border-radius:2px;pointer-events:none;"></div>
-            <input id="ha-date-start" type="range" min="0" max="100" value="0"
-              style="position:absolute;top:50%;transform:translateY(-50%);width:100%;appearance:none;background:transparent;cursor:pointer;pointer-events:auto;z-index:2;margin:0;outline:none;"
-              oninput="haSliderInput()" onchange="haOnFilter()">
-            <input id="ha-date-end" type="range" min="0" max="100" value="100"
-              style="position:absolute;top:50%;transform:translateY(-50%);width:100%;appearance:none;background:transparent;cursor:pointer;pointer-events:auto;z-index:3;margin:0;outline:none;"
-              oninput="haSliderInput()" onchange="haOnFilter()">
-          </div>
-        </div>
-      </div>
-      <div style="display:flex;justify-content:space-between;gap:6px;">
-        <span id="ha-date-start-lbl" style="font-size:0.65rem;color:var(--yellow);white-space:nowrap;min-width:72px;">—</span>
-        <span style="font-size:0.65rem;color:var(--muted);">→</span>
-        <span id="ha-date-end-lbl" style="font-size:0.65rem;color:var(--yellow);white-space:nowrap;min-width:72px;text-align:right;">—</span>
-      </div>
-    </div>
+    <!-- Date range dropdowns -->
+    <span class="flbl" style="margin-left:6px">From</span>
+    <select id="ha-date-from" onchange="haOnFilter()"><option value="all">All Dates</option></select>
+    <span class="flbl">To</span>
+    <select id="ha-date-to" onchange="haOnFilter()"><option value="all">All Dates</option></select>
 
     <span class="flbl" style="margin-left:6px">Played</span>
     <select id="ha-playedSel" onchange="haOnFilter()">
@@ -3082,27 +3034,7 @@ function renderPerfTable() {
 </div>
 </div><!-- end tab-ha-analysis -->
 
-<style>
-/* Range slider thumb style for ha sliders */
-#ha-date-start::-webkit-slider-thumb,
-#ha-date-end::-webkit-slider-thumb {
-  -webkit-appearance:none;
-  width:14px; height:14px;
-  border-radius:50%;
-  background:var(--yellow);
-  border:2px solid var(--dark);
-  cursor:pointer;
-  box-shadow:0 0 4px rgba(253,184,19,0.5);
-}
-#ha-date-start::-moz-range-thumb,
-#ha-date-end::-moz-range-thumb {
-  width:14px; height:14px;
-  border-radius:50%;
-  background:var(--yellow);
-  border:2px solid var(--dark);
-  cursor:pointer;
-}
-</style>
+
 
 </body>
 </html>
