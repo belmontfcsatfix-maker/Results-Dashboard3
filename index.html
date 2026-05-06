@@ -1479,6 +1479,7 @@ function getAge(r, isGirls) {
   return m ? 'U' + m[1] + (girls ? 'G' : '') : 'Other';
 }
 
+window.ALL_DATA = null; // will be set below
 const ALL = DATA.map(g => {
   const bh = /belmont/i.test(g.home);
   const isNP = g.played === 'N';
@@ -1498,6 +1499,7 @@ const ALL = DATA.map(g => {
     is_home: bh, result_type, tournament: g.tournament || 'League',
     group: g.group || '' };
 });
+window.ALL_DATA = ALL;
 
 // ── Last Updated: derive from latest game date in data ──
 (function() {
@@ -2844,7 +2846,7 @@ function haSortBy(col) {
 
 /* Called when switchTab activates this tab */
 window.haRebuildDropdowns = function() {
-  const data = (typeof ALL !== 'undefined') ? ALL : [];
+  const data = (window.ALL_DATA || []);
 
   // Build sorted date list from all data
   const dates = [...new Set(data.map(g => g.date_sort).filter(Boolean))].sort();
@@ -2899,7 +2901,7 @@ function haMatchGame(g, f, excludeKey) {
 }
 
 function haRebuildSelects() {
-  const data = (typeof ALL !== 'undefined') ? ALL : [];
+  const data = (window.ALL_DATA || []);
   const f = haGetFilters();
 
   // Groups
@@ -3002,7 +3004,7 @@ function haResetFilters() {
 }
 
 window.haRender = function haRender() {
-  const data = (typeof ALL !== 'undefined') ? ALL : [];
+  const data = (window.ALL_DATA || []);
   const f    = haGetFilters();
 
   // Filter data
