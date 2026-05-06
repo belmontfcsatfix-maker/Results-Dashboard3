@@ -291,13 +291,13 @@ td.loccol { font-size:0.78rem; color:var(--muted); max-width:160px; overflow:hid
 </div>
 
 <div class="tab-bar">
-  <button class="tab-btn" onclick="switchTab('match-day',this)">📋 Match Day</button>
-  <button class="tab-btn active" onclick="switchTab('fixtures',this)">🏆 Results</button>
+  <button class="tab-btn active" onclick="switchTab('match-day',this)">📋 Match Day</button>
+  <button class="tab-btn" onclick="switchTab('fixtures',this)">🏆 Results</button>
   <button class="tab-btn" onclick="switchTab('insights',this)">💡 Season Insights</button>
   <button class="tab-btn" onclick="switchTab('performance',this)">📊 Performance &amp; Activity</button>
 </div>
 
-<div id="tab-match-day" class="tab-panel">
+<div id="tab-match-day" class="tab-panel active">
 <!-- ═══════════ MATCH DAY TAB — NEW ═══════════ -->
 <div style="padding:24px 20px 48px;">
 
@@ -353,13 +353,13 @@ td.loccol { font-size:0.78rem; color:var(--muted); max-width:160px; overflow:hid
       <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding-bottom:2px;">
         <span style="font-size:0.58rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--muted);">Division Status:</span>
         <span style="display:flex;align-items:center;gap:5px;font-size:0.7rem;color:#8ba2c1;">
-          <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(46,204,113,0.32);border:1px solid rgba(46,204,113,0.65);flex-shrink:0;"></span>Confirmed
+          <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(46,204,113,0.45);border:1px solid rgba(46,204,113,0.75);flex-shrink:0;"></span>Confirmed
         </span>
         <span style="display:flex;align-items:center;gap:5px;font-size:0.7rem;color:#8ba2c1;">
-          <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(243,156,18,0.28);border:1px solid rgba(243,156,18,0.6);flex-shrink:0;"></span>Pending
+          <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(243,156,18,0.4);border:1px solid rgba(243,156,18,0.7);flex-shrink:0;"></span>Pending
         </span>
         <span style="display:flex;align-items:center;gap:5px;font-size:0.7rem;color:#8ba2c1;">
-          <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(231,76,60,0.32);border:1px solid rgba(231,76,60,0.65);flex-shrink:0;"></span>Declined
+          <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(231,76,60,0.45);border:1px solid rgba(231,76,60,0.75);flex-shrink:0;"></span>Declined
         </span>
       </div>
     </div>
@@ -752,10 +752,13 @@ function renderMatchDay() {
   function confIcon(val) {
     const v = (val || '').toUpperCase();
     if (v === 'Y') {
+      // Confirmed: green circle with checkmark
       return `<span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#27ae60;flex-shrink:0;vertical-align:middle;"><svg width="9" height="9" viewBox="0 0 9 9" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1.5 4.5L3.5 6.5L7.5 2.5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`;
     } else if (v === 'N') {
+      // Declined: red circle with X
       return `<span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#e74c3c;flex-shrink:0;vertical-align:middle;"><svg width="9" height="9" viewBox="0 0 9 9" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 2.5L6.5 6.5M6.5 2.5L2.5 6.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg></span>`;
     } else {
+      // Pending: orange circle with NO X (empty circle)
       return `<span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#e67e22;flex-shrink:0;vertical-align:middle;"></span>`;
     }
   }
@@ -800,14 +803,14 @@ function renderMatchDay() {
     },
     {
       dateFmt:'10-May-25', dateKey:20250510, div:'U14G. Div 2',   age:'U14G',
-      home:'Shelbourne FC',hConf:'Y',  away:'Belmont FC',   aConf:'',
-      ko:'11:30', ref:'',           refConf:'',  comments:'Test game B', pitch:'Pitch 2',
+      home:'Shelbourne FC',hConf:'N',  away:'Belmont FC',   aConf:'Y',
+      ko:'11:30', ref:'',           refConf:'',  comments:'Home team declined', pitch:'Pitch 2',
       gameLen:70, belHome:false,
     },
     {
       dateFmt:'17-May-25', dateKey:20250517, div:'U16. Div 3',    age:'U16',
-      home:'Belmont FC',   hConf:'',   away:'St. Kevin\'s',  aConf:'',
-      ko:'09:30', ref:'P. Walsh',   refConf:'',  comments:'Test game C', pitch:'Pitch 3',
+      home:'Belmont FC',   hConf:'Y',   away:'St. Kevin\'s',  aConf:'N',
+      ko:'09:30', ref:'P. Walsh',   refConf:'',  comments:'Away team declined', pitch:'Pitch 3',
       gameLen:80, belHome:true,
     },
   ];
@@ -858,10 +861,12 @@ function renderMatchDay() {
       const isAlt = testDateGroupIdx % 2 === 1;
       const rowBg = isAlt ? 'rgba(253,184,19,0.04)' : '';
       const dc = mdDivColor(g.div);
-      const bothConf = g.hConf && g.hConf.toUpperCase() === 'Y' && g.aConf && g.aConf.toUpperCase() === 'Y';
-      const hasDecl = g.hConf.toUpperCase() === 'N' || g.aConf.toUpperCase() === 'N';
-      const cBg  = hasDecl ? 'rgba(231,76,60,0.32)' : bothConf ? 'rgba(46,204,113,0.32)' : 'rgba(243,156,18,0.28)';
-      const cBrd = hasDecl ? 'rgba(231,76,60,0.65)' : bothConf ? 'rgba(46,204,113,0.65)' : 'rgba(243,156,18,0.6)';
+      const hcT = g.hConf ? g.hConf.toUpperCase() : '';
+      const acT = g.aConf ? g.aConf.toUpperCase() : '';
+      const bothConf = hcT === 'Y' && acT === 'Y';
+      const eitherDeclinedT = hcT === 'N' || acT === 'N';
+      const cBg  = bothConf ? 'rgba(46,204,113,0.32)' : eitherDeclinedT ? 'rgba(231,76,60,0.32)' : 'rgba(243,156,18,0.28)';
+      const cBrd = bothConf ? 'rgba(46,204,113,0.7)' : eitherDeclinedT ? 'rgba(231,76,60,0.7)' : 'rgba(243,156,18,0.65)';
       return `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.1s;${rowBg?`background:${rowBg}`:''};"
         onmouseover="this.style.background='rgba(255,255,255,0.06)'"
         onmouseout="this.style.background='${rowBg}'">
@@ -888,10 +893,12 @@ function renderMatchDay() {
       const isAlt = dateGroupIdx % 2 === 1;
       const rowBg = isAlt ? 'rgba(253,184,19,0.04)' : '';
       const dc = mdDivColor(g.div);
-      const bothConfirmed = g.hConf && g.hConf.toUpperCase() === 'Y' && g.aConf && g.aConf.toUpperCase() === 'Y';
-      const hasDeclined = g.hConf.toUpperCase() === 'N' || g.aConf.toUpperCase() === 'N';
-      const confCellBg = hasDeclined ? 'rgba(231,76,60,0.32)' : bothConfirmed ? 'rgba(46,204,113,0.32)' : 'rgba(243,156,18,0.28)';
-      const confCellBorder = hasDeclined ? 'rgba(231,76,60,0.65)' : bothConfirmed ? 'rgba(46,204,113,0.65)' : 'rgba(243,156,18,0.6)';
+      const hc = g.hConf ? g.hConf.toUpperCase() : '';
+      const ac = g.aConf ? g.aConf.toUpperCase() : '';
+      const bothConfirmed = hc === 'Y' && ac === 'Y';
+      const eitherDeclined = hc === 'N' || ac === 'N';
+      const confCellBg = bothConfirmed ? 'rgba(46,204,113,0.32)' : eitherDeclined ? 'rgba(231,76,60,0.32)' : 'rgba(243,156,18,0.28)';
+      const confCellBorder = bothConfirmed ? 'rgba(46,204,113,0.7)' : eitherDeclined ? 'rgba(231,76,60,0.7)' : 'rgba(243,156,18,0.65)';
       const tr = document.createElement('tr');
       tr.style.cssText = `border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.1s;${rowBg?`background:${rowBg}`:''}`;
       tr.onmouseover = () => tr.style.background = 'rgba(255,255,255,0.06)';
@@ -1234,9 +1241,12 @@ window._renderMatchDayFiltered = function() {
         const isAlt = dateGroupIdx % 2 === 1;
         const rowBg = isAlt ? 'rgba(253,184,19,0.04)' : '';
         const dc = mdDivColor(g.div);
-        const bothConfirmed = g.hConf && g.hConf.toUpperCase() === 'Y' && g.aConf && g.aConf.toUpperCase() === 'Y';
-        const confCellBg = bothConfirmed ? 'rgba(46,204,113,0.18)' : 'rgba(230,126,34,0.18)';
-        const confCellBorder = bothConfirmed ? 'rgba(46,204,113,0.35)' : 'rgba(230,126,34,0.35)';
+        const hcR = g.hConf ? g.hConf.toUpperCase() : '';
+        const acR = g.aConf ? g.aConf.toUpperCase() : '';
+        const bothConfirmed = hcR === 'Y' && acR === 'Y';
+        const eitherDeclinedR = hcR === 'N' || acR === 'N';
+        const confCellBg = bothConfirmed ? 'rgba(46,204,113,0.32)' : eitherDeclinedR ? 'rgba(231,76,60,0.32)' : 'rgba(243,156,18,0.28)';
+        const confCellBorder = bothConfirmed ? 'rgba(46,204,113,0.7)' : eitherDeclinedR ? 'rgba(231,76,60,0.7)' : 'rgba(243,156,18,0.65)';
         const tr = document.createElement('tr');
         tr.style.cssText = `border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.1s;${rowBg?`background:${rowBg}`:''}`;
         tr.onmouseover = () => tr.style.background = 'rgba(255,255,255,0.06)';
@@ -1261,7 +1271,7 @@ window._renderMatchDayFiltered = function() {
 </script>
 </div>
 
-<div id="tab-fixtures" class="tab-panel active">
+<div id="tab-fixtures" class="tab-panel">
 <div id="statsRow" class="stats"></div>
 
 <div class="filters-bar">
