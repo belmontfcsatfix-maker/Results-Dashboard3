@@ -2643,7 +2643,13 @@ function renderPerfTable() {
     return `${d}-${months[mi]}-${y.slice(2)}`;
   }
 
+  let haDateLabelMap = {}; // date_sort → display label (from g.date)
+
   window.haRebuildDropdowns = function() {
+    haDateLabelMap = {};
+    ALL.forEach(g => {
+      if (g.date_sort && g.date) haDateLabelMap[g.date_sort] = g.date;
+    });
     haDateList = [...new Set(ALL.map(g => g.date_sort).filter(Boolean))].sort();
     haRebuildDateSelects();
     haRebuildSelects();
@@ -2658,7 +2664,7 @@ function renderPerfTable() {
     fromSel.innerHTML = '<option value="all">All Dates</option>';
     toSel.innerHTML   = '<option value="all">All Dates</option>';
     haDateList.forEach(ds => {
-      const label = haFmtDate(ds);
+      const label = haDateLabelMap[ds] || haFmtDate(ds);
       const oF = new Option(label, ds); if (ds === curFrom) oF.selected = true; fromSel.appendChild(oF);
       const oT = new Option(label, ds); if (ds === curTo)   oT.selected = true; toSel.appendChild(oT);
     });
