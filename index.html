@@ -1317,10 +1317,17 @@ window._renderMatchDayFiltered = function() {
       </div>
     </div>
 
-    <!-- Reset -->
+    <!-- Reset + Print -->
     <div class="fbox-reset" style="padding:8px 10px;">
       <button class="breset" style="font-size:0.68rem;padding:3px 6px;" onclick="resetAll()">↺ Reset</button>
       <div class="active-count" id="activeCount"></div>
+      <button id="results-print-btn" onclick="resultsPrint()"
+        style="margin-top:6px;display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#1a4a80,#0e2d55);border:1px solid rgba(253,184,19,0.35);color:var(--yellow);font-family:'DM Sans',sans-serif;font-size:0.68rem;font-weight:600;padding:5px 11px;border-radius:6px;cursor:pointer;white-space:nowrap;transition:all 0.18s;"
+        onmouseover="this.style.borderColor='var(--yellow)';this.style.background='linear-gradient(135deg,#1f5a9e,#122f5a)'"
+        onmouseout="this.style.borderColor='rgba(253,184,19,0.35)';this.style.background='linear-gradient(135deg,#1a4a80,#0e2d55)'">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4V1h8v3M2 8H1V4h10v4h-1M3 8v3h6V8" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+        Print Results
+      </button>
     </div>
 
   </div>
@@ -1846,6 +1853,88 @@ function resetAll() {
   applyFilters();
 }
 
+function resultsPrint() {
+  const btn = document.getElementById('results-print-btn');
+  const origHTML = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="#fdb813" stroke-width="1.2" stroke-dasharray="8 4"><animateTransform attributeName="transform" type="rotate" from="0 6.5 6.5" to="360 6.5 6.5" dur="0.8s" repeatCount="indefinite"/></circle></svg> Generating…`;
+    btn.disabled = true;
+  }
+
+  function restore() { if (btn) { btn.innerHTML = origHTML; btn.disabled = false; } }
+
+  function doCapture() {
+    // Capture just the table wrapper so we get the filtered rows only
+    const target = document.querySelector('.twrap-outer') || document.getElementById('tab-fixtures');
+
+    const clone = target.cloneNode(true);
+
+    // Style the clone for a clean dark background snapshot
+    clone.style.cssText = [
+      'position:fixed;top:0;left:0;z-index:-9999;pointer-events:none;',
+      'opacity:1;background:#0a1628;padding:24px;',
+      'font-family:\'DM Sans\',sans-serif;color:#e2e8f4;',
+      'width:max-content;max-width:none;overflow:visible;'
+    ].join('');
+
+    // Expand any scroll containers so all rows are visible
+    clone.querySelectorAll('*').forEach(el => {
+      const cs = window.getComputedStyle(el);
+      if (['auto','scroll','hidden'].includes(cs.overflowX)) {
+        el.style.overflowX = 'visible';
+        el.style.width     = 'max-content';
+        el.style.maxWidth  = 'none';
+      }
+      if (['auto','scroll','hidden'].includes(cs.overflowY)) {
+        el.style.overflowY = 'visible';
+        el.style.height    = 'auto';
+        el.style.maxHeight = 'none';
+      }
+    });
+
+    // Add a header banner to the clone
+    const banner = document.createElement('div');
+    banner.style.cssText = 'font-family:\'Bebas Neue\',Impact,sans-serif;font-size:1.5rem;letter-spacing:0.08em;color:#fdb813;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid rgba(253,184,19,0.25);';
+    const rcEl = document.getElementById('rcount');
+    banner.textContent = 'Belmont FC · Results' + (rcEl ? '  —  ' + rcEl.textContent.replace(/\s+/g,' ').trim() : '');
+    clone.insertBefore(banner, clone.firstChild);
+
+    document.body.appendChild(clone);
+
+    requestAnimationFrame(() => {
+      const W = clone.scrollWidth;
+      const H = clone.scrollHeight;
+      html2canvas(clone, {
+        backgroundColor: '#0a1628', scale: 2, useCORS: true, allowTaint: true,
+        logging: false, scrollX: 0, scrollY: 0, x: 0, y: 0,
+        width: W, height: H, windowWidth: W, windowHeight: H,
+      }).then(canvas => {
+        if (clone.parentNode) clone.parentNode.removeChild(clone);
+        restore();
+        const link = document.createElement('a');
+        link.download = `Belmont_FC_Results_${new Date().toISOString().slice(0,10)}.jpeg`;
+        link.href = canvas.toDataURL('image/jpeg', 0.92);
+        link.click();
+      }).catch(err => {
+        if (clone.parentNode) clone.parentNode.removeChild(clone);
+        restore();
+        console.error('Print error:', err);
+        alert('Could not generate image. Please try again.');
+      });
+    });
+  }
+
+  if (window.html2canvas) {
+    doCapture();
+  } else {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    script.onload  = doCapture;
+    script.onerror = () => { restore(); alert('Could not load print library. Check your internet connection.'); };
+    document.head.appendChild(script);
+  }
+}
+
 // Register all event-handler functions as global so onclick="" attributes work
 window._toggleBtn          = toggleBtn;
 window._setDropdown        = setDropdown;
@@ -1856,6 +1945,7 @@ window._selectResultsOnly  = selectResultsOnly;
 window._switchTab          = switchTab;
 window._insFilterChange    = insFilterChange;
 window._resetInsights      = resetInsights;
+window.resultsPrint        = resultsPrint;
 
 // Initial render
 applyFilters();
