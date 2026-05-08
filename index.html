@@ -1,6 +1,4 @@
 <!DOCTYPE html>
-
-
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -279,7 +277,6 @@ td.loccol { font-size:0.78rem; color:var(--muted); max-width:160px; overflow:hid
 </head>
 <body>
 
-  
 <div class="header">
   <div>
     <div class="club-title">Belmont <span>FC</span></div>
@@ -302,50 +299,62 @@ td.loccol { font-size:0.78rem; color:var(--muted); max-width:160px; overflow:hid
 </div>
 
 <div id="tab-match-day" class="tab-panel active">
-<!-- ═══════════ MATCH DAY TAB — NEW ═══════════ -->
-<div style="padding:24px 20px 48px;">
 
-  <!-- Page subtitle -->
-  <div style="margin-bottom:20px;">
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:0.06em;color:var(--yellow);">Upcoming Fixtures</div>
-    <div id="md-subtitle" style="font-size:0.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.12em;margin-top:3px;">Belmont FC Home &amp; Away</div>
-  </div>
+<!-- ── MATCH DAY TITLE ── -->
+<div style="padding:20px 20px 0;">
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:0.06em;color:var(--yellow);">Upcoming Fixtures</div>
+  <div id="md-subtitle" style="font-size:0.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.12em;margin-top:3px;">Belmont FC Home &amp; Away</div>
+</div>
 
-  <!-- ── FILTERS BAR ── -->
-  <div id="md-filters-bar" style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;padding:12px 16px;background:var(--fbox);border:1px solid var(--fbox-b);border-radius:10px;">
+<!-- ── MATCH DAY FILTER BAR ── -->
+<div id="md-filters-bar" class="filters-bar">
+  <div class="filters-grid" style="grid-template-columns:auto auto auto;">
 
-    <!-- Row 1: Date filter + Print button -->
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-      <span style="font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.13em;color:var(--yellow);opacity:0.85;white-space:nowrap;">Filter by Date</span>
-      <div style="width:1px;height:18px;background:rgba(255,255,255,0.1);flex-shrink:0;"></div>
-      <button id="md-date-all-btn" onclick="mdToggleAllDates()" style="background:var(--blue2);border:1px solid rgba(255,255,255,0.1);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.74rem;padding:5px 10px;border-radius:6px;cursor:pointer;white-space:nowrap;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--yellow)';this.style.color='var(--text)'" onmouseout="mdRefreshAllBtnStyle()">All Dates</button>
-      <button id="md-date-clear-btn" onclick="mdClearAllDates()" style="background:transparent;border:1px solid rgba(231,76,60,0.35);color:rgba(231,76,60,0.7);font-family:'DM Sans',sans-serif;font-size:0.74rem;padding:5px 10px;border-radius:6px;cursor:pointer;white-space:nowrap;transition:all 0.15s;" onmouseover="this.style.borderColor='#e74c3c';this.style.color='#e74c3c'" onmouseout="this.style.borderColor='rgba(231,76,60,0.35)';this.style.color='rgba(231,76,60,0.7)'">Clear All</button>
-      <div style="width:1px;height:18px;background:rgba(255,255,255,0.1);flex-shrink:0;"></div>
-      <div id="md-date-btns" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;flex:1;"></div>
-      <div style="margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:5px;flex-shrink:0;">
-        <button id="md-print-btn" onclick="mdPrintFixtures(window._mdPrintMode||'all')" style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#1a4a80,#0e2d55);border:1px solid rgba(253,184,19,0.35);color:var(--yellow);font-family:'DM Sans',sans-serif;font-size:0.74rem;font-weight:600;padding:6px 14px;border-radius:6px;cursor:pointer;white-space:nowrap;transition:all 0.18s;" onmouseover="this.style.borderColor='var(--yellow)';this.style.background='linear-gradient(135deg,#1f5a9e,#122f5a)'" onmouseout="this.style.borderColor='rgba(253,184,19,0.35)';this.style.background='linear-gradient(135deg,#1a4a80,#0e2d55)'">
-          <svg width="13" height="13" viewBox="0 0 13 13" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="2" y="7" width="9" height="5" rx="1" stroke="#fdb813" stroke-width="1.2"/><path d="M4 7V4a1 1 0 0 1 1-1h3a1 1 0 0 1 1 1v3" stroke="#fdb813" stroke-width="1.2"/><path d="M4 9.5h5" stroke="#fdb813" stroke-width="1.2" stroke-linecap="round"/></svg>
+    <!-- Box 1: Filter by Date -->
+    <div class="fbox">
+      <div class="fbox-title">Filter by Date</div>
+      <div class="fbox-body">
+        <button id="md-date-all-btn" class="btn" onclick="mdToggleAllDates()">All Dates</button>
+        <div id="md-date-btns" style="display:contents;"></div>
+      </div>
+    </div>
+
+    <!-- Box 2: Filter by Age Group -->
+    <div class="fbox">
+      <div class="fbox-title">Filter by Age Group</div>
+      <div class="fbox-body">
+        <button id="md-age-all-btn" class="btn" onclick="mdToggleAllAges()">All Ages</button>
+        <div id="md-age-btns" style="display:contents;"></div>
+      </div>
+    </div>
+
+    <!-- Box 3: Reset + Print -->
+    <div class="fbox-reset" style="padding:8px 10px;flex-direction:column;align-items:flex-start;gap:6px;">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <button class="breset" style="font-size:0.68rem;padding:3px 6px;" onclick="mdResetAll()">↺ Reset</button>
+        <button id="md-print-btn" onclick="mdPrintFixtures(window._mdPrintMode||'all')"
+          style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#1a4a80,#0e2d55);border:1px solid rgba(253,184,19,0.35);color:var(--yellow);font-family:'DM Sans',sans-serif;font-size:0.68rem;font-weight:600;padding:5px 11px;border-radius:6px;cursor:pointer;white-space:nowrap;transition:all 0.18s;"
+          onmouseover="this.style.borderColor='var(--yellow)';this.style.background='linear-gradient(135deg,#1f5a9e,#122f5a)'"
+          onmouseout="this.style.borderColor='rgba(253,184,19,0.35)';this.style.background='linear-gradient(135deg,#1a4a80,#0e2d55)'">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4V1h8v3M2 8H1V4h10v4h-1M3 8v3h6V8" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
           Print Fixtures
         </button>
-        <div style="display:flex;gap:4px;">
-          <button onclick="mdSetPrintMode('games',this)" id="md-print-games-btn" style="font-family:'DM Sans',sans-serif;font-size:0.65rem;padding:3px 9px;border-radius:5px;cursor:pointer;white-space:nowrap;transition:all 0.15s;border:1px solid rgba(255,255,255,0.15);background:var(--blue2);color:var(--muted);">Games</button>
-          <button onclick="mdSetPrintMode('pitches',this)" id="md-print-pitches-btn" style="font-family:'DM Sans',sans-serif;font-size:0.65rem;padding:3px 9px;border-radius:5px;cursor:pointer;white-space:nowrap;transition:all 0.15s;border:1px solid rgba(255,255,255,0.15);background:var(--blue2);color:var(--muted);">Pitches</button>
-          <button onclick="mdSetPrintMode('all',this)" id="md-print-all-btn" style="font-family:'DM Sans',sans-serif;font-size:0.65rem;padding:3px 9px;border-radius:5px;cursor:pointer;white-space:nowrap;transition:all 0.15s;border:1px solid var(--yellow);background:rgba(253,184,19,0.15);color:var(--yellow);font-weight:700;">All</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <div class="active-count" id="md-active-count" style="min-height:0;"></div>
+        <div style="display:flex;gap:4px;margin-left:auto;">
+          <button onclick="mdSetPrintMode('games',this)" id="md-print-games-btn" class="btn" style="font-size:0.65rem;padding:3px 9px;">Games</button>
+          <button onclick="mdSetPrintMode('pitches',this)" id="md-print-pitches-btn" class="btn" style="font-size:0.65rem;padding:3px 9px;">Pitches</button>
+          <button onclick="mdSetPrintMode('all',this)" id="md-print-all-btn" class="btn active" style="font-size:0.65rem;padding:3px 9px;">All</button>
         </div>
       </div>
     </div>
 
-    <!-- Row 2: Age Group filter -->
-    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
-      <span style="font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.13em;color:var(--yellow);opacity:0.85;white-space:nowrap;">Filter by Age Group</span>
-      <div style="width:1px;height:18px;background:rgba(255,255,255,0.1);flex-shrink:0;"></div>
-      <button id="md-age-all-btn" onclick="mdToggleAllAges()" style="background:var(--blue2);border:1px solid rgba(255,255,255,0.1);color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.74rem;padding:5px 10px;border-radius:6px;cursor:pointer;white-space:nowrap;transition:all 0.15s;" onmouseover="this.style.borderColor='var(--yellow)';this.style.color='var(--text)'" onmouseout="mdRefreshAgeAllBtnStyle()">All Ages</button>
-      <button onclick="mdClearAllAges()" style="background:transparent;border:1px solid rgba(231,76,60,0.35);color:rgba(231,76,60,0.7);font-family:'DM Sans',sans-serif;font-size:0.74rem;padding:5px 10px;border-radius:6px;cursor:pointer;white-space:nowrap;transition:all 0.15s;" onmouseover="this.style.borderColor='#e74c3c';this.style.color='#e74c3c'" onmouseout="this.style.borderColor='rgba(231,76,60,0.35)';this.style.color='rgba(231,76,60,0.7)'">Clear All</button>
-      <div style="width:1px;height:18px;background:rgba(255,255,255,0.1);flex-shrink:0;"></div>
-      <div id="md-age-btns" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;flex:1;"></div>
-    </div>
-
   </div>
+</div>
+
+<!-- ═══════════ MATCH DAY TAB — CONTENT ═══════════ -->
+<div style="padding:24px 20px 48px;">
 
   <!-- ── GAMES TABLE ── -->
   <div id="md-games-section">
@@ -459,10 +468,29 @@ function mdRefreshAgeAllBtnStyle() {
   const allAges = window._mdAllAges || [];
   const sel = window._mdSelectedAges;
   const allSelected = sel && sel.size === allAges.length && allAges.length > 0;
-  btn.style.background = allSelected ? 'var(--yellow)' : 'var(--blue2)';
-  btn.style.borderColor = allSelected ? 'var(--yellow)' : 'rgba(255,255,255,0.1)';
-  btn.style.color = allSelected ? 'var(--blue)' : 'var(--muted)';
-  btn.style.fontWeight = allSelected ? '700' : 'normal';
+  btn.classList.toggle('active', allSelected);
+}
+
+function mdUpdateActiveCount() {
+  const el = document.getElementById('md-active-count');
+  if (!el) return;
+  const allDates = window._mdAllDates || [];
+  const allAges  = window._mdAllAges  || [];
+  const selDates = window._mdSelectedDates;
+  const selAges  = window._mdSelectedAges;
+  let count = 0;
+  const datesFiltered = selDates && selDates.size > 0 && selDates.size < allDates.length;
+  const agesFiltered  = selAges  && selAges.size  > 0 && selAges.size  < allAges.length;
+  if (datesFiltered) count++;
+  if (agesFiltered)  count++;
+  el.textContent = count > 0 ? `${count} filter${count > 1 ? 's' : ''} active` : '';
+}
+
+function mdResetAll() {
+  window._mdSelectedDates = new Set();
+  window._mdSelectedAges  = new Set();
+  mdApplyDateFilter();
+  mdApplyAgeFilter();
 }
 
 function mdApplyAgeFilter() {
@@ -472,12 +500,9 @@ function mdApplyAgeFilter() {
   allAges.forEach(age => {
     const btn = document.getElementById(`md-age-btn-${age.replace(/[^a-zA-Z0-9]/g,'_')}`);
     if (!btn) return;
-    const active = sel.has(age);
-    btn.style.background = active ? 'var(--yellow)' : 'var(--blue2)';
-    btn.style.borderColor = active ? 'var(--yellow)' : 'rgba(255,255,255,0.1)';
-    btn.style.color = active ? 'var(--blue)' : 'var(--muted)';
-    btn.style.fontWeight = active ? '700' : 'normal';
+    btn.classList.toggle('active', sel.has(age));
   });
+  mdUpdateActiveCount();
   if (window._renderMatchDayFiltered) window._renderMatchDayFiltered();
 }
 
@@ -488,11 +513,7 @@ function mdSetPrintMode(mode, btn) {
   ['games','pitches','all'].forEach(m => {
     const b = document.getElementById(`md-print-${m}-btn`);
     if (!b) return;
-    const active = m === mode;
-    b.style.background    = active ? 'rgba(253,184,19,0.15)' : 'var(--blue2)';
-    b.style.borderColor   = active ? 'var(--yellow)'         : 'rgba(255,255,255,0.15)';
-    b.style.color         = active ? 'var(--yellow)'         : 'var(--muted)';
-    b.style.fontWeight    = active ? '700'                   : 'normal';
+    b.classList.toggle('active', m === mode);
   });
 }
 
@@ -604,10 +625,7 @@ function mdRefreshAllBtnStyle() {
   const allDates = window._mdAllDates || [];
   const sel = window._mdSelectedDates;
   const allSelected = sel && allDates.length > 0 && sel.size === allDates.length;
-  btn.style.background = allSelected ? 'var(--yellow)' : 'var(--blue2)';
-  btn.style.borderColor = allSelected ? 'var(--yellow)' : 'rgba(255,255,255,0.1)';
-  btn.style.color = allSelected ? 'var(--blue)' : 'var(--muted)';
-  btn.style.fontWeight = allSelected ? '700' : 'normal';
+  btn.classList.toggle('active', allSelected);
 }
 
 function mdApplyDateFilter() {
@@ -618,12 +636,9 @@ function mdApplyDateFilter() {
   allDates.forEach(d => {
     const btn = document.getElementById(`md-date-btn-${d.fmt.replace(/[^a-zA-Z0-9]/g,'_')}`);
     if (!btn) return;
-    const active = sel.has(d.fmt);
-    btn.style.background = active ? 'var(--yellow)' : 'var(--blue2)';
-    btn.style.borderColor = active ? 'var(--yellow)' : 'rgba(255,255,255,0.1)';
-    btn.style.color = active ? 'var(--blue)' : 'var(--muted)';
-    btn.style.fontWeight = active ? '700' : 'normal';
+    btn.classList.toggle('active', sel.has(d.fmt));
   });
+  mdUpdateActiveCount();
   // Re-render games table (filtered + descending) + pitches tables
   if (window._renderMatchDayFiltered) window._renderMatchDayFiltered();
 }
@@ -719,10 +734,7 @@ function renderMatchDay() {
     dateBtnsEl.innerHTML = allDates.map(d => {
       const id = `md-date-btn-${d.fmt.replace(/[^a-zA-Z0-9]/g,'_')}`;
       const active = window._mdSelectedDates.has(d.fmt);
-      return `<button id="${id}" onclick="mdToggleDate('${d.fmt}')"
-        style="background:${active?'var(--yellow)':'var(--blue2)'};border:1px solid ${active?'var(--yellow)':'rgba(255,255,255,0.1)'};color:${active?'var(--blue)':'var(--muted)'};font-family:'DM Sans',sans-serif;font-size:0.74rem;padding:5px 10px;border-radius:6px;cursor:pointer;white-space:nowrap;transition:all 0.15s;font-weight:${active?'700':'normal'};"
-        onmouseover="this.style.borderColor='var(--yellow)';this.style.color=this.style.background==='rgb(253, 184, 19)'?'var(--blue)':'var(--text)'"
-        onmouseout="mdApplyDateFilter()">${d.fmt}</button>`;
+      return `<button id="${id}" class="btn${active?' active':''}" onclick="mdToggleDate('${d.fmt}')">${d.fmt}</button>`;
     }).join('');
   }
   mdRefreshAllBtnStyle();
@@ -744,10 +756,7 @@ function renderMatchDay() {
     ageBtnsEl.innerHTML = allAges.map(age => {
       const id = `md-age-btn-${age.replace(/[^a-zA-Z0-9]/g,'_')}`;
       const active = window._mdSelectedAges.has(age);
-      return `<button id="${id}" onclick="mdToggleAge('${age}')"
-        style="background:${active?'var(--yellow)':'var(--blue2)'};border:1px solid ${active?'var(--yellow)':'rgba(255,255,255,0.1)'};color:${active?'var(--blue)':'var(--muted)'};font-family:'DM Sans',sans-serif;font-size:0.74rem;padding:5px 10px;border-radius:6px;cursor:pointer;white-space:nowrap;transition:all 0.15s;font-weight:${active?'700':'normal'};"
-        onmouseover="this.style.borderColor='var(--yellow)';this.style.color=this.style.background==='rgb(253, 184, 19)'?'var(--blue)':'var(--text)'"
-        onmouseout="mdApplyAgeFilter()">${age}</button>`;
+      return `<button id="${id}" class="btn${active?' active':''}" onclick="mdToggleAge('${age}')">${age}</button>`;
     }).join('');
   }
   mdRefreshAgeAllBtnStyle();
@@ -840,10 +849,7 @@ function renderMatchDay() {
       dateBtnsEl2.innerHTML = testDates.map(d => {
         const id = `md-date-btn-${d.fmt.replace(/[^a-zA-Z0-9]/g,'_')}`;
         const active = window._mdSelectedDates.has(d.fmt);
-        return `<button id="${id}" onclick="mdToggleDate('${d.fmt}')"
-          style="background:${active?'var(--yellow)':'var(--blue2)'};border:1px solid ${active?'var(--yellow)':'rgba(255,255,255,0.1)'};color:${active?'var(--blue)':'var(--muted)'};font-family:'DM Sans',sans-serif;font-size:0.74rem;padding:5px 10px;border-radius:6px;cursor:pointer;white-space:nowrap;transition:all 0.15s;font-weight:${active?'700':'normal'};"
-          onmouseover="this.style.borderColor='var(--yellow)';this.style.color=this.style.background==='rgb(253, 184, 19)'?'var(--blue)':'var(--text)'"
-          onmouseout="mdApplyDateFilter()">${d.fmt} <span style="font-size:0.58rem;opacity:0.7;">(test)</span></button>`;
+        return `<button id="${id}" class="btn${active?' active':''}" onclick="mdToggleDate('${d.fmt}')">${d.fmt} <span style="font-size:0.58rem;opacity:0.7;">(test)</span></button>`;
       }).join('');
     }
 
@@ -1121,7 +1127,7 @@ window._renderMatchDayTables = function() {
         const entries = startMap[sk];
 
         if (entries && entries.length) {
-          const hasConflict = conflictGames[pi].size > 0 && entries._minSi !== undefined;
+          const hasConflict = conflictGames[pi].size > 0;
           if (hasConflict) {
             if (si === entries._minSi) {
               const mergedSpan = entries._mergedSpan;
@@ -1321,16 +1327,18 @@ window._renderMatchDayFiltered = function() {
     </div>
 
     <!-- Reset + Print -->
-    <div class="fbox-reset" style="padding:8px 10px;">
-      <button class="breset" style="font-size:0.68rem;padding:3px 6px;" onclick="resetAll()">↺ Reset</button>
+    <div class="fbox-reset" style="padding:8px 10px;flex-direction:column;align-items:flex-start;gap:6px;">
+      <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+        <button class="breset" style="font-size:0.68rem;padding:3px 6px;" onclick="resetAll()">↺ Reset</button>
+        <button id="results-print-btn" onclick="resultsPrint()"
+          style="display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#1a4a80,#0e2d55);border:1px solid rgba(253,184,19,0.35);color:var(--yellow);font-family:'DM Sans',sans-serif;font-size:0.68rem;font-weight:600;padding:5px 11px;border-radius:6px;cursor:pointer;white-space:nowrap;transition:all 0.18s;"
+          onmouseover="this.style.borderColor='var(--yellow)';this.style.background='linear-gradient(135deg,#1f5a9e,#122f5a)'"
+          onmouseout="this.style.borderColor='rgba(253,184,19,0.35)';this.style.background='linear-gradient(135deg,#1a4a80,#0e2d55)'">
+          <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4V1h8v3M2 8H1V4h10v4h-1M3 8v3h6V8" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+          Print Results
+        </button>
+      </div>
       <div class="active-count" id="activeCount"></div>
-      <button id="results-print-btn" onclick="resultsPrint()"
-        style="margin-top:6px;display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#1a4a80,#0e2d55);border:1px solid rgba(253,184,19,0.35);color:var(--yellow);font-family:'DM Sans',sans-serif;font-size:0.68rem;font-weight:600;padding:5px 11px;border-radius:6px;cursor:pointer;white-space:nowrap;transition:all 0.18s;"
-        onmouseover="this.style.borderColor='var(--yellow)';this.style.background='linear-gradient(135deg,#1f5a9e,#122f5a)'"
-        onmouseout="this.style.borderColor='rgba(253,184,19,0.35)';this.style.background='linear-gradient(135deg,#1a4a80,#0e2d55)'">
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4V1h8v3M2 8H1V4h10v4h-1M3 8v3h6V8" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
-        Print Results
-      </button>
     </div>
 
   </div>
@@ -1379,39 +1387,12 @@ function parseCSV(text) {
   const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
   if (lines.length < 2) return [];
   const headers = lines[0].split(',').map(h => h.trim());
-
-  // RFC-4180 compliant field splitter: handles "field,with,commas" and "field ""with"" quotes"
-  function splitLine(line) {
-    const fields = [];
-    let i = 0;
-    while (i <= line.length) {
-      if (line[i] === '"') {
-        // Quoted field
-        let val = '';
-        i++; // skip opening quote
-        while (i < line.length) {
-          if (line[i] === '"' && line[i+1] === '"') { val += '"'; i += 2; }
-          else if (line[i] === '"') { i++; break; } // closing quote
-          else { val += line[i++]; }
-        }
-        fields.push(val);
-        if (line[i] === ',') i++; // skip comma
-      } else {
-        // Unquoted field
-        const end = line.indexOf(',', i);
-        if (end === -1) { fields.push(line.slice(i)); break; }
-        fields.push(line.slice(i, end));
-        i = end + 1;
-      }
-    }
-    return fields;
-  }
-
   const rows = [];
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
-    const vals = splitLine(line);
+    // Simple CSV parse (handles empty fields; no quoted-comma support needed here)
+    const vals = line.split(',');
     const obj = {};
     headers.forEach((h, idx) => {
       let v = vals[idx] !== undefined ? vals[idx].trim() : '';
@@ -1648,12 +1629,7 @@ function updateDropdowns() {
 
   const agePool = poolExcluding('age');
   rebuildSelect('ageSel', 'age',
-    [...new Set(agePool.map(g=>g.age))].sort((a,b)=>{
-      const na = parseInt(a.replace(/\D/g,'')) || 9999;
-      const nb = parseInt(b.replace(/\D/g,'')) || 9999;
-      if (na !== nb) return na - nb;
-      return String(a).localeCompare(String(b));
-    }),
+    [...new Set(agePool.map(g=>g.age))].sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1))),
     filters.age, 'Age');
 
   const divPool = poolExcluding('div');
@@ -1773,6 +1749,7 @@ function renderStats(filtered) {
   // Active state: pill is highlighted if its result_type is in the filter AND not all selected
   const isAllSt = filters.st.size === ALL_ST.length;
   const act = v => (!isAllSt && filters.st.has(v)) ? 'active-pill' : '';
+  const totalAct = isAllSt ? '' : 'active-pill'; // total pill active when filtering
 
   document.getElementById('statsRow').innerHTML = `
     <button class="pill ${isAllSt?'':'' }" onclick="selectOnlySt(null)" style="flex:0 1 126px;min-width:0;">
@@ -2084,12 +2061,7 @@ function rebuildInsDropdowns() {
   rebuildInsSelect('ins-groupSel', groups, f.group, 'All Groups');
   // Age
   const agePool = insPoolExcluding('age');
-  const ages = [...new Set(agePool.map(g=>g.age))].sort((a,b)=>{
-    const na = parseInt(a.replace(/\D/g,'')) || 9999;
-    const nb = parseInt(b.replace(/\D/g,'')) || 9999;
-    if (na !== nb) return na - nb;
-    return String(a).localeCompare(String(b));
-  });
+  const ages = [...new Set(agePool.map(g=>g.age))].sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1)));
   rebuildInsSelect('ins-ageSel', ages, f.age, 'All Ages');
   // Division
   const divPool = insPoolExcluding('div');
@@ -2315,12 +2287,11 @@ function buildCard(title, sub, headers, rows, headerAligns, ranked) {
     else if (i > 1) cls = 'right';
     return `<th${cls?' class="'+cls+'"':''}>${h}</th>`;
   }).join('');
-  const safeRows = rows || [];
-  const trs = safeRows.length ? safeRows.join('') : `<tr><td colspan="${headers.length}" class="no-data">No data</td></tr>`;
+  const trs = rows.length ? rows.join('') : `<tr><td colspan="${headers.length}" class="no-data">No data</td></tr>`;
   return `<div class="stat-card${ranked?' stat-card--ranked':''}">
     <div class="stat-card-header">
       <div class="stat-card-title">${title}</div>
-      <div class="stat-card-sub">${sub || ''}</div>
+      <div class="stat-card-sub">${sub}</div>
     </div>
     <div class="stat-table-wrap">
       <table class="stat-table"><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>
@@ -2553,12 +2524,7 @@ function rebuildPerfDropdowns() {
   if (curGroup !== 'all' && !groups.includes(curGroup)) groupSel.value = 'all';
 
   const agePool = perfPoolExcluding('age');
-  const ages = [...new Set(agePool.map(g => g.age))].sort((a,b)=>{
-    const na = parseInt(a.replace(/\D/g,'')) || 9999;
-    const nb = parseInt(b.replace(/\D/g,'')) || 9999;
-    if (na !== nb) return na - nb;
-    return String(a).localeCompare(String(b));
-  });
+  const ages = [...new Set(agePool.map(g => g.age))].sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1)));
   ageSel.innerHTML = '<option value="all">All Ages</option>';
   ages.forEach(v => { const o = new Option(v,v); if(v===curAge) o.selected=true; ageSel.appendChild(o); });
   if (curAge !== 'all' && !ages.includes(curAge)) ageSel.value = 'all';
