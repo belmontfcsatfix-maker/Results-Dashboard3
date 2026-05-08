@@ -600,7 +600,7 @@ function mdRefreshAllBtnStyle() {
   if (!btn) return;
   const allDates = window._mdAllDates || [];
   const sel = window._mdSelectedDates;
-  const allSelected = sel && sel.size === allDates.length;
+  const allSelected = sel && allDates.length > 0 && sel.size === allDates.length;
   btn.style.background = allSelected ? 'var(--yellow)' : 'var(--blue2)';
   btn.style.borderColor = allSelected ? 'var(--yellow)' : 'rgba(255,255,255,0.1)';
   btn.style.color = allSelected ? 'var(--blue)' : 'var(--muted)';
@@ -1118,7 +1118,7 @@ window._renderMatchDayTables = function() {
         const entries = startMap[sk];
 
         if (entries && entries.length) {
-          const hasConflict = conflictGames[pi].size > 0;
+          const hasConflict = conflictGames[pi].size > 0 && entries._minSi !== undefined;
           if (hasConflict) {
             if (si === entries._minSi) {
               const mergedSpan = entries._mergedSpan;
@@ -1376,12 +1376,39 @@ function parseCSV(text) {
   const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
   if (lines.length < 2) return [];
   const headers = lines[0].split(',').map(h => h.trim());
+
+  // RFC-4180 compliant field splitter: handles "field,with,commas" and "field ""with"" quotes"
+  function splitLine(line) {
+    const fields = [];
+    let i = 0;
+    while (i <= line.length) {
+      if (line[i] === '"') {
+        // Quoted field
+        let val = '';
+        i++; // skip opening quote
+        while (i < line.length) {
+          if (line[i] === '"' && line[i+1] === '"') { val += '"'; i += 2; }
+          else if (line[i] === '"') { i++; break; } // closing quote
+          else { val += line[i++]; }
+        }
+        fields.push(val);
+        if (line[i] === ',') i++; // skip comma
+      } else {
+        // Unquoted field
+        const end = line.indexOf(',', i);
+        if (end === -1) { fields.push(line.slice(i)); break; }
+        fields.push(line.slice(i, end));
+        i = end + 1;
+      }
+    }
+    return fields;
+  }
+
   const rows = [];
   for (let i = 1; i < lines.length; i++) {
     const line = lines[i].trim();
     if (!line) continue;
-    // Simple CSV parse (handles empty fields; no quoted-comma support needed here)
-    const vals = line.split(',');
+    const vals = splitLine(line);
     const obj = {};
     headers.forEach((h, idx) => {
       let v = vals[idx] !== undefined ? vals[idx].trim() : '';
@@ -1618,7 +1645,12 @@ function updateDropdowns() {
 
   const agePool = poolExcluding('age');
   rebuildSelect('ageSel', 'age',
-    [...new Set(agePool.map(g=>g.age))].sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1))),
+    [...new Set(agePool.map(g=>g.age))].sort((a,b)=>{
+      const na = parseInt(a.replace(/\D/g,'')) || 9999;
+      const nb = parseInt(b.replace(/\D/g,'')) || 9999;
+      if (na !== nb) return na - nb;
+      return String(a).localeCompare(String(b));
+    }),
     filters.age, 'Age');
 
   const divPool = poolExcluding('div');
@@ -1738,7 +1770,6 @@ function renderStats(filtered) {
   // Active state: pill is highlighted if its result_type is in the filter AND not all selected
   const isAllSt = filters.st.size === ALL_ST.length;
   const act = v => (!isAllSt && filters.st.has(v)) ? 'active-pill' : '';
-  const totalAct = isAllSt ? '' : 'active-pill'; // total pill active when filtering
 
   document.getElementById('statsRow').innerHTML = `
     <button class="pill ${isAllSt?'':'' }" onclick="selectOnlySt(null)" style="flex:0 1 126px;min-width:0;">
@@ -2050,7 +2081,12 @@ function rebuildInsDropdowns() {
   rebuildInsSelect('ins-groupSel', groups, f.group, 'All Groups');
   // Age
   const agePool = insPoolExcluding('age');
-  const ages = [...new Set(agePool.map(g=>g.age))].sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1)));
+  const ages = [...new Set(agePool.map(g=>g.age))].sort((a,b)=>{
+    const na = parseInt(a.replace(/\D/g,'')) || 9999;
+    const nb = parseInt(b.replace(/\D/g,'')) || 9999;
+    if (na !== nb) return na - nb;
+    return String(a).localeCompare(String(b));
+  });
   rebuildInsSelect('ins-ageSel', ages, f.age, 'All Ages');
   // Division
   const divPool = insPoolExcluding('div');
@@ -2276,11 +2312,12 @@ function buildCard(title, sub, headers, rows, headerAligns, ranked) {
     else if (i > 1) cls = 'right';
     return `<th${cls?' class="'+cls+'"':''}>${h}</th>`;
   }).join('');
-  const trs = rows.length ? rows.join('') : `<tr><td colspan="${headers.length}" class="no-data">No data</td></tr>`;
+  const safeRows = rows || [];
+  const trs = safeRows.length ? safeRows.join('') : `<tr><td colspan="${headers.length}" class="no-data">No data</td></tr>`;
   return `<div class="stat-card${ranked?' stat-card--ranked':''}">
     <div class="stat-card-header">
       <div class="stat-card-title">${title}</div>
-      <div class="stat-card-sub">${sub}</div>
+      <div class="stat-card-sub">${sub || ''}</div>
     </div>
     <div class="stat-table-wrap">
       <table class="stat-table"><thead><tr>${ths}</tr></thead><tbody>${trs}</tbody></table>
@@ -2513,7 +2550,12 @@ function rebuildPerfDropdowns() {
   if (curGroup !== 'all' && !groups.includes(curGroup)) groupSel.value = 'all';
 
   const agePool = perfPoolExcluding('age');
-  const ages = [...new Set(agePool.map(g => g.age))].sort((a,b)=>parseInt(a.slice(1))-parseInt(b.slice(1)));
+  const ages = [...new Set(agePool.map(g => g.age))].sort((a,b)=>{
+    const na = parseInt(a.replace(/\D/g,'')) || 9999;
+    const nb = parseInt(b.replace(/\D/g,'')) || 9999;
+    if (na !== nb) return na - nb;
+    return String(a).localeCompare(String(b));
+  });
   ageSel.innerHTML = '<option value="all">All Ages</option>';
   ages.forEach(v => { const o = new Option(v,v); if(v===curAge) o.selected=true; ageSel.appendChild(o); });
   if (curAge !== 'all' && !ages.includes(curAge)) ageSel.value = 'all';
