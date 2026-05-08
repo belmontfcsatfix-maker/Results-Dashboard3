@@ -291,13 +291,14 @@ td.loccol { font-size:0.78rem; color:var(--muted); max-width:160px; overflow:hid
 </div>
 
 <div class="tab-bar">
-  <button class="tab-btn" onclick="switchTab('match-day',this)">📋 Match Day</button>
-  <button class="tab-btn active" onclick="switchTab('fixtures',this)">🏆 Results</button>
+  <button class="tab-btn active" onclick="switchTab('match-day',this)">📋 Match Day</button>
+  <button class="tab-btn" onclick="switchTab('fixtures',this)">🏆 Results</button>
   <button class="tab-btn" onclick="switchTab('insights',this)">💡 Season Insights</button>
   <button class="tab-btn" onclick="switchTab('performance',this)">📊 Performance &amp; Activity</button>
+  <button class="tab-btn" onclick="switchTab('ha-analysis',this)">🏠 Home &amp; Away</button>
 </div>
 
-<div id="tab-match-day" class="tab-panel">
+<div id="tab-match-day" class="tab-panel active">
 <!-- ═══════════ MATCH DAY TAB — NEW ═══════════ -->
 <div style="padding:24px 20px 48px;">
 
@@ -353,10 +354,13 @@ td.loccol { font-size:0.78rem; color:var(--muted); max-width:160px; overflow:hid
       <div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap;padding-bottom:2px;">
         <span style="font-size:0.58rem;text-transform:uppercase;letter-spacing:0.12em;color:var(--muted);">Division Status:</span>
         <span style="display:flex;align-items:center;gap:5px;font-size:0.7rem;color:#8ba2c1;">
-          <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(46,204,113,0.35);border:1px solid rgba(46,204,113,0.6);flex-shrink:0;"></span>Confirmed
+          <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(46,204,113,0.45);border:1px solid rgba(46,204,113,0.75);flex-shrink:0;"></span>Confirmed
         </span>
         <span style="display:flex;align-items:center;gap:5px;font-size:0.7rem;color:#8ba2c1;">
-          <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(230,126,34,0.35);border:1px solid rgba(230,126,34,0.6);flex-shrink:0;"></span>Pending
+          <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(243,156,18,0.4);border:1px solid rgba(243,156,18,0.7);flex-shrink:0;"></span>Pending
+        </span>
+        <span style="display:flex;align-items:center;gap:5px;font-size:0.7rem;color:#8ba2c1;">
+          <span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:rgba(231,76,60,0.45);border:1px solid rgba(231,76,60,0.75);flex-shrink:0;"></span>Declined
         </span>
       </div>
     </div>
@@ -747,9 +751,17 @@ function renderMatchDay() {
 
   /* ── helpers ── */
   function confIcon(val) {
-    return val && val.toUpperCase() === 'Y'
-      ? `<span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#27ae60;flex-shrink:0;vertical-align:middle;"><svg width="9" height="9" viewBox="0 0 9 9" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1.5 4.5L3.5 6.5L7.5 2.5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`
-      : `<span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#e67e22;flex-shrink:0;vertical-align:middle;"><svg width="9" height="9" viewBox="0 0 9 9" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 2.5L6.5 6.5M6.5 2.5L2.5 6.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg></span>`;
+    const v = (val || '').toUpperCase();
+    if (v === 'Y') {
+      // Confirmed: green circle with checkmark
+      return `<span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#27ae60;flex-shrink:0;vertical-align:middle;"><svg width="9" height="9" viewBox="0 0 9 9" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1.5 4.5L3.5 6.5L7.5 2.5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`;
+    } else if (v === 'N') {
+      // Declined: red circle with X
+      return `<span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#e74c3c;flex-shrink:0;vertical-align:middle;"><svg width="9" height="9" viewBox="0 0 9 9" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 2.5L6.5 6.5M6.5 2.5L2.5 6.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg></span>`;
+    } else {
+      // Pending: orange circle with NO X (empty circle)
+      return `<span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#e67e22;flex-shrink:0;vertical-align:middle;"></span>`;
+    }
   }
   function highlightBFC(name) {
     return /belmont fc/i.test(name)
@@ -792,14 +804,14 @@ function renderMatchDay() {
     },
     {
       dateFmt:'10-May-25', dateKey:20250510, div:'U14G. Div 2',   age:'U14G',
-      home:'Shelbourne FC',hConf:'Y',  away:'Belmont FC',   aConf:'',
-      ko:'11:30', ref:'',           refConf:'',  comments:'Test game B', pitch:'Pitch 2',
+      home:'Shelbourne FC',hConf:'N',  away:'Belmont FC',   aConf:'Y',
+      ko:'11:30', ref:'',           refConf:'',  comments:'Home team declined', pitch:'Pitch 2',
       gameLen:70, belHome:false,
     },
     {
       dateFmt:'17-May-25', dateKey:20250517, div:'U16. Div 3',    age:'U16',
-      home:'Belmont FC',   hConf:'',   away:'St. Kevin\'s',  aConf:'',
-      ko:'09:30', ref:'P. Walsh',   refConf:'',  comments:'Test game C', pitch:'Pitch 3',
+      home:'Belmont FC',   hConf:'Y',   away:'St. Kevin\'s',  aConf:'N',
+      ko:'09:30', ref:'P. Walsh',   refConf:'',  comments:'Away team declined', pitch:'Pitch 3',
       gameLen:80, belHome:true,
     },
   ];
@@ -850,9 +862,12 @@ function renderMatchDay() {
       const isAlt = testDateGroupIdx % 2 === 1;
       const rowBg = isAlt ? 'rgba(253,184,19,0.04)' : '';
       const dc = mdDivColor(g.div);
-      const bothConf = g.hConf && g.hConf.toUpperCase() === 'Y' && g.aConf && g.aConf.toUpperCase() === 'Y';
-      const cBg  = bothConf ? 'rgba(46,204,113,0.18)' : 'rgba(230,126,34,0.18)';
-      const cBrd = bothConf ? 'rgba(46,204,113,0.35)' : 'rgba(230,126,34,0.35)';
+      const hcT = g.hConf ? g.hConf.toUpperCase() : '';
+      const acT = g.aConf ? g.aConf.toUpperCase() : '';
+      const bothConf = hcT === 'Y' && acT === 'Y';
+      const eitherDeclinedT = hcT === 'N' || acT === 'N';
+      const cBg  = bothConf ? 'rgba(46,204,113,0.32)' : eitherDeclinedT ? 'rgba(231,76,60,0.32)' : 'rgba(243,156,18,0.28)';
+      const cBrd = bothConf ? 'rgba(46,204,113,0.7)' : eitherDeclinedT ? 'rgba(231,76,60,0.7)' : 'rgba(243,156,18,0.65)';
       return `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.1s;${rowBg?`background:${rowBg}`:''};"
         onmouseover="this.style.background='rgba(255,255,255,0.06)'"
         onmouseout="this.style.background='${rowBg}'">
@@ -879,9 +894,12 @@ function renderMatchDay() {
       const isAlt = dateGroupIdx % 2 === 1;
       const rowBg = isAlt ? 'rgba(253,184,19,0.04)' : '';
       const dc = mdDivColor(g.div);
-      const bothConfirmed = g.hConf && g.hConf.toUpperCase() === 'Y' && g.aConf && g.aConf.toUpperCase() === 'Y';
-      const confCellBg = bothConfirmed ? 'rgba(46,204,113,0.18)' : 'rgba(230,126,34,0.18)';
-      const confCellBorder = bothConfirmed ? 'rgba(46,204,113,0.35)' : 'rgba(230,126,34,0.35)';
+      const hc = g.hConf ? g.hConf.toUpperCase() : '';
+      const ac = g.aConf ? g.aConf.toUpperCase() : '';
+      const bothConfirmed = hc === 'Y' && ac === 'Y';
+      const eitherDeclined = hc === 'N' || ac === 'N';
+      const confCellBg = bothConfirmed ? 'rgba(46,204,113,0.32)' : eitherDeclined ? 'rgba(231,76,60,0.32)' : 'rgba(243,156,18,0.28)';
+      const confCellBorder = bothConfirmed ? 'rgba(46,204,113,0.7)' : eitherDeclined ? 'rgba(231,76,60,0.7)' : 'rgba(243,156,18,0.65)';
       const tr = document.createElement('tr');
       tr.style.cssText = `border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.1s;${rowBg?`background:${rowBg}`:''}`;
       tr.onmouseover = () => tr.style.background = 'rgba(255,255,255,0.06)';
@@ -1180,9 +1198,14 @@ window._renderMatchDayFiltered = function() {
 
   // Helpers
   function confIcon(val) {
-    return val && val.toUpperCase() === 'Y'
-      ? `<span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#27ae60;flex-shrink:0;vertical-align:middle;"><svg width="9" height="9" viewBox="0 0 9 9" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1.5 4.5L3.5 6.5L7.5 2.5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`
-      : `<span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#e67e22;flex-shrink:0;vertical-align:middle;"><svg width="9" height="9" viewBox="0 0 9 9" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 2.5L6.5 6.5M6.5 2.5L2.5 6.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg></span>`;
+    const v = (val || '').toUpperCase();
+    if (v === 'Y') {
+      return `<span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#27ae60;flex-shrink:0;vertical-align:middle;"><svg width="9" height="9" viewBox="0 0 9 9" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M1.5 4.5L3.5 6.5L7.5 2.5" stroke="white" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></span>`;
+    } else if (v === 'N') {
+      return `<span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#e74c3c;flex-shrink:0;vertical-align:middle;"><svg width="9" height="9" viewBox="0 0 9 9" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 2.5L6.5 6.5M6.5 2.5L2.5 6.5" stroke="white" stroke-width="1.5" stroke-linecap="round"/></svg></span>`;
+    } else {
+      return `<span style="display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;background:#e67e22;flex-shrink:0;vertical-align:middle;"></span>`;
+    }
   }
   function highlightBFC(name) {
     return /belmont fc/i.test(name)
@@ -1219,9 +1242,12 @@ window._renderMatchDayFiltered = function() {
         const isAlt = dateGroupIdx % 2 === 1;
         const rowBg = isAlt ? 'rgba(253,184,19,0.04)' : '';
         const dc = mdDivColor(g.div);
-        const bothConfirmed = g.hConf && g.hConf.toUpperCase() === 'Y' && g.aConf && g.aConf.toUpperCase() === 'Y';
-        const confCellBg = bothConfirmed ? 'rgba(46,204,113,0.18)' : 'rgba(230,126,34,0.18)';
-        const confCellBorder = bothConfirmed ? 'rgba(46,204,113,0.35)' : 'rgba(230,126,34,0.35)';
+        const hcR = g.hConf ? g.hConf.toUpperCase() : '';
+        const acR = g.aConf ? g.aConf.toUpperCase() : '';
+        const bothConfirmed = hcR === 'Y' && acR === 'Y';
+        const eitherDeclinedR = hcR === 'N' || acR === 'N';
+        const confCellBg = bothConfirmed ? 'rgba(46,204,113,0.32)' : eitherDeclinedR ? 'rgba(231,76,60,0.32)' : 'rgba(243,156,18,0.28)';
+        const confCellBorder = bothConfirmed ? 'rgba(46,204,113,0.7)' : eitherDeclinedR ? 'rgba(231,76,60,0.7)' : 'rgba(243,156,18,0.65)';
         const tr = document.createElement('tr');
         tr.style.cssText = `border-bottom:1px solid rgba(255,255,255,0.04);transition:background 0.1s;${rowBg?`background:${rowBg}`:''}`;
         tr.onmouseover = () => tr.style.background = 'rgba(255,255,255,0.06)';
@@ -1246,7 +1272,7 @@ window._renderMatchDayFiltered = function() {
 </script>
 </div>
 
-<div id="tab-fixtures" class="tab-panel active">
+<div id="tab-fixtures" class="tab-panel">
 <div id="statsRow" class="stats"></div>
 
 <div class="filters-bar">
@@ -1291,10 +1317,17 @@ window._renderMatchDayFiltered = function() {
       </div>
     </div>
 
-    <!-- Reset -->
+    <!-- Reset + Print -->
     <div class="fbox-reset" style="padding:8px 10px;">
       <button class="breset" style="font-size:0.68rem;padding:3px 6px;" onclick="resetAll()">↺ Reset</button>
       <div class="active-count" id="activeCount"></div>
+      <button id="results-print-btn" onclick="resultsPrint()"
+        style="margin-top:6px;display:inline-flex;align-items:center;gap:6px;background:linear-gradient(135deg,#1a4a80,#0e2d55);border:1px solid rgba(253,184,19,0.35);color:var(--yellow);font-family:'DM Sans',sans-serif;font-size:0.68rem;font-weight:600;padding:5px 11px;border-radius:6px;cursor:pointer;white-space:nowrap;transition:all 0.18s;"
+        onmouseover="this.style.borderColor='var(--yellow)';this.style.background='linear-gradient(135deg,#1f5a9e,#122f5a)'"
+        onmouseout="this.style.borderColor='rgba(253,184,19,0.35)';this.style.background='linear-gradient(135deg,#1a4a80,#0e2d55)'">
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none"><path d="M2 4V1h8v3M2 8H1V4h10v4h-1M3 8v3h6V8" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/></svg>
+        Print Results
+      </button>
     </div>
 
   </div>
@@ -1453,6 +1486,7 @@ function getAge(r, isGirls) {
   return m ? 'U' + m[1] + (girls ? 'G' : '') : 'Other';
 }
 
+window.ALL_DATA = null; // will be set below
 const ALL = DATA.map(g => {
   const bh = /belmont/i.test(g.home);
   const isNP = g.played === 'N';
@@ -1472,6 +1506,7 @@ const ALL = DATA.map(g => {
     is_home: bh, result_type, tournament: g.tournament || 'League',
     group: g.group || '' };
 });
+window.ALL_DATA = ALL;
 
 // ── Last Updated: derive from latest game date in data ──
 (function() {
@@ -1818,6 +1853,88 @@ function resetAll() {
   applyFilters();
 }
 
+function resultsPrint() {
+  const btn = document.getElementById('results-print-btn');
+  const origHTML = btn ? btn.innerHTML : '';
+  if (btn) {
+    btn.innerHTML = `<svg width="13" height="13" viewBox="0 0 13 13" fill="none"><circle cx="6.5" cy="6.5" r="5" stroke="#fdb813" stroke-width="1.2" stroke-dasharray="8 4"><animateTransform attributeName="transform" type="rotate" from="0 6.5 6.5" to="360 6.5 6.5" dur="0.8s" repeatCount="indefinite"/></circle></svg> Generating…`;
+    btn.disabled = true;
+  }
+
+  function restore() { if (btn) { btn.innerHTML = origHTML; btn.disabled = false; } }
+
+  function doCapture() {
+    // Capture just the table wrapper so we get the filtered rows only
+    const target = document.querySelector('.twrap-outer') || document.getElementById('tab-fixtures');
+
+    const clone = target.cloneNode(true);
+
+    // Style the clone for a clean dark background snapshot
+    clone.style.cssText = [
+      'position:fixed;top:0;left:0;z-index:-9999;pointer-events:none;',
+      'opacity:1;background:#0a1628;padding:24px;',
+      'font-family:\'DM Sans\',sans-serif;color:#e2e8f4;',
+      'width:max-content;max-width:none;overflow:visible;'
+    ].join('');
+
+    // Expand any scroll containers so all rows are visible
+    clone.querySelectorAll('*').forEach(el => {
+      const cs = window.getComputedStyle(el);
+      if (['auto','scroll','hidden'].includes(cs.overflowX)) {
+        el.style.overflowX = 'visible';
+        el.style.width     = 'max-content';
+        el.style.maxWidth  = 'none';
+      }
+      if (['auto','scroll','hidden'].includes(cs.overflowY)) {
+        el.style.overflowY = 'visible';
+        el.style.height    = 'auto';
+        el.style.maxHeight = 'none';
+      }
+    });
+
+    // Add a header banner to the clone
+    const banner = document.createElement('div');
+    banner.style.cssText = 'font-family:\'Bebas Neue\',Impact,sans-serif;font-size:1.5rem;letter-spacing:0.08em;color:#fdb813;margin-bottom:14px;padding-bottom:10px;border-bottom:1px solid rgba(253,184,19,0.25);';
+    const rcEl = document.getElementById('rcount');
+    banner.textContent = 'Belmont FC · Results' + (rcEl ? '  —  ' + rcEl.textContent.replace(/\s+/g,' ').trim() : '');
+    clone.insertBefore(banner, clone.firstChild);
+
+    document.body.appendChild(clone);
+
+    requestAnimationFrame(() => {
+      const W = clone.scrollWidth;
+      const H = clone.scrollHeight;
+      html2canvas(clone, {
+        backgroundColor: '#0a1628', scale: 2, useCORS: true, allowTaint: true,
+        logging: false, scrollX: 0, scrollY: 0, x: 0, y: 0,
+        width: W, height: H, windowWidth: W, windowHeight: H,
+      }).then(canvas => {
+        if (clone.parentNode) clone.parentNode.removeChild(clone);
+        restore();
+        const link = document.createElement('a');
+        link.download = `Belmont_FC_Results_${new Date().toISOString().slice(0,10)}.jpeg`;
+        link.href = canvas.toDataURL('image/jpeg', 0.92);
+        link.click();
+      }).catch(err => {
+        if (clone.parentNode) clone.parentNode.removeChild(clone);
+        restore();
+        console.error('Print error:', err);
+        alert('Could not generate image. Please try again.');
+      });
+    });
+  }
+
+  if (window.html2canvas) {
+    doCapture();
+  } else {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js';
+    script.onload  = doCapture;
+    script.onerror = () => { restore(); alert('Could not load print library. Check your internet connection.'); };
+    document.head.appendChild(script);
+  }
+}
+
 // Register all event-handler functions as global so onclick="" attributes work
 window._toggleBtn          = toggleBtn;
 window._setDropdown        = setDropdown;
@@ -1828,6 +1945,7 @@ window._selectResultsOnly  = selectResultsOnly;
 window._switchTab          = switchTab;
 window._insFilterChange    = insFilterChange;
 window._resetInsights      = resetInsights;
+window.resultsPrint        = resultsPrint;
 
 // Initial render
 applyFilters();
@@ -1842,6 +1960,7 @@ function switchTab(tab, btn) {
   document.getElementById('tab-' + tab).classList.add('active');
   if (tab === 'insights') renderInsights();
   if (tab === 'performance') { rebuildPerfDropdowns(); renderPerfTable(); }
+  if (tab === 'ha-analysis') { haRebuildDropdowns(); haRender(); }
   if (tab === 'match-day' && typeof window._renderMatchDay === 'function') window._renderMatchDay();
 }
 
@@ -2588,6 +2707,456 @@ function renderPerfTable() {
 
 
 
+
+/* ════════════════════════════════
+   HOME & AWAY ANALYSIS TAB
+════════════════════════════════ */
+(function(){
+  let haSortCol = 'age', haSortAsc = true;
+  let haDateList = [];
+
+  window.haSortBy = function(col) {
+    if (haSortCol === col) { haSortAsc = !haSortAsc; }
+    else { haSortCol = col; haSortAsc = (col === 'age' || col === 'div'); }
+    haRender();
+  };
+
+  // Format YYYY-MM-DD → dd-Mmm-yy (robust — falls back to raw value)
+  function haFmtDate(ds) {
+    if (!ds) return '—';
+    const parts = ds.split('-');
+    if (parts.length !== 3) return ds;
+    const [y, m, d] = parts;
+    const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const mi = parseInt(m, 10) - 1;
+    if (mi < 0 || mi > 11 || !d || !y) return ds;
+    return `${d}-${months[mi]}-${y.slice(2)}`;
+  }
+
+  let haDateLabelMap = {}; // date_sort → display label (from g.date)
+
+  window.haRebuildDropdowns = function() {
+    haDateLabelMap = {};
+    ALL.forEach(g => {
+      if (g.date_sort && g.date) haDateLabelMap[g.date_sort] = g.date;
+    });
+    haDateList = [...new Set(ALL.map(g => g.date_sort).filter(Boolean))].sort();
+    haRebuildDateSelects();
+    haRebuildSelects();
+  };
+
+  function haRebuildDateSelects() {
+    const fromSel = document.getElementById('ha-date-from');
+    const toSel   = document.getElementById('ha-date-to');
+    if (!fromSel || !toSel) return;
+    const curFrom = fromSel.value;
+    const curTo   = toSel.value;
+    fromSel.innerHTML = '<option value="all">All Dates</option>';
+    toSel.innerHTML   = '<option value="all">All Dates</option>';
+    haDateList.forEach(ds => {
+      const label = haDateLabelMap[ds] || haFmtDate(ds);
+      const oF = new Option(label, ds); if (ds === curFrom) oF.selected = true; fromSel.appendChild(oF);
+      const oT = new Option(label, ds); if (ds === curTo)   oT.selected = true; toSel.appendChild(oT);
+    });
+  }
+
+  function haGetFilters() {
+    const selGroup  = document.getElementById('ha-groupSel')?.value  || 'all';
+    const selAge    = document.getElementById('ha-ageSel')?.value    || 'all';
+    const selDiv    = document.getElementById('ha-divSel')?.value    || 'all';
+    const selPlayed = document.getElementById('ha-playedSel')?.value || 'all';
+    const selTp     = document.getElementById('ha-tpSel')?.value     || 'all';
+    const selView   = document.getElementById('ha-viewBySel')?.value || 'division';
+    const fromVal   = document.getElementById('ha-date-from')?.value || 'all';
+    const toVal     = document.getElementById('ha-date-to')?.value   || 'all';
+    const startDate = fromVal !== 'all' ? fromVal : null;
+    const endDate   = toVal   !== 'all' ? toVal   : null;
+    return { selGroup, selAge, selDiv, selPlayed, selTp, selView, startDate, endDate };
+  }
+
+  function haMatchGame(g, f, excludeKey) {
+    if (excludeKey !== 'group'  && f.selGroup !== 'all'  && g.group      !== f.selGroup)  return false;
+    if (excludeKey !== 'age'    && f.selAge   !== 'all'  && g.age        !== f.selAge)    return false;
+    if (excludeKey !== 'div'    && f.selDiv   !== 'all'  && g.division   !== f.selDiv)    return false;
+    if (excludeKey !== 'tp'     && f.selTp    !== 'all'  && g.tournament !== f.selTp)     return false;
+    if (excludeKey !== 'played') {
+      if (f.selPlayed === 'Y' && g.played !== 'Y') return false;
+      if (f.selPlayed === 'N' && g.played !== 'N') return false;
+    }
+    if (f.startDate && g.date_sort && g.date_sort < f.startDate) return false;
+    if (f.endDate   && g.date_sort && g.date_sort > f.endDate)   return false;
+    return true;
+  }
+
+  function haRebuildSelects() {
+    const f = haGetFilters();
+    const groupSel = document.getElementById('ha-groupSel');
+    if (groupSel) {
+      const cur = groupSel.value;
+      const opts = [...new Set(ALL.filter(g => haMatchGame(g, f, 'group')).map(g => g.group).filter(Boolean))].sort();
+      groupSel.innerHTML = '<option value="all">All Groups</option>';
+      opts.forEach(v => { const o = new Option(v,v); if(v===cur) o.selected=true; groupSel.appendChild(o); });
+    }
+    const ageSel = document.getElementById('ha-ageSel');
+    if (ageSel) {
+      const cur = ageSel.value;
+      const opts = [...new Set(ALL.filter(g => haMatchGame(g, f, 'age')).map(g => g.age).filter(Boolean))]
+        .sort((a,b) => parseInt(a.replace(/\D/g,'')) - parseInt(b.replace(/\D/g,'')));
+      ageSel.innerHTML = '<option value="all">All Ages</option>';
+      opts.forEach(v => { const o = new Option(v,v); if(v===cur) o.selected=true; ageSel.appendChild(o); });
+    }
+    const divSel = document.getElementById('ha-divSel');
+    if (divSel) {
+      const cur = divSel.value;
+      const opts = [...new Set(ALL.filter(g => haMatchGame(g, f, 'div')).map(g => g.division).filter(Boolean))]
+        .sort((a,b) => String(a).localeCompare(String(b), undefined, {numeric:true}));
+      divSel.innerHTML = '<option value="all">All Divisions</option>';
+      opts.forEach(v => { const o = new Option(v,v); if(v===cur) o.selected=true; divSel.appendChild(o); });
+    }
+    const tpSel = document.getElementById('ha-tpSel');
+    if (tpSel) {
+      const cur = tpSel.value;
+      const opts = [...new Set(ALL.filter(g => haMatchGame(g, f, 'tp')).map(g => g.tournament).filter(Boolean))].sort();
+      tpSel.innerHTML = '<option value="all">All</option>';
+      opts.forEach(v => { const o = new Option(v,v); if(v===cur) o.selected=true; tpSel.appendChild(o); });
+    }
+  }
+
+  window.haOnFilter = function() {
+    haRebuildSelects();
+    haRender();
+  };
+
+  window.haResetFilters = function() {
+    ['ha-groupSel','ha-ageSel','ha-divSel','ha-playedSel','ha-tpSel','ha-date-from','ha-date-to'].forEach(id => {
+      const el = document.getElementById(id); if(el) el.value = 'all';
+    });
+    const vb = document.getElementById('ha-viewBySel');
+    if (vb) vb.value = 'division';
+    haRebuildSelects();
+    haRender();
+  };
+
+  function haRender() {
+    const f        = haGetFilters();
+    const filtered = ALL.filter(g => haMatchGame(g, f, null));
+
+    const rcEl = document.getElementById('ha-rcount');
+    if (rcEl) rcEl.innerHTML = `<span style="color:var(--yellow);font-weight:700;">${filtered.length}</span> games`;
+
+    const subEl = document.getElementById('ha-table-sub');
+    if (subEl) subEl.textContent = `by ${f.selView === 'age' ? 'Age Group' : 'Division'} · all filters applied`;
+
+    const total   = filtered.length;
+    const homeCnt = filtered.filter(g => g.is_home).length;
+    const awayCnt = filtered.filter(g => !g.is_home).length;
+    const homePct = total > 0 ? Math.round(homeCnt / total * 100) : 0;
+    const awayPct = total > 0 ? Math.round(awayCnt / total * 100) : 0;
+
+    const pillsEl = document.getElementById('ha-summary-pills');
+    if (pillsEl) {
+      pillsEl.innerHTML = `
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 20px;display:flex;flex-direction:column;gap:4px;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;line-height:1;">${total}</div>
+          <div style="font-size:0.62rem;text-transform:uppercase;color:var(--muted);letter-spacing:0.1em;">Total Games</div>
+        </div>
+        <div style="background:var(--card);border:1px solid rgba(116,185,255,0.3);border-radius:12px;padding:14px 20px;display:flex;flex-direction:column;gap:4px;">
+          <div style="display:flex;align-items:baseline;gap:8px;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;line-height:1;color:#74b9ff;">${homeCnt}</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:rgba(116,185,255,0.6);">${homePct}%</div>
+          </div>
+          <div style="font-size:0.62rem;text-transform:uppercase;color:#74b9ff;letter-spacing:0.1em;opacity:0.8;">🏠 Home Games</div>
+        </div>
+        <div style="background:var(--card);border:1px solid rgba(253,121,168,0.3);border-radius:12px;padding:14px 20px;display:flex;flex-direction:column;gap:4px;">
+          <div style="display:flex;align-items:baseline;gap:8px;">
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:2rem;line-height:1;color:#fd79a8;">${awayCnt}</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:rgba(253,121,168,0.6);">${awayPct}%</div>
+          </div>
+          <div style="font-size:0.62rem;text-transform:uppercase;color:#fd79a8;letter-spacing:0.1em;opacity:0.8;">✈️ Away Games</div>
+        </div>`;
+    }
+
+    const keyFn = f.selView === 'age'
+      ? g => g.age
+      : g => g.age + '||' + g.division;
+
+    const rowMap = {};
+    filtered.forEach(g => {
+      const key = keyFn(g);
+      if (!rowMap[key]) rowMap[key] = { age: g.age, div: f.selView === 'age' ? g.age : g.division, home: 0, away: 0, total: 0 };
+      rowMap[key].total++;
+      if (g.is_home) rowMap[key].home++; else rowMap[key].away++;
+    });
+
+    let rows = Object.values(rowMap).map(r => ({
+      ...r,
+      homePct: r.total > 0 ? Math.round(r.home / r.total * 100) : 0,
+      awayPct: r.total > 0 ? Math.round(r.away / r.total * 100) : 0,
+    }));
+
+    rows.sort((a, b) => {
+      let va, vb;
+      if (haSortCol === 'age') {
+        va = parseInt(a.age.replace(/\D/g,'')||0); vb = parseInt(b.age.replace(/\D/g,'')||0);
+        if (va !== vb) return haSortAsc ? va - vb : vb - va;
+        return haSortAsc ? String(a.div).localeCompare(String(b.div),undefined,{numeric:true})
+                         : String(b.div).localeCompare(String(a.div),undefined,{numeric:true});
+      } else if (haSortCol === 'div') {
+        return haSortAsc ? String(a.div).localeCompare(String(b.div),undefined,{numeric:true})
+                         : String(b.div).localeCompare(String(a.div),undefined,{numeric:true});
+      } else if (haSortCol === 'total') { va = a.total; vb = b.total; }
+      else if   (haSortCol === 'home')  { va = a.home;  vb = b.home; }
+      else if   (haSortCol === 'away')  { va = a.away;  vb = b.away; }
+      else { va = a.total; vb = b.total; }
+      return haSortAsc ? va - vb : vb - va;
+    });
+
+    const arrow = col => haSortCol === col ? (haSortAsc ? ' ↑' : ' ↓') : ' ↕';
+    ['age','div','total','home','away'].forEach(c => {
+      const th = document.getElementById(`ha-th-${c}`);
+      const labels = {age:'Age Group',div:'Division',total:'Total',home:'Home',away:'Away'};
+      if (th) th.innerHTML = labels[c] + arrow(c);
+    });
+
+    const tbody = document.getElementById('ha-tbody');
+    const tfoot = document.getElementById('ha-tfoot');
+    if (!tbody) return;
+
+    function pctBar(pct, colour) {
+      return `<div style="display:flex;align-items:center;gap:5px;">
+        <div style="flex:1;height:4px;background:rgba(255,255,255,0.06);border-radius:2px;min-width:30px;max-width:54px;overflow:hidden;">
+          <div style="width:${pct}%;height:100%;background:${colour};border-radius:2px;"></div>
+        </div>
+        <span style="font-family:'Bebas Neue',sans-serif;font-size:0.88rem;color:${colour};min-width:28px;">${pct}%</span>
+      </div>`;
+    }
+
+    if (!rows.length) {
+      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center;padding:40px;color:var(--muted)">No games match the selected filters</td></tr>`;
+      if (tfoot) tfoot.innerHTML = '';
+      return;
+    }
+
+    tbody.innerHTML = rows.map(r => {
+      const showBoth = f.selView !== 'age';
+      return `<tr style="border-bottom:1px solid rgba(255,255,255,0.04);" onmouseover="this.style.background='rgba(255,255,255,0.03)'" onmouseout="this.style.background=''">
+        <td style="font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:var(--yellow);padding:12px 15px;">${r.age}</td>
+        <td style="font-weight:700;color:var(--text);font-size:0.88rem;padding:12px 15px;">${showBoth ? r.div : '<span style="opacity:0.25">—</span>'}</td>
+        <td style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1rem;padding:12px 15px;">${r.total}</td>
+        <td style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#74b9ff;padding:12px 15px;">${r.home > 0 ? r.home : '<span style="opacity:0.25">–</span>'}</td>
+        <td style="padding:12px 15px;">${pctBar(r.homePct,'#74b9ff')}</td>
+        <td style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#fd79a8;padding:12px 15px;">${r.away > 0 ? r.away : '<span style="opacity:0.25">–</span>'}</td>
+        <td style="padding:12px 15px;">${pctBar(r.awayPct,'#fd79a8')}</td>
+      </tr>`;
+    }).join('');
+
+    if (tfoot) {
+      const totHome = rows.reduce((s,r) => s+r.home,  0);
+      const totAway = rows.reduce((s,r) => s+r.away,  0);
+      const totAll  = rows.reduce((s,r) => s+r.total, 0);
+      const tHomePct = totAll > 0 ? Math.round(totHome / totAll * 100) : 0;
+      const tAwayPct = totAll > 0 ? Math.round(totAway / totAll * 100) : 0;
+      tfoot.innerHTML = `<tr style="border-top:2px solid rgba(253,184,19,0.3);background:rgba(253,184,19,0.06);">
+        <td colspan="2" style="font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--yellow);padding:11px 15px;letter-spacing:0.06em;">TOTALS</td>
+        <td style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.05rem;font-weight:700;padding:11px 15px;">${totAll}</td>
+        <td style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:#74b9ff;padding:11px 15px;">${totHome}</td>
+        <td style="padding:11px 15px;">${pctBar(tHomePct,'#74b9ff')}</td>
+        <td style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.05rem;color:#fd79a8;padding:11px 15px;">${totAway}</td>
+        <td style="padding:11px 15px;">${pctBar(tAwayPct,'#fd79a8')}</td>
+      </tr>`;
+    }
+    // ── Render timeline chart ──
+    haRenderChart(filtered);
+  }
+
+  function haRenderChart(filtered) {
+    const canvas = document.getElementById('ha-timeline-canvas');
+    if (!canvas) return;
+
+    // Group by date_sort, use g.date for display label
+    const byDate = {};
+    filtered.forEach(g => {
+      const ds = g.date_sort;
+      if (!ds) return;
+      if (!byDate[ds]) byDate[ds] = { ds, label: g.date || haFmtDate(ds), home: 0, away: 0, total: 0 };
+      byDate[ds].total++;
+      if (g.is_home) byDate[ds].home++; else byDate[ds].away++;
+    });
+    const points = Object.values(byDate).sort((a,b) => a.ds.localeCompare(b.ds));
+
+    const ctx = canvas.getContext('2d');
+    // Responsive width
+    const W = canvas.parentElement.clientWidth || 800;
+    canvas.width  = W;
+    canvas.height = 160;
+    const H = 160;
+
+    const PAD_L = 36, PAD_R = 16, PAD_T = 14, PAD_B = 38;
+    const chartW = W - PAD_L - PAD_R;
+    const chartH = H - PAD_T - PAD_B;
+
+    ctx.clearRect(0, 0, W, H);
+
+    if (!points.length) {
+      ctx.fillStyle = 'rgba(139,162,193,0.4)';
+      ctx.font = '13px DM Sans, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('No data', W / 2, H / 2);
+      return;
+    }
+
+    const n = points.length;
+    const barW = Math.max(4, Math.min(36, chartW / n - 3));
+    const step = n > 1 ? chartW / n : chartW;
+
+    // Grid lines at 0, 25, 75, 100% (subtle)
+    [0, 25, 75, 100].forEach(pct => {
+      const y = PAD_T + chartH - (pct / 100) * chartH;
+      ctx.beginPath();
+      ctx.strokeStyle = 'rgba(255,255,255,0.05)';
+      ctx.lineWidth = 0.5;
+      ctx.setLineDash([]);
+      ctx.moveTo(PAD_L, y);
+      ctx.lineTo(W - PAD_R, y);
+      ctx.stroke();
+      ctx.fillStyle = 'rgba(139,162,193,0.5)';
+      ctx.font = '9px DM Sans, sans-serif';
+      ctx.textAlign = 'right';
+      ctx.fillText(pct + '%', PAD_L - 4, y + 3);
+    });
+
+    // Store bar positions for tooltip hit-testing
+    const barRects = [];
+
+    points.forEach((pt, i) => {
+      const homePct = pt.total > 0 ? pt.home / pt.total : 0;
+      const awayPct = pt.total > 0 ? pt.away / pt.total : 0;
+
+      const cx = PAD_L + i * step + step / 2;
+      const x  = cx - barW / 2;
+
+      const homeH = homePct * chartH;
+      const awayH = awayPct * chartH;
+
+      // Stacked bar: home (bottom), away (top)
+      const homeY = PAD_T + chartH - homeH;
+      const awayY = homeY - awayH;
+
+      // Home segment
+      ctx.fillStyle = 'rgba(116,185,255,0.75)';
+      ctx.beginPath();
+      const r = 3;
+      if (awayH < 1) {
+        // rounded top on home if no away
+        ctx.moveTo(x + r, homeY);
+        ctx.lineTo(x + barW - r, homeY);
+        ctx.quadraticCurveTo(x + barW, homeY, x + barW, homeY + r);
+        ctx.lineTo(x + barW, PAD_T + chartH);
+        ctx.lineTo(x, PAD_T + chartH);
+        ctx.lineTo(x, homeY + r);
+        ctx.quadraticCurveTo(x, homeY, x + r, homeY);
+      } else {
+        ctx.rect(x, homeY, barW, homeH);
+      }
+      ctx.fill();
+
+      // Away segment (on top)
+      if (awayH > 0) {
+        ctx.fillStyle = 'rgba(253,121,168,0.75)';
+        ctx.beginPath();
+        ctx.moveTo(x + r, awayY);
+        ctx.lineTo(x + barW - r, awayY);
+        ctx.quadraticCurveTo(x + barW, awayY, x + barW, awayY + r);
+        ctx.lineTo(x + barW, homeY);
+        ctx.lineTo(x, homeY);
+        ctx.lineTo(x, awayY + r);
+        ctx.quadraticCurveTo(x, awayY, x + r, awayY);
+        ctx.fill();
+      }
+
+      barRects.push({ x, y: awayH > 0 ? awayY : homeY, w: barW, h: homeH + awayH, pt, cx });
+
+      // X-axis label — show every Nth label to avoid crowding
+      const labelEvery = Math.ceil(n / Math.floor(chartW / 56));
+      if (i % labelEvery === 0 || i === n - 1) {
+        ctx.save();
+        ctx.fillStyle = 'rgba(139,162,193,0.7)';
+        ctx.font = '9px DM Sans, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.translate(cx, H - PAD_B + 14);
+        ctx.rotate(-Math.PI / 5);
+        ctx.fillText(pt.label, 0, 0);
+        ctx.restore();
+      }
+    });
+
+    // ── 50% line drawn on top of bars ──
+    const y50 = PAD_T + chartH * 0.5;
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgba(253,184,19,0.45)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([5, 4]);
+    ctx.moveTo(PAD_L, y50);
+    ctx.lineTo(W - PAD_R, y50);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // Label
+    ctx.fillStyle = 'rgba(253,184,19,0.7)';
+    ctx.font = 'bold 9px DM Sans, sans-serif';
+    ctx.textAlign = 'right';
+    ctx.fillText('50%', PAD_L - 4, y50 + 3);
+
+    // Tooltip interaction
+    const tooltip = document.getElementById('ha-chart-tooltip');
+    const handleMove = function(e) {
+      const rect = canvas.getBoundingClientRect();
+      const mx = (e.touches ? e.touches[0].clientX : e.clientX) - rect.left;
+      const my = (e.touches ? e.touches[0].clientY : e.clientY) - rect.top;
+      let hit = null;
+      for (const b of barRects) {
+        if (mx >= b.x - 4 && mx <= b.x + b.w + 4 && my >= PAD_T && my <= PAD_T + chartH) { hit = b; break; }
+      }
+      if (hit && tooltip) {
+        const hp = hit.pt.total > 0 ? Math.round(hit.pt.home / hit.pt.total * 100) : 0;
+        const ap = hit.pt.total > 0 ? Math.round(hit.pt.away / hit.pt.total * 100) : 0;
+        tooltip.innerHTML =
+          `<div style="font-family:'Bebas Neue',sans-serif;font-size:0.95rem;color:var(--yellow);margin-bottom:3px;">${hit.pt.label}</div>` +
+          `<div style="color:var(--text);">Total: <strong>${hit.pt.total}</strong></div>` +
+          `<div style="color:#74b9ff;">🏠 Home: ${hit.pt.home} <span style="opacity:0.7">(${hp}%)</span></div>` +
+          `<div style="color:#fd79a8;">✈️ Away: ${hit.pt.away} <span style="opacity:0.7">(${ap}%)</span></div>`;
+        const ex = e.touches ? e.touches[0].clientX : e.clientX;
+        const ey = e.touches ? e.touches[0].clientY : e.clientY;
+        tooltip.style.display = 'block';
+        tooltip.style.left = (ex + 14) + 'px';
+        tooltip.style.top  = (ey - 10) + 'px';
+      } else if (tooltip) {
+        tooltip.style.display = 'none';
+      }
+    };
+    const handleLeave = () => { if (tooltip) tooltip.style.display = 'none'; };
+    canvas.onmousemove  = handleMove;
+    canvas.onmouseleave = handleLeave;
+    canvas.ontouchmove  = handleMove;
+    canvas.ontouchend   = handleLeave;
+  }
+
+  window.haRender = haRender;
+
+  // Redraw chart on resize
+  if (typeof ResizeObserver !== 'undefined') {
+    const ro = new ResizeObserver(() => {
+      const canvas = document.getElementById('ha-timeline-canvas');
+      if (canvas && canvas.closest('#tab-ha-analysis.active')) haRender();
+    });
+    // Observe once the DOM is ready
+    setTimeout(() => {
+      const panel = document.getElementById('tab-ha-analysis');
+      if (panel) ro.observe(panel);
+    }, 0);
+  }
+
+})(); // end H&A IIFE
+
 }
 </script>
 
@@ -2666,6 +3235,107 @@ function renderPerfTable() {
     <div class="stats-grid" id="insightsGrid"></div>
   </div>
 </div>
+
+
+
+<!-- ══════════════════════════════════════════
+     HOME & AWAY ANALYSIS TAB
+══════════════════════════════════════════ -->
+<div id="tab-ha-analysis" class="tab-panel">
+<div class="stats-page">
+
+  <!-- ── Filters ── -->
+  <div class="stats-filters" id="ha-filters-bar" style="display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-bottom:18px;">
+    <span class="flbl">Group</span>
+    <select id="ha-groupSel" onchange="haOnFilter()"><option value="all">All Groups</option></select>
+    <span class="flbl" style="margin-left:6px">Age Group</span>
+    <select id="ha-ageSel" onchange="haOnFilter()"><option value="all">All Ages</option></select>
+    <span class="flbl" style="margin-left:6px">Division</span>
+    <select id="ha-divSel" onchange="haOnFilter()"><option value="all">All Divisions</option></select>
+
+    <!-- Date range dropdowns -->
+    <span class="flbl" style="margin-left:6px">From</span>
+    <select id="ha-date-from" onchange="haOnFilter()"><option value="all">All Dates</option></select>
+    <span class="flbl">To</span>
+    <select id="ha-date-to" onchange="haOnFilter()"><option value="all">All Dates</option></select>
+
+    <span class="flbl" style="margin-left:6px">Played</span>
+    <select id="ha-playedSel" onchange="haOnFilter()">
+      <option value="all">All</option>
+      <option value="Y">Yes</option>
+      <option value="N">No</option>
+    </select>
+
+    <span class="flbl" style="margin-left:6px">Championship</span>
+    <select id="ha-tpSel" onchange="haOnFilter()"><option value="all">All</option></select>
+
+    <span class="flbl" style="margin-left:6px">View By</span>
+    <select id="ha-viewBySel" onchange="haOnFilter()">
+      <option value="division">Division</option>
+      <option value="age">Age Group</option>
+    </select>
+
+    <button onclick="haResetFilters()" style="margin-left:auto;background:transparent;border:1px solid rgba(253,184,19,0.4);color:var(--yellow);font-family:'DM Sans',sans-serif;font-size:0.68rem;font-weight:700;padding:4px 10px;border-radius:5px;cursor:pointer;letter-spacing:0.05em;transition:all 0.15s;" onmouseover="this.style.background='rgba(253,184,19,0.1)'" onmouseout="this.style.background='transparent'">↺ Reset</button>
+  </div>
+
+  <!-- ── Timeline Chart ── -->
+  <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px 20px;margin-bottom:20px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;flex-wrap:wrap;gap:8px;">
+      <div>
+        <div class="act-title">Home vs Away by Match Day</div>
+        <div class="act-sub">% of games per date · home <span style="color:#74b9ff;">■</span> away <span style="color:#fd79a8;">■</span></div>
+      </div>
+      <div id="ha-chart-legend" style="display:flex;gap:16px;align-items:center;font-size:0.68rem;color:var(--muted);"></div>
+    </div>
+    <div style="position:relative;width:100%;overflow-x:auto;">
+      <canvas id="ha-timeline-canvas" height="160" style="display:block;min-width:300px;width:100%;cursor:crosshair;"></canvas>
+      <div id="ha-chart-tooltip" style="position:fixed;pointer-events:none;display:none;background:rgba(5,13,26,0.97);border:1px solid rgba(253,184,19,0.35);border-radius:8px;padding:9px 13px;font-size:0.72rem;line-height:1.7;z-index:999;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,0.5);"></div>
+    </div>
+  </div>
+
+  <!-- ── Summary Pills + Table row ── -->
+  <div style="display:flex;gap:20px;align-items:flex-start;flex-wrap:wrap;">
+
+    <!-- Summary pills (left) -->
+    <div style="display:flex;flex-direction:column;gap:12px;min-width:180px;flex:0 0 auto;">
+      <div style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;letter-spacing:0.06em;color:var(--yellow);margin-bottom:2px;">Summary</div>
+      <div id="ha-summary-pills" style="display:flex;flex-direction:column;gap:10px;">
+        <!-- filled by JS -->
+      </div>
+    </div>
+
+    <!-- Table (right, fills remaining space) -->
+    <div style="flex:1 1 0;min-width:0;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;flex-wrap:wrap;gap:8px;">
+        <div>
+          <div class="act-title">Home vs Away Breakdown</div>
+          <div class="act-sub" id="ha-table-sub">by Division · all filters applied</div>
+        </div>
+        <div id="ha-rcount" style="font-size:0.7rem;text-transform:uppercase;color:var(--muted);"></div>
+      </div>
+      <div class="twrap" style="border-radius:12px;">
+        <table id="ha-table" style="min-width:640px;">
+          <thead>
+            <tr>
+              <th id="ha-th-age" style="text-align:left;cursor:pointer;user-select:none;" onclick="haSortBy('age')" title="Sort by Age Group">Age Group ↕</th>
+              <th id="ha-th-div" style="text-align:left;cursor:pointer;user-select:none;" onclick="haSortBy('div')" title="Sort by Division">Division ↕</th>
+              <th id="ha-th-total" style="text-align:center;cursor:pointer;user-select:none;" onclick="haSortBy('total')">Total ↕</th>
+              <th id="ha-th-home" style="text-align:center;color:#74b9ff;cursor:pointer;user-select:none;" onclick="haSortBy('home')">Home ↕</th>
+              <th style="text-align:center;color:#74b9ff;font-size:0.55rem;">Home %</th>
+              <th id="ha-th-away" style="text-align:center;color:#fd79a8;cursor:pointer;user-select:none;" onclick="haSortBy('away')">Away ↕</th>
+              <th style="text-align:center;color:#fd79a8;font-size:0.55rem;">Away %</th>
+            </tr>
+          </thead>
+          <tbody id="ha-tbody"></tbody>
+          <tfoot id="ha-tfoot"></tfoot>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+</div><!-- end tab-ha-analysis -->
+
 
 
 </body>
