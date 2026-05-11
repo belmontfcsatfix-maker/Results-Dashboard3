@@ -300,6 +300,12 @@ td.loccol { font-size:0.78rem; color:var(--muted); max-width:160px; overflow:hid
 
 <div id="tab-match-day" class="tab-panel active">
 
+<!-- ── MATCH DAY TITLE ── -->
+<div style="padding:20px 20px 0;">
+  <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:0.06em;color:var(--yellow);">Upcoming Fixtures</div>
+  <div id="md-subtitle" style="font-size:0.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.12em;margin-top:3px;">Belmont FC Home &amp; Away</div>
+</div>
+
 <!-- ── MATCH DAY FILTER BAR ── -->
 <div id="md-filters-bar" class="filters-bar">
   <div class="filters-grid" style="grid-template-columns:auto auto auto;">
@@ -349,12 +355,6 @@ td.loccol { font-size:0.78rem; color:var(--muted); max-width:160px; overflow:hid
 
 <!-- ═══════════ MATCH DAY TAB — CONTENT ═══════════ -->
 <div style="padding:24px 20px 48px;">
-
-  <!-- Page subtitle -->
-  <div style="margin-bottom:20px;">
-    <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:0.06em;color:var(--yellow);">Upcoming Fixtures</div>
-    <div id="md-subtitle" style="font-size:0.62rem;color:var(--muted);text-transform:uppercase;letter-spacing:0.12em;margin-top:3px;">Belmont FC Home &amp; Away</div>
-  </div>
 
   <!-- ── GAMES TABLE ── -->
   <div id="md-games-section">
@@ -1074,9 +1074,26 @@ window._renderMatchDayTables = function() {
       const koColor     = isConflict ? '#ffaaaa' : 'var(--yellow)';
       const divColor    = isConflict ? '#ff8080' : dc;
       const widthStyle  = halfWidth ? 'width:50%;min-width:0;flex:1 1 0;' : 'width:100%;';
+
+      // ── Confirmation status label (mirrors Games table logic) ──
+      const hc = (game.hConf || '').toUpperCase();
+      const ac = (game.aConf || '').toUpperCase();
+      const bothConfirmed  = hc === 'Y' && ac === 'Y';
+      const eitherDeclined = hc === 'N' || ac === 'N';
+      const confStatus     = bothConfirmed ? 'confirmed' : eitherDeclined ? 'cancelled' : 'pending';
+      const confLabel      = bothConfirmed ? 'Confirmed'  : eitherDeclined ? 'Cancelled'  : 'Pending';
+      const confBg         = bothConfirmed ? 'rgba(46,204,113,0.22)'  : eitherDeclined ? 'rgba(231,76,60,0.22)'  : 'rgba(243,156,18,0.22)';
+      const confBorder     = bothConfirmed ? 'rgba(46,204,113,0.55)'  : eitherDeclined ? 'rgba(231,76,60,0.55)'  : 'rgba(243,156,18,0.55)';
+      const confColor      = bothConfirmed ? '#2ecc71'                : eitherDeclined ? '#e74c3c'                : '#f39c12';
+      const confDot        = bothConfirmed ? '●' : eitherDeclined ? '●' : '●';
+      const statusBadge    = `<span style="display:inline-flex;align-items:center;gap:3px;font-size:0.52rem;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;padding:1px 5px;border-radius:3px;background:${confBg};border:1px solid ${confBorder};color:${confColor};line-height:1.5;white-space:nowrap;"><span style="font-size:0.45rem;">${confDot}</span>${confLabel}</span>`;
+
       return `<div style="${widthStyle}background:${blockBg};border:1px solid ${blockBorder};border-radius:6px;padding:5px 7px;height:${h}px;display:flex;flex-direction:column;justify-content:center;gap:2px;${shadow}">
         ${isConflict ? `<div style="font-size:0.55rem;font-weight:700;color:#ff6b6b;text-transform:uppercase;letter-spacing:0.08em;line-height:1;">⚠ Conflict</div>` : ''}
-        <div style="font-family:'Bebas Neue',sans-serif;font-size:0.95rem;color:${koColor};line-height:1;">${game.ko}</div>
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:4px;flex-wrap:wrap;">
+          <div style="font-family:'Bebas Neue',sans-serif;font-size:0.95rem;color:${koColor};line-height:1;">${game.ko}</div>
+          ${statusBadge}
+        </div>
         <div style="font-size:0.65rem;font-weight:700;color:${divColor};opacity:0.9;">${game.div}</div>
         ${!isShort ? `<div style="font-size:0.72rem;font-weight:600;${/belmont fc/i.test(game.away)?'color:var(--yellow);':'color:#ffffff;'}">${game.away}</div>` : ''}
         ${game.ref && !isShort ? `<div style="font-size:0.62rem;color:var(--muted);margin-top:1px;">Ref: ${game.ref}</div>` : ''}
@@ -3346,8 +3363,6 @@ function renderPerfTable() {
 
 </div>
 </div><!-- end tab-ha-analysis -->
-
-
 
 </body>
 </html>
