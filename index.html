@@ -1504,15 +1504,23 @@ async function loadData() {
   // today or earlier → results (Results and other tabs).
   const todayStr = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
 
+  // Normalise date_sort to YYYY-MM-DD regardless of whether it arrives
+  // as "2026-05-17" or "20260517"
+  function normDateSort(ds) {
+    const s = (ds || '').trim().replace(/-/g, '');
+    if (s.length === 8) return s.slice(0,4) + '-' + s.slice(4,6) + '-' + s.slice(6,8);
+    return (ds || '').trim();
+  }
+
   // Results rows: date_sort exists and is on or before today
   DATA = (rows || []).filter(r => {
-    const ds = (r.date_sort || '').trim();
+    const ds = normDateSort(r.date_sort);
     return ds && ds <= todayStr;
   });
 
   // Fixtures rows: date_sort is on or after today
   FIXTURES_DATA = (rows || []).filter(r => {
-    const ds = (r.date_sort || '').trim();
+    const ds = normDateSort(r.date_sort);
     return ds && ds >= todayStr;
   });
 
