@@ -663,26 +663,29 @@ function renderMatchDay() {
   }
 
   // Map raw rows → game objects
+  // Column names from the unified sheet:
+  //   date, division_raw, home, h_conf, a_conf, away, kick off,
+  //   referee, ref_conf, comments, pitch, game lenght, date_sort
   const MD_GAMES = raw.map(r => {
-    const home      = fc(r,'Home Team');
-    const away      = fc(r,'Away Team');
-    const dateSort  = fc(r,'Date Sort');   // YYYY-MM-DD — used for sorting only
-    const dateFmt   = fc(r,'Date');        // DD-MMM-YY — used for display
+    const home      = fc(r,'home');
+    const away      = fc(r,'away');
+    const dateSort  = fc(r,'date_sort');   // YYYY-MM-DD — used for sorting only
+    const dateFmt   = fc(r,'date');        // DD-MMM-YY — used for display
     return {
       dateSort,
       dateFmt,
       dateKey:  dateKey(dateSort),
-      div:      fc(r,'Division'),
+      div:      fc(r,'division_raw'),
       home,
-      hConf:    fc(r,'H Conf'),
+      hConf:    fc(r,'h_conf'),
       away,
-      aConf:    fc(r,'A Conf'),
-      ko:       fc(r,'Kick Off'),
-      ref:      fc(r,'Referee'),
-      refConf:  fc(r,'Ref Conf'),
-      comments: fc(r,'Comments'),
-      pitch:    fc(r,'Pitch'),
-      gameLen:  parseInt(fc(r,'Game Length')) || 75,
+      aConf:    fc(r,'a_conf'),
+      ko:       fc(r,'kick off'),
+      ref:      fc(r,'referee'),
+      refConf:  fc(r,'ref_conf'),
+      comments: fc(r,'comments'),
+      pitch:    fc(r,'pitch'),
+      gameLen:  parseInt(fc(r,'game lenght')) || 75,
       belHome:  /belmont fc/i.test(home),
     };
   });
@@ -1450,17 +1453,11 @@ async function tryFetch(url) {
 
 async function loadData() {
   const sheetId = '1Dej_HbjnZZb3Zrb86ExJ6Mg4XCb0PrT5_5BQOfyRJbM';
-  const url1 = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=0`;
-  const url2 = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=827954`;
-  const url3 = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=1892133300`;
+  const url = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=1325549679`;
 
-  const [rows1, rows2, rows3] = await Promise.all([
-    tryFetch(url1),
-    tryFetch(url2),
-    tryFetch(url3)
-  ]);
+  const rows = await tryFetch(url);
 
-  if (!rows1 && !rows2) {
+  if (!rows) {
     DATA = [
       { date:'1-Jan-99', date_sort:'1999-01-01', division_raw:'x.xx', home:'Belmont FC', h_goals:9, a_goals:9, away:'Test', referee:'Test', location:'', tournament:'League', played:'Y', reason:'' },
       { date:'1-Jan-99', date_sort:'1999-01-01', division_raw:'x.xx', home:'Belmont FC', h_goals:9, a_goals:9, away:'Test', referee:'Test', location:'', tournament:'League', played:'Y', reason:'' },
@@ -1474,21 +1471,27 @@ async function loadData() {
   // Show which files loaded
   const el = document.getElementById('filesLoaded');
   if (el) {
-    const sheets = [
-      { label:'Results 1', rows: rows1 },
-      { label:'Results 2', rows: rows2 },
-      { label:'Fixtures',  rows: rows3 },
-    ];
-    let html = sheets.map(s =>
-      s.rows
-        ? `<span style="color:var(--green)">${s.label} ✓</span>`
-        : `<span style="color:var(--red);opacity:0.6">${s.label} ✗</span>`
-    ).join('&nbsp; ');
-    el.innerHTML = html;
+    el.innerHTML = rows
+      ? `<span style="color:var(--green)">Season Data ✓</span>`
+      : `<span style="color:var(--red);opacity:0.6">Season Data ✗</span>`;
   }
 
-  DATA = [...(rows1 || []), ...(rows2 || [])];
-  FIXTURES_DATA = rows3 || [];
+  // Split rows by date: today or later → fixtures (Match Day tab);
+  // today or earlier → results (Results and other tabs).
+  const todayStr = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+
+  // Results rows: date_sort exists and is on or before today
+  DATA = (rows || []).filter(r => {
+    const ds = (r.date_sort || '').trim();
+    return ds && ds <= todayStr;
+  });
+
+  // Fixtures rows: date_sort is on or after today
+  FIXTURES_DATA = (rows || []).filter(r => {
+    const ds = (r.date_sort || '').trim();
+    return ds && ds >= todayStr;
+  });
+
   initDashboard();
   if (typeof window._renderMatchDay === 'function') window._renderMatchDay();
 }
