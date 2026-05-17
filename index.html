@@ -1404,19 +1404,43 @@ function resetInsights()             { if(window._resetInsights) window._resetIn
 //   referee, location, tournament, played, reason
 
 function parseCSV(text) {
-  const lines = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').split('\n');
-  if (lines.length < 2) return [];
-  const headers = lines[0].split(',').map(h => h.trim());
+  // RFC 4180-compliant parser: handles quoted fields containing commas and newlines
+  function tokenise(src) {
+    const records = [];
+    let fields = [], cur = '', i = 0;
+    while (i < src.length) {
+      if (src[i] === '"') {
+        // Quoted field
+        i++;
+        while (i < src.length) {
+          if (src[i] === '"' && src[i+1] === '"') { cur += '"'; i += 2; }
+          else if (src[i] === '"') { i++; break; }
+          else { cur += src[i++]; }
+        }
+      } else if (src[i] === ',') {
+        fields.push(cur); cur = ''; i++;
+      } else if (src[i] === '\r' && src[i+1] === '\n') {
+        fields.push(cur); records.push(fields); fields = []; cur = ''; i += 2;
+      } else if (src[i] === '\n' || src[i] === '\r') {
+        fields.push(cur); records.push(fields); fields = []; cur = ''; i++;
+      } else {
+        cur += src[i++];
+      }
+    }
+    if (cur || fields.length) { fields.push(cur); records.push(fields); }
+    return records;
+  }
+
+  const records = tokenise(text);
+  if (records.length < 2) return [];
+  const headers = records[0].map(h => h.trim());
   const rows = [];
-  for (let i = 1; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-    // Simple CSV parse (handles empty fields; no quoted-comma support needed here)
-    const vals = line.split(',');
+  for (let i = 1; i < records.length; i++) {
+    const vals = records[i];
+    if (vals.length === 1 && vals[0].trim() === '') continue; // skip blank lines
     const obj = {};
     headers.forEach((h, idx) => {
       let v = vals[idx] !== undefined ? vals[idx].trim() : '';
-      // Coerce numeric goal fields
       if (h === 'h_goals' || h === 'a_goals') {
         obj[h] = v === '' || v === 'null' ? null : Number(v);
       } else {
