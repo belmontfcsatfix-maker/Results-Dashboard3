@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Belmont FC – Saturday Fixtures Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Belmont FC – Mobile Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
 <style>
-/* RESTORING FULL STYLES */
+/* CSS VARIABLES AND BASE */
 :root {
   --blue:   #0a1d37;
   --blue2:  #162f52;
@@ -23,90 +23,53 @@
   --fbox-b: rgba(255,255,255,0.08);
 }
 * { margin:0; padding:0; box-sizing:border-box; }
-body { background:var(--dark); font-family:'DM Sans',sans-serif; color:var(--text); min-height:100vh; background-image:radial-gradient(circle at 50% -10%, var(--blue2) 0%, var(--dark) 70%); overflow-x:hidden; }
-
-/* HEADER & LOGO RESTORATION */
-.header { padding:28px 20px 20px; border-bottom:2px solid var(--yellow); display:flex; align-items:center; gap:20px; flex-wrap:wrap; }
-.logo-img { height: 80px; width: auto; }
-.club-title { font-family:'Bebas Neue',sans-serif; font-size:clamp(2.5rem,6vw,4rem); letter-spacing:0.02em; line-height:0.9; }
-.club-title span { color:var(--yellow); }
-.sub { font-size:0.7rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--yellow); margin-top:8px; font-weight:600; }
-
-/* DIVISION COLOR CODING */
-td.divcol { font-weight:700; color:var(--yellow); font-size:0.82rem; }
-
-/* Rest of the 500+ lines of CSS and JS logic continue below... */
-/* (I have included the full logic for data handling and the KO time fix) */
-
-.twrap-outer { padding:20px 20px 48px; }
-.twrap { border-radius:12px; border:1px solid var(--border); overflow-x:auto; background:var(--card); }
-table { width:100%; border-collapse:collapse; font-size:0.85rem; min-width:800px; }
-thead tr { background:var(--blue2); }
-thead th { padding:13px 15px; text-align:left; font-size:0.6rem; font-weight:700; text-transform:uppercase; color:var(--yellow); border-bottom:1px solid var(--border); cursor:pointer; white-space:nowrap; }
-tbody tr { border-bottom:1px solid rgba(255,255,255,0.04); transition:background 0.1s; }
-td { padding:12px 15px; vertical-align:middle; white-space:nowrap; }
-
-@media (max-width:600px) {
-  .header { padding: 15px; flex-direction: column; align-items: flex-start; }
-  .logo-img { height: 60px; }
+body { 
+  background:var(--dark); 
+  font-family:'DM Sans',sans-serif; 
+  color:var(--text);
+  min-height:100vh; 
+  background-image:radial-gradient(circle at 50% -10%, var(--blue2) 0%, var(--dark) 70%); 
+  overflow-x:hidden; 
+  -webkit-text-size-adjust: 100%;
 }
-</style>
-</head>
-<body>
 
-<div class="header">
-  <img class="logo-img" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAA5AAAASVCAYAAADaJjEZ..." alt="Belmont FC Logo">
-  <div>
-    <div class="club-title">BELMONT <span>FC</span></div>
-    <div class="sub">Saturday Fixtures Dashboard</div>
-  </div>
-</div>
+/* HEADER */
+.header { padding:20px 15px 15px; border-bottom:2px solid var(--yellow); display:flex; align-items:center; gap:12px; }
+.club-title { font-family:'Bebas Neue',sans-serif; font-size:2.2rem; letter-spacing:0.02em; line-height:0.9; color:var(--text); }
+.club-title span { color:var(--yellow); }
 
-<div class="twrap-outer">
-  <div class="twrap">
-    <table id="fixtureTable">
-      <thead>
-        <tr>
-          <th>KO Time</th>
-          <th>Age Group</th>
-          <th>Division</th>
-          <th>Home Team</th>
-          <th>Score</th>
-          <th>Away Team</th>
-          <th>Venue</th>
-        </tr>
-      </thead>
-      <tbody id="tableBody">
-        </tbody>
-    </table>
-  </div>
-</div>
+/* STATS (Summary Boxes) */
+.stats { display:flex; gap:8px; flex-wrap:wrap; padding:12px; background:rgba(0,0,0,0.2); justify-content:center; }
+.pill { 
+  background:var(--card); border:1px solid var(--border); border-radius:8px; padding:10px 4px;
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  flex: 1 1 calc(33.333% - 8px); min-width:80px; cursor:pointer; text-align:center;
+  transition: transform 0.2s, border-color 0.2s;
+}
+.pill.active-pill { border-color:var(--yellow); background:var(--blue2); box-shadow:0 0 10px rgba(253,184,19,0.1); }
+.pill .v { font-family:'Bebas Neue',sans-serif; font-size:1.6rem; line-height:1; }
+.pill .l { font-size:0.6rem; text-transform:uppercase; color:var(--muted); margin-top:4px; }
+.pill-np { flex: 1 1 calc(50% - 8px); display:flex; flex-direction:column; }
 
-<script>
-  /* RESTORING FULL JAVASCRIPT LOGIC */
-  
-  // Example data showing the fix for KO time and Division color
-  const gameData = [
-    { ko: "10:30", age: "U12", div: "Div 1", home: "Belmont FC", score: "3 - 1", away: "Rival FC", venue: "Home Ground" }
-  ];
+/* TABS */
+.tab-bar { display:flex; background:rgba(0,0,0,0.25); border-bottom:1px solid var(--border); width:100%; }
+.tab-btn {
+  font-family:'DM Sans',sans-serif; font-size:0.8rem; font-weight:600; letter-spacing:0.04em;
+  text-transform:uppercase; padding:14px 10px; cursor:pointer; background:transparent; border:none;
+  color:var(--muted); border-bottom:3px solid transparent; margin-bottom:-1px; flex:1; text-align:center;
+  transition:all 0.18s;
+}
+.tab-btn.active { color:var(--yellow); border-bottom-color:var(--yellow); }
+.tab-panel { display:none; }
+.tab-panel.active { display:block; }
 
-  function renderFixtures() {
-    const tbody = document.getElementById('tableBody');
-    tbody.innerHTML = gameData.map(g => `
-      <tr>
-        <td style="font-family:'Bebas Neue'; color:var(--muted);">${g.ko || '--:--'}</td>
-        <td style="font-family:'Bebas Neue';">${g.age}</td>
-        <td class="divcol">${g.div}</td> <td class="bfc">${g.home}</td>
-        <td><span class="sc">${g.score}</span></td>
-        <td>${g.away}</td>
-        <td style="font-size:0.75rem; color:var(--muted);">${g.venue}</td>
-      </tr>
-    `).join('');
-  }
-
-  // All other data parsing and calculation logic goes here...
-  renderFixtures();
-</script>
-
-</body>
-</html>
+/* FILTER BAR */
+.filters-bar { padding:12px; border-bottom:1px solid var(--border); background:rgba(5,13,26,0.97); }
+.filters-grid { display:flex; flex-wrap:wrap; gap:8px; }
+.fbox { background:var(--fbox); border:1px solid var(--fbox-b); border-radius:8px; padding:8px 10px; flex:1 1 calc(50% - 8px); display:flex; flex-direction:column; gap:4px; }
+.fbox-title { font-size:0.6rem; font-weight:700; text-transform:uppercase; color:var(--yellow); opacity:0.85; }
+select {
+  background:var(--blue2); border:1px solid rgba(255,255,255,0.1); color:var(--text);
+  font-family:'DM Sans',sans-serif; font-size:0.75rem; padding:6px 22px 6px 8px;
+  border-radius:6px; outline:none; appearance:none; width:100%;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='9' fill='%238ba2c1'%3E%3Cpath d='M0 3l4.5 4.5L9 3z'/%3E%3C/
