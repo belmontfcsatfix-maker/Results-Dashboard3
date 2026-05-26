@@ -35,11 +35,12 @@ body {
 
 /* HEADER */
 .header { padding:20px 15px 15px; border-bottom:2px solid var(--yellow); display:flex; align-items:center; gap:12px; }
+.club-logo { width: 45px; height: auto; display: block; }
 .club-title { font-family:'Bebas Neue',sans-serif; font-size:2.2rem; letter-spacing:0.02em; line-height:0.9; color:var(--text); }
 .club-title span { color:var(--yellow); }
 
 /* STATS (Summary Boxes) */
-.stats { display:flex; gap:8px; flex-wrap:wrap; padding:12px; background:rgba(0,0,0,0.2); justify-content:center; }
+.stats { display:flex; gap:8px; flex-wrap:wrap; padding:12px; background:rgba(0,0,0,0.2); justify-content:center; margin-bottom: 5px; }
 .pill { 
   background:var(--card); border:1px solid var(--border); border-radius:8px; padding:10px 4px;
   display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -49,7 +50,7 @@ body {
 .pill.active-pill { border-color:var(--yellow); background:var(--blue2); box-shadow:0 0 10px rgba(253,184,19,0.1); }
 .pill .v { font-family:'Bebas Neue',sans-serif; font-size:1.6rem; line-height:1; }
 .pill .l { font-size:0.6rem; text-transform:uppercase; color:var(--muted); margin-top:4px; }
-.pill-np { flex: 1 1 calc(50% - 8px); display:flex; flex-direction:column; } /* 2 pills on the bottom row */
+.pill-np { flex: 1 1 calc(50% - 8px); display:flex; flex-direction:column; }
 
 /* TABS */
 .tab-bar { display:flex; background:rgba(0,0,0,0.25); border-bottom:1px solid var(--border); width:100%; }
@@ -85,9 +86,8 @@ select {
 .mobile-table th { padding:10px 4px; text-align:center; font-size:0.6rem; font-weight:700; text-transform:uppercase; color:var(--yellow); border-bottom:1px solid var(--border); }
 .mobile-table td { padding:10px 4px; vertical-align:middle; text-align:center; word-wrap:break-word; border-bottom:1px solid rgba(255,255,255,0.04); }
 .mobile-table tr:last-child td { border-bottom:none; }
-.mobile-table tbody tr:active { background:rgba(255,255,255,0.03); }
 
-/* Specific Column Widths to prevent horizontal scrolling */
+/* Specific Column Widths */
 #md-table th:nth-child(1) { width:15%; }
 #md-table th:nth-child(2) { width:15%; }
 #md-table th:nth-child(3) { width:28%; }
@@ -117,11 +117,7 @@ select {
 <body>
 
 <div class="header">
-  <svg width="35" height="35" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="50" cy="50" r="48" fill="#fdb813" stroke="#162f52" stroke-width="4"/>
-    <path d="M50 20 L80 40 L80 80 L50 95 L20 80 L20 40 Z" fill="#0a1d37"/>
-    <text x="50" y="65" font-family="'Bebas Neue', sans-serif" font-size="36" fill="#fdb813" text-anchor="middle">BFC</text>
-  </svg>
+  <img src="1000094681.png" alt="Belmont FC Logo" class="club-logo">
   <div class="club-title">BELMONT <span>FC</span></div>
 </div>
 
@@ -245,7 +241,6 @@ function parseCSV(text) {
 
 let MD_GAMES = [];
 let RES_GAMES = [];
-
 let mdFilters = { date: 'all', age: 'all' };
 let resFilters = { date: 'all', div: 'all', rival: 'all', st: new Set(['win','draw','loss','nr','np']) };
 const ALL_ST = ['win','draw','loss','nr','np'];
@@ -267,7 +262,6 @@ async function loadData() {
       if (s.length === 8) return s.slice(0,4) + '-' + s.slice(4,6) + '-' + s.slice(6,8);
       return ds.trim();
     }
-    
     function getDiv(r) {
       const m = String(r).match(/^U?([^\s]+)/i);
       return m ? m[1] : r;
@@ -308,7 +302,6 @@ async function loadData() {
     initMD();
     initRes();
     renderStats(RES_GAMES);
-
   } catch(e) {
     document.getElementById('md-tbody').innerHTML = '<tr><td colspan="5" style="color:var(--red);">Error loading data</td></tr>';
   }
@@ -321,11 +314,9 @@ function switchTab(tab, btn) {
   document.getElementById('tab-' + tab).classList.add('active');
 }
 
-// ------------------- MATCH DAY -------------------
 function initMD() {
   const dates = [...new Set(MD_GAMES.map(g=>g.date).filter(Boolean))];
   const ages = [...new Set(MD_GAMES.map(g=>g.age).filter(Boolean))].sort((a,b)=>parseInt(a.replace(/\D/g,''))-parseInt(b.replace(/\D/g,'')));
-  
   populateSelect('md-dateSel', dates, 'All Dates');
   populateSelect('md-ageSel', ages, 'All Ages');
   mdApplyFilters();
@@ -334,39 +325,35 @@ function initMD() {
 function mdApplyFilters() {
   mdFilters.date = document.getElementById('md-dateSel').value;
   mdFilters.age = document.getElementById('md-ageSel').value;
-  
   const filtered = MD_GAMES.filter(g => {
     if (mdFilters.date !== 'all' && g.date !== mdFilters.date) return false;
     if (mdFilters.age !== 'all' && g.age !== mdFilters.age) return false;
     return true;
   });
-  
   document.getElementById('md-rcount').innerHTML = `Showing <span>${filtered.length}</span> games`;
-
   const tbody = document.getElementById('md-tbody');
   if (!filtered.length) {
     tbody.innerHTML = '<tr><td colspan="5" style="padding:20px;color:var(--muted);">No fixtures found</td></tr>';
     return;
   }
-  
   tbody.innerHTML = filtered.map(g => {
     const dc = mdDivColor(g.division);
+    // FIX: Fallback to kick_off or ko depending on CSV header
+    const time = g.kick_off || g.ko || '-';
     return `<tr>
       <td style="color:var(--muted); font-size:0.65rem;">${g.date.replace(/-20\d\d/,'')}</td>
       <td><div class="div-tag" style="color:${dc}; border-color:${dc}44;">${esc(g.division)}</div></td>
       <td>${teamCellMobile(g.home, g.h_conf)}</td>
       <td>${teamCellMobile(g.away, g.a_conf)}</td>
-      <td style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--yellow);">${g.ko||'-'}</td>
+      <td style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--yellow);">${time}</td>
     </tr>`;
   }).join('');
 }
 
-// ------------------- RESULTS -------------------
 function initRes() {
   const dates = [...new Set(RES_GAMES.map(g=>g.date).filter(Boolean))];
   const divs = [...new Set(RES_GAMES.map(g=>g.division).filter(Boolean))].sort();
   const rivals = [...new Set(RES_GAMES.map(g => g.is_home ? g.away : g.home).filter(Boolean))].sort();
-  
   populateSelect('res-dateSel', dates, 'All Dates');
   populateSelect('res-divSel', divs, 'All Divisions');
   populateSelect('res-rivalSel', rivals, 'All Rivals');
@@ -377,7 +364,6 @@ function resApplyFilters() {
   resFilters.date = document.getElementById('res-dateSel').value;
   resFilters.div = document.getElementById('res-divSel').value;
   resFilters.rival = document.getElementById('res-rivalSel').value;
-
   const preFiltered = RES_GAMES.filter(g => {
     if (resFilters.date !== 'all' && g.date !== resFilters.date) return false;
     if (resFilters.div !== 'all' && g.division !== resFilters.div) return false;
@@ -387,25 +373,19 @@ function resApplyFilters() {
     }
     return true;
   });
-
   renderStats(preFiltered);
-
   const filtered = preFiltered.filter(g => resFilters.st.has(g.result_type));
-
   document.getElementById('res-rcount').innerHTML = `Showing <span>${filtered.length}</span> results`;
-
   const tbody = document.getElementById('res-tbody');
   if (!filtered.length) {
     tbody.innerHTML = '<tr><td colspan="4" style="padding:20px;color:var(--muted);">No results found</td></tr>';
     return;
   }
-
   tbody.innerHTML = filtered.map(g => {
     const bfc = '<span class="bfc">Belmont FC</span>';
     const homeT = g.is_home ? bfc : esc(g.home);
     const awayT = !g.is_home ? bfc : esc(g.away);
     const dc = mdDivColor(g.division);
-
     let result;
     if (g.result_type === 'np') {
       result = `<span class="badge badge-np">NP</span>`;
@@ -414,10 +394,7 @@ function resApplyFilters() {
     } else {
       result = `<div class="sc ${g.result_type}">${g.h_goals}&ndash;${g.a_goals}</div>`;
     }
-
     const typeBadge = g.tournament === 'Cup' ? '<div class="badge badge-cup">Cup</div>' : '<div class="badge badge-league">Lge</div>';
-
-    // Collapsed col 1 for details
     return `<tr>
       <td>
         <div style="font-size:0.65rem; color:var(--muted);">${g.date.replace(/-20\d\d/,'')}</div>
@@ -438,11 +415,9 @@ function renderStats(pool) {
   const l = played.filter(g=>g.result_type==='loss').length;
   const nr = pool.filter(g=>g.result_type==='nr').length;
   const np = pool.filter(g=>g.result_type==='np').length;
-  
   const isAll = resFilters.st.size === ALL_ST.length;
   const act = v => (!isAll && resFilters.st.has(v)) ? 'active-pill' : '';
   const actTot = isAll ? 'active-pill' : '';
-
   document.getElementById('statsRow').innerHTML = `
     <div class="pill ${actTot}" onclick="toggleSt(null)"><span class="v">${pool.length}</span><span class="l">Total</span></div>
     <div class="pill ${act('win')}" onclick="toggleSt('win')"><span class="v" style="color:var(--green)">${w}</span><span class="l">Wins</span></div>
@@ -454,28 +429,19 @@ function renderStats(pool) {
 }
 
 function toggleSt(val) {
-  if (val === null) {
-    resFilters.st = new Set(ALL_ST);
-  } else if (resFilters.st.size === ALL_ST.length) {
-    resFilters.st = new Set([val]);
-  } else if (resFilters.st.has(val) && resFilters.st.size === 1) {
-    resFilters.st = new Set(ALL_ST);
-  } else if (resFilters.st.has(val)) {
-    resFilters.st.delete(val);
-  } else {
-    resFilters.st.add(val);
-  }
+  if (val === null) resFilters.st = new Set(ALL_ST);
+  else if (resFilters.st.size === ALL_ST.length) resFilters.st = new Set([val]);
+  else if (resFilters.st.has(val) && resFilters.st.size === 1) resFilters.st = new Set(ALL_ST);
+  else if (resFilters.st.has(val)) resFilters.st.delete(val);
+  else resFilters.st.add(val);
   resApplyFilters();
 }
 
-// ------------------- HELPERS -------------------
 function populateSelect(id, options, allLabel) {
   const sel = document.getElementById(id);
   const cur = sel.value || 'all';
   sel.innerHTML = `<option value="all">${allLabel}</option>`;
-  options.forEach(o => {
-    sel.innerHTML += `<option value="${esc(o)}">${esc(o)}</option>`;
-  });
+  options.forEach(o => { sel.innerHTML += `<option value="${esc(o)}">${esc(o)}</option>`; });
   if(options.includes(cur)) sel.value = cur;
 }
 
@@ -504,10 +470,7 @@ function teamCellMobile(name, conf) {
   </div>`;
 }
 
-function esc(s) {
-  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-}
-
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 window.onload = loadData;
 </script>
 </body>
