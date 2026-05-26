@@ -49,7 +49,7 @@ body {
 .pill.active-pill { border-color:var(--yellow); background:var(--blue2); box-shadow:0 0 10px rgba(253,184,19,0.1); }
 .pill .v { font-family:'Bebas Neue',sans-serif; font-size:1.6rem; line-height:1; }
 .pill .l { font-size:0.6rem; text-transform:uppercase; color:var(--muted); margin-top:4px; }
-.pill-np { flex: 1 1 calc(50% - 8px); display:flex; flex-direction:column; }
+.pill-np { flex: 1 1 calc(50% - 8px); display:flex; flex-direction:column; } /* 2 pills on the bottom row */
 
 /* TABS */
 .tab-bar { display:flex; background:rgba(0,0,0,0.25); border-bottom:1px solid var(--border); width:100%; }
@@ -72,4 +72,444 @@ select {
   background:var(--blue2); border:1px solid rgba(255,255,255,0.1); color:var(--text);
   font-family:'DM Sans',sans-serif; font-size:0.75rem; padding:6px 22px 6px 8px;
   border-radius:6px; outline:none; appearance:none; width:100%;
-  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='9' fill='%238ba2c1'%3E%3Cpath d='M0 3l4.5 4.5L9 3z'/%3E%3C/
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='9' height='9' fill='%238ba2c1'%3E%3Cpath d='M0 3l4.5 4.5L9 3z'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 7px center;
+}
+
+/* MOBILE TABLE */
+.twrap-outer { padding:12px; }
+.rcount { font-size:0.7rem; text-transform:uppercase; color:var(--muted); margin-bottom:10px; text-align:center;}
+.rcount span { color:var(--yellow); font-weight:700; }
+.mobile-table { width:100%; border-collapse:collapse; font-size:0.75rem; table-layout:fixed; background:var(--card); border-radius:10px; overflow:hidden; border:1px solid var(--border); }
+.mobile-table thead { background:var(--blue2); }
+.mobile-table th { padding:10px 4px; text-align:center; font-size:0.6rem; font-weight:700; text-transform:uppercase; color:var(--yellow); border-bottom:1px solid var(--border); }
+.mobile-table td { padding:10px 4px; vertical-align:middle; text-align:center; word-wrap:break-word; border-bottom:1px solid rgba(255,255,255,0.04); }
+.mobile-table tr:last-child td { border-bottom:none; }
+.mobile-table tbody tr:active { background:rgba(255,255,255,0.03); }
+
+/* Specific Column Widths to prevent horizontal scrolling */
+#md-table th:nth-child(1) { width:15%; }
+#md-table th:nth-child(2) { width:15%; }
+#md-table th:nth-child(3) { width:28%; }
+#md-table th:nth-child(4) { width:28%; }
+#md-table th:nth-child(5) { width:14%; }
+
+#res-table th:nth-child(1) { width:25%; }
+#res-table th:nth-child(2) { width:28%; }
+#res-table th:nth-child(3) { width:19%; }
+#res-table th:nth-child(4) { width:28%; }
+
+/* ELEMENTS */
+.bfc { color:var(--yellow); font-weight:700; }
+.sc { display:inline-flex; align-items:center; justify-content:center; border-radius:4px; padding:4px 0px; font-family:'Bebas Neue',sans-serif; font-size:1.1rem; border:1px solid var(--yellow); color:var(--yellow); background:var(--blue); width:100%; }
+.sc.win { background:var(--green); color:#fff; border-color:var(--green); }
+.sc.loss { background:var(--red); color:#fff; border-color:var(--red); }
+.sc.draw { background:rgba(253,184,19,0.15); }
+.badge { font-size:0.6rem; font-weight:700; padding:2px 4px; border-radius:3px; text-transform:uppercase; white-space:nowrap; display:inline-block; margin-top:3px; }
+.badge-np { background:rgba(255,255,255,0.05); color:var(--muted); border:1px solid rgba(255,255,255,0.12); }
+.badge-nr { background:rgba(243,156,18,0.15); color:var(--amber); border:1px solid rgba(243,156,18,0.3); }
+.badge-cup { background:rgba(253,184,19,0.13); color:var(--yellow); border:1px solid rgba(253,184,19,0.3); }
+.badge-league { background:rgba(255,255,255,0.05); color:var(--muted); border:1px solid rgba(255,255,255,0.1); }
+.team-cont { display:flex; flex-direction:column; align-items:center; gap:4px; line-height:1.2; font-size:0.75rem; }
+.div-tag { font-size:0.65rem; font-weight:700; padding:2px 4px; border-radius:3px; border:1px solid rgba(255,255,255,0.2); background:rgba(255,255,255,0.05); color:var(--text); display:inline-block; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <svg width="35" height="35" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <circle cx="50" cy="50" r="48" fill="#fdb813" stroke="#162f52" stroke-width="4"/>
+    <path d="M50 20 L80 40 L80 80 L50 95 L20 80 L20 40 Z" fill="#0a1d37"/>
+    <text x="50" y="65" font-family="'Bebas Neue', sans-serif" font-size="36" fill="#fdb813" text-anchor="middle">BFC</text>
+  </svg>
+  <div class="club-title">BELMONT FC</div>
+</div>
+
+<div class="stats" id="statsRow">
+  <div class="pill active-pill"><span class="v">0</span><span class="l">Total</span></div>
+  <div class="pill"><span class="v" style="color:var(--green)">0</span><span class="l">Wins</span></div>
+  <div class="pill"><span class="v" style="color:var(--muted)">0</span><span class="l">Draws</span></div>
+  <div class="pill"><span class="v" style="color:var(--red)">0</span><span class="l">Losses</span></div>
+  <div class="pill pill-np"><span class="v" style="color:var(--amber)">0</span><span class="l">Not Rep.</span></div>
+  <div class="pill pill-np"><span class="v">0</span><span class="l">Not Played</span></div>
+</div>
+
+<div class="tab-bar">
+  <button id="btn-match-day" class="tab-btn active" onclick="switchTab('match-day', this)">Match Day</button>
+  <button id="btn-results" class="tab-btn" onclick="switchTab('results', this)">Results</button>
+</div>
+
+<div id="tab-match-day" class="tab-panel active">
+  <div class="filters-bar">
+    <div class="filters-grid">
+      <div class="fbox">
+        <span class="fbox-title">Date</span>
+        <select id="md-dateSel" onchange="mdApplyFilters()"></select>
+      </div>
+      <div class="fbox">
+        <span class="fbox-title">Age Group</span>
+        <select id="md-ageSel" onchange="mdApplyFilters()"></select>
+      </div>
+    </div>
+  </div>
+  <div class="twrap-outer">
+    <div class="rcount" id="md-rcount"></div>
+    <table class="mobile-table" id="md-table">
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Div</th>
+          <th>Home</th>
+          <th>Away</th>
+          <th>KO</th>
+        </tr>
+      </thead>
+      <tbody id="md-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<div id="tab-results" class="tab-panel">
+  <div class="filters-bar">
+    <div class="filters-grid">
+      <div class="fbox" style="flex-basis: 100%;">
+        <span class="fbox-title">Date</span>
+        <select id="res-dateSel" onchange="resApplyFilters()"></select>
+      </div>
+      <div class="fbox">
+        <span class="fbox-title">Division</span>
+        <select id="res-divSel" onchange="resApplyFilters()"></select>
+      </div>
+      <div class="fbox">
+        <span class="fbox-title">Rival</span>
+        <select id="res-rivalSel" onchange="resApplyFilters()"></select>
+      </div>
+    </div>
+  </div>
+  <div class="twrap-outer">
+    <div class="rcount" id="res-rcount"></div>
+    <table class="mobile-table" id="res-table">
+      <thead>
+        <tr>
+          <th>Details</th>
+          <th>Home</th>
+          <th>Res</th>
+          <th>Away</th>
+        </tr>
+      </thead>
+      <tbody id="res-tbody"></tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+// CSV Parsing Logic
+function parseCSV(text) {
+  function tokenise(src) {
+    const records = [];
+    let fields = [], cur = '', i = 0;
+    while (i < src.length) {
+      if (src[i] === '"') {
+        i++;
+        while (i < src.length) {
+          if (src[i] === '"' && src[i+1] === '"') { cur += '"'; i += 2; }
+          else if (src[i] === '"') { i++; break; }
+          else { cur += src[i++]; }
+        }
+      } else if (src[i] === ',') { fields.push(cur); cur = ''; i++; }
+      else if (src[i] === '\r' && src[i+1] === '\n') { fields.push(cur); records.push(fields); fields = []; cur = ''; i += 2; }
+      else if (src[i] === '\n' || src[i] === '\r') { fields.push(cur); records.push(fields); fields = []; cur = ''; i++; }
+      else { cur += src[i++]; }
+    }
+    if (cur || fields.length) { fields.push(cur); records.push(fields); }
+    return records;
+  }
+  const records = tokenise(text);
+  if (records.length < 2) return [];
+  const headers = records[0].map(h => h.trim());
+  const rows = [];
+  for (let i = 1; i < records.length; i++) {
+    const vals = records[i];
+    if (vals.length === 1 && vals[0].trim() === '') continue;
+    const obj = {};
+    headers.forEach((h, idx) => {
+      let v = vals[idx] !== undefined ? vals[idx].trim() : '';
+      if (h === 'h_goals' || h === 'a_goals') {
+        obj[h] = v === '' || v === 'null' ? null : Number(v);
+      } else { obj[h] = v; }
+    });
+    rows.push(obj);
+  }
+  return rows;
+}
+
+let MD_GAMES = [];
+let RES_GAMES = [];
+
+let mdFilters = { date: 'all', age: 'all' };
+let resFilters = { date: 'all', div: 'all', rival: 'all', st: new Set(['win','draw','loss','nr','np']) };
+const ALL_ST = ['win','draw','loss','nr','np'];
+
+async function loadData() {
+  const sheetId = '1Dej_HbjnZZb3Zrb86ExJ6Mg4XCb0PrT5_5BQOfyRJbM';
+  const url1 = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=1325549679`;
+  const url2 = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=575243176`;
+  
+  try {
+    const [resp1, resp2] = await Promise.all([fetch(url1), fetch(url2)]);
+    const t1 = await resp1.text();
+    const t2 = await resp2.text();
+    const rows = [...parseCSV(t1), ...parseCSV(t2)];
+    
+    const todayStr = new Date().toISOString().slice(0, 10);
+    function normDS(ds) {
+      const s = (ds||'').trim().replace(/-/g, '');
+      if (s.length === 8) return s.slice(0,4) + '-' + s.slice(4,6) + '-' + s.slice(6,8);
+      return ds.trim();
+    }
+    
+    function getDiv(r) {
+      const m = String(r).match(/^U?([^\s]+)/i);
+      return m ? m[1] : r;
+    }
+    function getAge(r, isGirls) {
+      const s = String(r);
+      const girls = isGirls || /girls/i.test(s);
+      const m = s.match(/U(\d+)\./i) || s.match(/U(\d+)/i) || s.match(/(\d+)\./i) || s.match(/(\d+)/i);
+      return m ? 'U' + m[1] + (girls ? 'G' : '') : 'Other';
+    }
+
+    const ALL_PROCESSED = rows.map(g => {
+      const bh = /belmont/i.test(g.home);
+      const isNP = g.played === 'N';
+      const hasScore = g.h_goals !== null && g.h_goals !== undefined;
+      let result_type = 'np';
+      if (!isNP) {
+        if (hasScore) {
+          const me = bh ? g.h_goals : g.a_goals, them = bh ? g.a_goals : g.h_goals;
+          result_type = me > them ? 'win' : me === them ? 'draw' : 'loss';
+        } else { result_type = 'nr'; }
+      }
+      const isGirls = /girls/i.test(g.division_raw || '');
+      const divVal = getDiv(g.division_raw).replace(/G+$/i, '') + (isGirls ? 'G' : '');
+      return { 
+        ...g, 
+        division: divVal, 
+        age: getAge(g.division_raw, isGirls), 
+        is_home: bh, 
+        result_type,
+        tournament: g.tournament || 'League',
+        ko: g.ko || g.ko_time || g.kickoff || g.kick_off || g.time || g['kick off'] || ''
+      };
+    });
+
+    RES_GAMES = ALL_PROCESSED.filter(r => normDS(r.date_sort) <= todayStr);
+    MD_GAMES = ALL_PROCESSED.filter(r => normDS(r.date_sort) >= todayStr);
+
+    initMD();
+    initRes();
+    renderStats(RES_GAMES);
+
+  } catch(e) {
+    document.getElementById('md-tbody').innerHTML = '<tr><td colspan="5" style="color:var(--red);">Error loading data</td></tr>';
+  }
+}
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+}
+
+// ------------------- MATCH DAY -------------------
+function initMD() {
+  const dates = [...new Set(MD_GAMES.map(g=>g.date).filter(Boolean))];
+  const ages = [...new Set(MD_GAMES.map(g=>g.age).filter(Boolean))].sort((a,b)=>parseInt(a.replace(/\D/g,''))-parseInt(b.replace(/\D/g,'')));
+  
+  populateSelect('md-dateSel', dates, 'All Dates');
+  populateSelect('md-ageSel', ages, 'All Ages');
+  mdApplyFilters();
+}
+
+function mdApplyFilters() {
+  mdFilters.date = document.getElementById('md-dateSel').value;
+  mdFilters.age = document.getElementById('md-ageSel').value;
+  
+  const filtered = MD_GAMES.filter(g => {
+    if (mdFilters.date !== 'all' && g.date !== mdFilters.date) return false;
+    if (mdFilters.age !== 'all' && g.age !== mdFilters.age) return false;
+    return true;
+  });
+  
+  document.getElementById('md-rcount').innerHTML = `Showing <span>${filtered.length}</span> games`;
+
+  const tbody = document.getElementById('md-tbody');
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="5" style="padding:20px;color:var(--muted);">No fixtures found</td></tr>';
+    return;
+  }
+  
+  tbody.innerHTML = filtered.map(g => {
+    const dc = mdDivColor(g.division);
+    return `<tr>
+      <td style="color:var(--muted); font-size:0.65rem;">${g.date.replace(/-20\d\d/,'')}</td>
+      <td><div class="div-tag" style="color:${dc}; border-color:${dc}66; background:${dc}18;">${esc(g.division)}</div></td>
+      <td>${teamCellMobile(g.home, g.h_conf)}</td>
+      <td>${teamCellMobile(g.away, g.a_conf)}</td>
+      <td style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--yellow);">${g.ko||'-'}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ------------------- RESULTS -------------------
+function initRes() {
+  const dates = [...new Set(RES_GAMES.map(g=>g.date).filter(Boolean))];
+  const divs = [...new Set(RES_GAMES.map(g=>g.division).filter(Boolean))].sort();
+  const rivals = [...new Set(RES_GAMES.map(g => g.is_home ? g.away : g.home).filter(Boolean))].sort();
+  
+  populateSelect('res-dateSel', dates, 'All Dates');
+  populateSelect('res-divSel', divs, 'All Divisions');
+  populateSelect('res-rivalSel', rivals, 'All Rivals');
+  resApplyFilters();
+}
+
+function resApplyFilters() {
+  resFilters.date = document.getElementById('res-dateSel').value;
+  resFilters.div = document.getElementById('res-divSel').value;
+  resFilters.rival = document.getElementById('res-rivalSel').value;
+
+  const preFiltered = RES_GAMES.filter(g => {
+    if (resFilters.date !== 'all' && g.date !== resFilters.date) return false;
+    if (resFilters.div !== 'all' && g.division !== resFilters.div) return false;
+    if (resFilters.rival !== 'all') {
+      const opp = g.is_home ? g.away : g.home;
+      if (opp !== resFilters.rival) return false;
+    }
+    return true;
+  });
+
+  renderStats(preFiltered);
+
+  const filtered = preFiltered.filter(g => resFilters.st.has(g.result_type));
+
+  document.getElementById('res-rcount').innerHTML = `Showing <span>${filtered.length}</span> results`;
+
+  const tbody = document.getElementById('res-tbody');
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="4" style="padding:20px;color:var(--muted);">No results found</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = filtered.map(g => {
+    const bfc = '<span class="bfc">Belmont FC</span>';
+    const homeT = g.is_home ? bfc : esc(g.home);
+    const awayT = !g.is_home ? bfc : esc(g.away);
+    const dc = mdDivColor(g.division);
+
+    let result;
+    if (g.result_type === 'np') {
+      result = `<span class="badge badge-np">NP</span>`;
+    } else if (g.result_type === 'nr') {
+      result = '<span class="badge badge-nr">NR</span>';
+    } else {
+      result = `<div class="sc ${g.result_type}">${g.h_goals}&ndash;${g.a_goals}</div>`;
+    }
+
+    const typeBadge = g.tournament === 'Cup' ? '<div class="badge badge-cup">Cup</div>' : '<div class="badge badge-league">Lge</div>';
+
+    // Collapsed col 1 for details
+    return `<tr>
+      <td>
+        <div style="font-size:0.65rem; color:var(--muted);">${g.date.replace(/-20\d\d/,'')}</div>
+        <div class="div-tag" style="color:${dc}; border-color:${dc}66; background:${dc}18; margin-top:3px;">${esc(g.division)}</div><br>
+        ${typeBadge}
+      </td>
+      <td style="font-weight:600;">${homeT}</td>
+      <td>${result}</td>
+      <td style="font-weight:600;">${awayT}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderStats(pool) {
+  const played = pool.filter(g => ['win','draw','loss'].includes(g.result_type));
+  const w = played.filter(g=>g.result_type==='win').length;
+  const d = played.filter(g=>g.result_type==='draw').length;
+  const l = played.filter(g=>g.result_type==='loss').length;
+  const nr = pool.filter(g=>g.result_type==='nr').length;
+  const np = pool.filter(g=>g.result_type==='np').length;
+  
+  const isAll = resFilters.st.size === ALL_ST.length;
+  const act = v => (!isAll && resFilters.st.has(v)) ? 'active-pill' : '';
+  const actTot = isAll ? 'active-pill' : '';
+
+  document.getElementById('statsRow').innerHTML = `
+    <div class="pill ${actTot}" onclick="toggleSt(null)"><span class="v">${pool.length}</span><span class="l">Total</span></div>
+    <div class="pill ${act('win')}" onclick="toggleSt('win')"><span class="v" style="color:var(--green)">${w}</span><span class="l">Wins</span></div>
+    <div class="pill ${act('draw')}" onclick="toggleSt('draw')"><span class="v" style="color:var(--muted)">${d}</span><span class="l">Draws</span></div>
+    <div class="pill ${act('loss')}" onclick="toggleSt('loss')"><span class="v" style="color:var(--red)">${l}</span><span class="l">Losses</span></div>
+    <div class="pill pill-np ${act('nr')}" onclick="toggleSt('nr')"><span class="v" style="color:var(--amber)">${nr}</span><span class="l">Not Rep.</span></div>
+    <div class="pill pill-np ${act('np')}" onclick="toggleSt('np')"><span class="v">${np}</span><span class="l">Not Played</span></div>
+  `;
+}
+
+function toggleSt(val) {
+  if (val === null) {
+    resFilters.st = new Set(ALL_ST);
+  } else if (resFilters.st.size === ALL_ST.length) {
+    resFilters.st = new Set([val]);
+  } else if (resFilters.st.has(val) && resFilters.st.size === 1) {
+    resFilters.st = new Set(ALL_ST);
+  } else if (resFilters.st.has(val)) {
+    resFilters.st.delete(val);
+  } else {
+    resFilters.st.add(val);
+  }
+  resApplyFilters();
+}
+
+// ------------------- HELPERS -------------------
+function populateSelect(id, options, allLabel) {
+  const sel = document.getElementById(id);
+  const cur = sel.value || 'all';
+  sel.innerHTML = `<option value="all">${allLabel}</option>`;
+  options.forEach(o => {
+    sel.innerHTML += `<option value="${esc(o)}">${esc(o)}</option>`;
+  });
+  if(options.includes(cur)) sel.value = cur;
+}
+
+function mdDivColor(div) {
+  const d = parseFloat(String(div).replace(/[^\d.]/g, ''));
+  if (isNaN(d)) return '#bdc3c7';
+  if (d <= 9) return '#3498db';
+  if (d <= 11) return '#9b59b6';
+  if (d <= 13) return '#e67e22';
+  if (d <= 15) return '#e74c3c';
+  return '#f1c40f';
+}
+
+function confIcon(val) {
+  const v = (val || '').toUpperCase();
+  if (v === 'Y') return `<svg width="12" height="12" viewBox="0 0 9 9"><circle cx="4.5" cy="4.5" r="4.5" fill="#27ae60"/><path d="M2.5 4.5L4 6L6.5 3" stroke="white" stroke-width="1.2" fill="none"/></svg>`;
+  if (v === 'N') return `<svg width="12" height="12" viewBox="0 0 9 9"><circle cx="4.5" cy="4.5" r="4.5" fill="#e74c3c"/><path d="M3 3L6 6M6 3L3 6" stroke="white" stroke-width="1.2" fill="none"/></svg>`;
+  return `<svg width="12" height="12" viewBox="0 0 9 9"><circle cx="4.5" cy="4.5" r="4.5" fill="#e67e22"/></svg>`;
+}
+
+function teamCellMobile(name, conf) {
+  const isBFC = /belmont fc/i.test(name);
+  return `<div class="team-cont">
+    <span style="${isBFC ? 'color:var(--yellow);font-weight:700;' : ''}">${esc(name)}</span>
+    ${confIcon(conf)}
+  </div>`;
+}
+
+function esc(s) {
+  return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+window.onload = loadData;
+</script>
+</body>
+</html>
