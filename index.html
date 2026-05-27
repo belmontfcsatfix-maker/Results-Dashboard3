@@ -354,7 +354,11 @@ function mdApplyFilters() {
     const dc = mdDivColor(g.division);
     return `<tr>
       <td style="color:var(--muted); font-size:0.65rem;">${g.date.replace(/-20\d\d/,'')}</td>
-      <td><div class="div-tag" style="color:${dc}; border-color:${dc}44;">${esc(g.division)}</div></td>
+      
+      <td>  <div class="div-tag" style="color:${dc}; border-color:${dc}44;">
+    ${esc(g.Division)}${divStatusDot(g.h_conf, g.a_conf)}
+  </div></td>
+     
       <td>${teamCellMobile(g.home, g.h_conf)}</td>
       <td>${teamCellMobile(g.away, g.a_conf)}</td>
       <td style="font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--yellow);">${g.ko||'-'}</td>
@@ -505,6 +509,33 @@ function teamCellMobile(name, conf) {
   </div>`;
 }
 
+function divStatusDot(hc, ac) {
+  const H = (hc || '').toUpperCase();
+  const A = (ac || '').toUpperCase();
+
+  let color;
+
+  if (H === 'Y' && A === 'Y') {
+    color = '#2ecc71'; // green
+  } else if (H === 'N' || A === 'N') {
+    color = '#e74c3c'; // red
+  } else {
+    color = '#f39c12'; // amber
+  }
+
+  return `
+    <span style="
+      display:inline-block;
+      width:7px;
+      height:7px;
+      border-radius:50%;
+      background:${color};
+      margin-left:4px;
+      vertical-align:middle;
+    "></span>
+  `;
+}
+  
 function esc(s) {
   return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
