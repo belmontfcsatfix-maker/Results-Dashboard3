@@ -350,8 +350,8 @@ function mdApplyFilters() {
     return;
   }
   
-    tbody.innerHTML = filtered.map(g => {
-    const dc = mdDivColor(g.h_conf, g.a_conf);
+   tbody.innerHTML = filtered.map(g => {
+    const dc = mdDivColor(g.division);
     return `<tr>
       <td style="color:var(--muted); font-size:0.65rem;">${g.date.replace(/-20\d\d/,'')}</td>
       <td><div class="div-tag" style="color:${dc}; border-color:${dc}44;">${esc(g.division)}</div></td>
