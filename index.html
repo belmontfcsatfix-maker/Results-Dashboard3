@@ -354,10 +354,12 @@ function mdApplyFilters() {
     const dc = mdDivColor(g.division);
     return `<tr>
       <td style="color:var(--muted); font-size:0.65rem;">${g.date.replace(/-20\d\d/,'')}</td>
-      
-      <td>  <div class="div-tag" style="color:${dc}; border-color:${dc}44;">
-    ${esc(g.Division)}${divStatusDot(g.h_conf, g.a_conf)}
-  </div></td>
+
+      <td>
+  <div class="div-tag" style="color:${dc}; border-color:${dc}44;">
+    ${esc(g.Division)} ${divStatusDot(g.h_conf, g.a_conf)}
+  </div>
+</td>
      
       <td>${teamCellMobile(g.home, g.h_conf)}</td>
       <td>${teamCellMobile(g.away, g.a_conf)}</td>
