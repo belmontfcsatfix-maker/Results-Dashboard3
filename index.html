@@ -428,7 +428,10 @@ function resApplyFilters() {
     return `<tr>
       <td>
         <div style="font-size:0.65rem; color:var(--muted);">${g.date.replace(/-20\d\d/,'')}</div>
-        <div class="div-tag" style="color:${dc}; border-color:${dc}44; margin-top:3px;">${esc(g.division)}</div><br>
+        <div style="display:flex; align-items:center; justify-content:center; gap:4px; margin-top:3px;">
+          <div class="div-tag" style="color:${dc}; border-color:${dc}44;">${esc(g.division)}</div>
+          <div style="display:flex; gap:2px;">${confIcon(g.home_confirmed)}${confIcon(g.away_confirmed)}</div>
+        </div>
         ${typeBadge}
       </td>
       <td style="font-weight:600;">${homeT}</td>
@@ -528,8 +531,8 @@ function divStatusDot(hc, ac) {
   return `
     <span style="
       display:inline-block;
-      width:11px;
-      height:11px;
+      width:7px;
+      height:7px;
       border-radius:50%;
       background:${color};
       margin-left:4px;
