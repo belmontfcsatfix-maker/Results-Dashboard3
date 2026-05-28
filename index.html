@@ -428,10 +428,7 @@ function resApplyFilters() {
     return `<tr>
       <td>
         <div style="font-size:0.65rem; color:var(--muted);">${g.date.replace(/-20\d\d/,'')}</div>
-        <div style="display:flex; align-items:center; justify-content:center; gap:6px; margin-top:3px;">
-          <div class="div-tag" style="color:${dc}; border-color:${dc}44;">${esc(g.division)}</div>
-          <div>${divConfirmIcon(g.home_confirmed, g.away_confirmed)}</div>
-        </div>
+        <div class="div-tag" style="color:${dc}; border-color:${dc}44; margin-top:3px;">${esc(g.division)}</div><br>
         ${typeBadge}
       </td>
       <td style="font-weight:600;">${homeT}</td>
