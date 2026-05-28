@@ -7,6 +7,45 @@
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
 <style>
 /* CSS VARIABLES AND BASE */
+
+.status-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  font-size: 12px;
+  color: white;
+  font-weight: bold;
+  margin-left: 4px;
+}
+
+/* Green circle with tick */
+.status-icon.confirmed {
+  background-color: #28a745;
+}
+.status-icon.confirmed::before {
+  content: "✓";
+}
+
+/* Red circle with X */
+.status-icon.rejected {
+  background-color: #dc3545;
+}
+.status-icon.rejected::before {
+  content: "✕";
+}
+
+/* Optional: yellow circle for pending */
+.status-icon.pending {
+  background-color: #ffc107;
+}
+.status-icon.pending::before {
+  content: "•";
+}
+
+  
 :root {
   --blue:   #0a1d37;
   --blue2:  #162f52;
@@ -526,15 +565,7 @@ function divStatusDot(hc, ac) {
   }
 
   return `
-    <span style="
-      display:inline-block;
-      width:7px;
-      height:7px;
-      border-radius:50%;
-      background:${color};
-      margin-left:4px;
-      vertical-align:middle;
-    "></span>
+<span class="status-icon ${colorClass}"></span>
   `;
 }
   
