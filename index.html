@@ -505,11 +505,29 @@ function confIcon(val) {
 
 function teamCellMobile(name, conf) {
   const isBFC = /belmont fc/i.test(name);
-  return `<div class="team-cont">
-    <span style="${isBFC ? 'color:var(--yellow);font-weight:700;' : ''}">${esc(name)}</span>
-    ${confIcon(conf)}
-  </div>`;
+  return `
+    <div class="team-cont">
+      <span class="team-name" style="${isBFC ? 'color:var(--yellow);font-weight:700;' : ''}">
+        ${esc(name)}
+      </span>
+      <span class="team-icon">
+        ${confIcon(conf)}
+      </span>
+    </div>
+  `;
 }
+  
+.team-cont {
+  display: flex;
+  align-items: center;
+  gap: 6px; /* space between name and icon */
+}
+
+.team-icon svg {
+  width: 14px;
+  height: 14px;
+}
+  
 
 function divStatusDot(hc, ac) {
   const H = (hc || '').toUpperCase();
