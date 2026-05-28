@@ -526,9 +526,15 @@ function divStatusDot(hc, ac) {
   }
 
   return `
-    
-    <span class="status-icon ${colorClass}"></span>
-    
+    <span style="
+      display:inline-block;
+      width:7px;
+      height:7px;
+      border-radius:50%;
+      background:${color};
+      margin-left:4px;
+      vertical-align:middle;
+    "></span>
   `;
 }
   
