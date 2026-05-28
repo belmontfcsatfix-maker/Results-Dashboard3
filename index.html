@@ -428,9 +428,9 @@ function resApplyFilters() {
     return `<tr>
       <td>
         <div style="font-size:0.65rem; color:var(--muted);">${g.date.replace(/-20\d\d/,'')}</div>
-        <div style="display:flex; align-items:center; justify-content:center; gap:4px; margin-top:3px;">
+        <div style="display:flex; align-items:center; justify-content:center; gap:6px; margin-top:3px;">
           <div class="div-tag" style="color:${dc}; border-color:${dc}44;">${esc(g.division)}</div>
-          <div style="display:flex; gap:2px;">${confIcon(g.home_confirmed)}${confIcon(g.away_confirmed)}</div>
+          <div>${divConfirmIcon(g.home_confirmed, g.away_confirmed)}</div>
         </div>
         ${typeBadge}
       </td>
@@ -504,6 +504,22 @@ function confIcon(val) {
   if (v === 'Y') return `<svg width="12" height="12" viewBox="0 0 9 9"><circle cx="4.5" cy="4.5" r="4.5" fill="#27ae60"/><path d="M2.5 4.5L4 6L6.5 3" stroke="white" stroke-width="1.2" fill="none"/></svg>`;
   if (v === 'N') return `<svg width="12" height="12" viewBox="0 0 9 9"><circle cx="4.5" cy="4.5" r="4.5" fill="#e74c3c"/><path d="M3 3L6 6M6 3L3 6" stroke="white" stroke-width="1.2" fill="none"/></svg>`;
   return `<svg width="12" height="12" viewBox="0 0 9 9"><circle cx="4.5" cy="4.5" r="4.5" fill="#e67e22"/></svg>`;
+}
+
+function divConfirmIcon(hc, ac) {
+  const H = (hc || '').toUpperCase();
+  const A = (ac || '').toUpperCase();
+
+  // Both confirmed: green tick
+  if (H === 'Y' && A === 'Y') {
+    return `<svg width="14" height="14" viewBox="0 0 9 9"><circle cx="4.5" cy="4.5" r="4.5" fill="#2ecc71"/><path d="M2.5 4.5L4 6L6.5 3" stroke="white" stroke-width="1.2" fill="none"/></svg>`;
+  }
+  // Either declined: red X
+  if (H === 'N' || A === 'N') {
+    return `<svg width="14" height="14" viewBox="0 0 9 9"><circle cx="4.5" cy="4.5" r="4.5" fill="#e74c3c"/><path d="M3 3L6 6M6 3L3 6" stroke="white" stroke-width="1.2" fill="none"/></svg>`;
+  }
+  // Other scenarios: amber dot
+  return `<svg width="14" height="14" viewBox="0 0 9 9"><circle cx="4.5" cy="4.5" r="4.5" fill="#f39c12"/></svg>`;
 }
 
 function teamCellMobile(name, conf) {
