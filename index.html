@@ -503,22 +503,6 @@ function confIcon(val) {
   return `<svg width="12" height="12" viewBox="0 0 9 9"><circle cx="4.5" cy="4.5" r="4.5" fill="#e67e22"/></svg>`;
 }
 
-function divConfirmIcon(hc, ac) {
-  const H = (hc || '').toUpperCase();
-  const A = (ac || '').toUpperCase();
-
-  // Both confirmed: green tick
-  if (H === 'Y' && A === 'Y') {
-    return `<svg width="14" height="14" viewBox="0 0 9 9"><circle cx="4.5" cy="4.5" r="4.5" fill="#2ecc71"/><path d="M2.5 4.5L4 6L6.5 3" stroke="white" stroke-width="1.2" fill="none"/></svg>`;
-  }
-  // Either declined: red X
-  if (H === 'N' || A === 'N') {
-    return `<svg width="14" height="14" viewBox="0 0 9 9"><circle cx="4.5" cy="4.5" r="4.5" fill="#e74c3c"/><path d="M3 3L6 6M6 3L3 6" stroke="white" stroke-width="1.2" fill="none"/></svg>`;
-  }
-  // Other scenarios: amber dot
-  return `<svg width="14" height="14" viewBox="0 0 9 9"><circle cx="4.5" cy="4.5" r="4.5" fill="#f39c12"/></svg>`;
-}
-
 function teamCellMobile(name, conf) {
   const isBFC = /belmont fc/i.test(name);
   return `<div class="team-cont">
@@ -530,28 +514,12 @@ function teamCellMobile(name, conf) {
 function divStatusDot(hc, ac) {
   const H = (hc || '').toUpperCase();
   const A = (ac || '').toUpperCase();
-
-  let color;
-
   if (H === 'Y' && A === 'Y') {
-    color = '#2ecc71'; // green
+    return `<svg width="12" height="12" viewBox="0 0 9 9" style="vertical-align:middle;margin-left:3px"><circle cx="4.5" cy="4.5" r="4.5" fill="#27ae60"/><path d="M2.5 4.5L4 6L6.5 3" stroke="white" stroke-width="1.2" fill="none"/></svg>`;
   } else if (H === 'N' || A === 'N') {
-    color = '#e74c3c'; // red
-  } else {
-    color = '#f39c12'; // amber
+    return `<svg width="12" height="12" viewBox="0 0 9 9" style="vertical-align:middle;margin-left:3px"><circle cx="4.5" cy="4.5" r="4.5" fill="#e74c3c"/><path d="M3 3L6 6M6 3L3 6" stroke="white" stroke-width="1.2" fill="none"/></svg>`;
   }
-
-  return `
-    <span style="
-      display:inline-block;
-      width:7px;
-      height:7px;
-      border-radius:50%;
-      background:${color};
-      margin-left:4px;
-      vertical-align:middle;
-    "></span>
-  `;
+  return `<svg width="12" height="12" viewBox="0 0 9 9" style="vertical-align:middle;margin-left:3px"><circle cx="4.5" cy="4.5" r="4.5" fill="#e67e22"/></svg>`;
 }
   
 function esc(s) {
