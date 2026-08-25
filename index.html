@@ -112,6 +112,40 @@ select {
 select:hover, select:focus { border-color:var(--yellow); color:var(--text); }
 select option:disabled { color:rgba(139,162,193,0.35); }
 
+/* Multiselect dropdown (e.g. Match Day date filter) */
+.msdrop { position:relative; display:inline-block; }
+.msdrop-trigger {
+  background:var(--blue2); border:1px solid rgba(255,255,255,0.1); color:var(--muted);
+  font-family:'DM Sans',sans-serif; font-size:0.74rem; padding:5px 10px;
+  border-radius:6px; cursor:pointer; white-space:nowrap; transition:all 0.15s;
+  display:inline-flex; align-items:center; gap:7px; user-select:none;
+}
+.msdrop-trigger:hover { border-color:var(--yellow); color:var(--text); }
+.msdrop-trigger.active { background:var(--yellow); border-color:var(--yellow); color:var(--blue); font-weight:700; }
+.msdrop-trigger .msdrop-caret { flex-shrink:0; transition:transform 0.15s; }
+.msdrop.open .msdrop-trigger .msdrop-caret { transform:rotate(180deg); }
+.msdrop-panel {
+  display:none; position:absolute; top:calc(100% + 6px); left:0; z-index:50;
+  background:var(--card); border:1px solid var(--border); border-radius:10px;
+  padding:8px; min-width:190px; max-width:260px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.5);
+}
+.msdrop.open .msdrop-panel { display:block; }
+.msdrop-actions { display:flex; gap:6px; margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid rgba(255,255,255,0.08); }
+.msdrop-action {
+  background:transparent; border:1px solid rgba(253,184,19,0.3); color:var(--yellow);
+  font-family:'DM Sans',sans-serif; font-size:0.64rem; font-weight:700; padding:4px 8px;
+  border-radius:5px; cursor:pointer; flex:1 1 auto; letter-spacing:0.03em;
+}
+.msdrop-action:hover { background:rgba(253,184,19,0.12); }
+.msdrop-options { display:flex; flex-direction:column; gap:2px; max-height:220px; overflow-y:auto; }
+.msdrop-option {
+  display:flex; align-items:center; gap:8px; padding:5px 6px; border-radius:5px;
+  font-size:0.76rem; color:var(--text); cursor:pointer; transition:background 0.12s; white-space:nowrap;
+}
+.msdrop-option:hover { background:rgba(255,255,255,0.06); }
+.msdrop-option input[type="checkbox"] { accent-color:var(--yellow); width:13px; height:13px; cursor:pointer; flex-shrink:0; }
+
 /* Reset box */
 .fbox-reset {
   background:transparent;
@@ -318,8 +352,19 @@ td.loccol { font-size:0.78rem; color:var(--muted); max-width:160px; overflow:hid
     <div class="fbox">
       <div class="fbox-title">Filter by Date</div>
       <div class="fbox-body">
-        <button id="md-date-all-btn" class="btn" onclick="mdToggleAllDates()">All Dates</button>
-        <div id="md-date-btns" style="display:contents;"></div>
+        <div class="msdrop" id="md-date-dropdown">
+          <button type="button" id="md-date-trigger" class="msdrop-trigger" onclick="mdToggleDateDropdown()">
+            <span id="md-date-trigger-label">All Dates</span>
+            <svg class="msdrop-caret" width="9" height="9" viewBox="0 0 9 9" fill="none"><path d="M0 3l4.5 4.5L9 3z" fill="currentColor"/></svg>
+          </button>
+          <div class="msdrop-panel" id="md-date-panel">
+            <div class="msdrop-actions">
+              <button type="button" class="msdrop-action" onclick="mdToggleAllDates()">Select All</button>
+              <button type="button" class="msdrop-action" onclick="mdClearAllDates()">Clear</button>
+            </div>
+            <div class="msdrop-options" id="md-date-options"></div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -660,6 +705,36 @@ function mdPrintFixtures(mode) {
   }
 }
 
+// ── Date dropdown open/close ──
+function mdToggleDateDropdown(forceState) {
+  const dropdown = document.getElementById('md-date-dropdown');
+  if (!dropdown) return;
+  const isOpen = dropdown.classList.contains('open');
+  const newState = typeof forceState === 'boolean' ? forceState : !isOpen;
+  dropdown.classList.toggle('open', newState);
+}
+document.addEventListener('click', function(e) {
+  const dropdown = document.getElementById('md-date-dropdown');
+  if (dropdown && dropdown.classList.contains('open') && !dropdown.contains(e.target)) {
+    mdToggleDateDropdown(false);
+  }
+});
+
+// Build the checkbox option list inside the date dropdown panel
+function mdRenderDateOptions(allDatesArg, testMode) {
+  const optsEl = document.getElementById('md-date-options');
+  if (!optsEl) return;
+  const sel = window._mdSelectedDates || new Set();
+  optsEl.innerHTML = allDatesArg.map(d => {
+    const id = `md-date-opt-${d.fmt.replace(/[^a-zA-Z0-9]/g,'_')}`;
+    const checked = sel.has(d.fmt);
+    return `<label class="msdrop-option" for="${id}">
+      <input type="checkbox" id="${id}" ${checked?'checked':''} onchange="mdToggleDate('${d.fmt}')">
+      <span>${d.fmt}${testMode?' <span style="font-size:0.58rem;opacity:0.7;">(test)</span>':''}</span>
+    </label>`;
+  }).join('');
+}
+
 function mdToggleDate(fmt) {
   const sel = window._mdSelectedDates || new Set();
   if (sel.has(fmt)) {
@@ -672,24 +747,33 @@ function mdToggleDate(fmt) {
 }
 
 function mdRefreshAllBtnStyle() {
-  const btn = document.getElementById('md-date-all-btn');
-  if (!btn) return;
   const allDates = window._mdAllDates || [];
-  const sel = window._mdSelectedDates;
-  const allSelected = sel && allDates.length > 0 && sel.size === allDates.length;
-  btn.classList.toggle('active', allSelected);
+  const sel = window._mdSelectedDates || new Set();
+  const allSelected = allDates.length > 0 && sel.size === allDates.length;
+
+  // Update dropdown trigger label
+  const labelEl = document.getElementById('md-date-trigger-label');
+  if (labelEl) {
+    if (sel.size === 0 || allSelected) {
+      labelEl.textContent = 'All Dates';
+    } else if (sel.size === 1) {
+      labelEl.textContent = [...sel][0];
+    } else {
+      labelEl.textContent = `${sel.size} Dates Selected`;
+    }
+  }
+  const trigger = document.getElementById('md-date-trigger');
+  if (trigger) trigger.classList.toggle('active', sel.size > 0 && sel.size < allDates.length);
+
+  // Sync checkbox states
+  allDates.forEach(d => {
+    const cb = document.getElementById(`md-date-opt-${d.fmt.replace(/[^a-zA-Z0-9]/g,'_')}`);
+    if (cb) cb.checked = sel.has(d.fmt);
+  });
 }
 
 function mdApplyDateFilter() {
   mdRefreshAllBtnStyle();
-  // Refresh date button styles
-  const allDates = window._mdAllDates || [];
-  const sel = window._mdSelectedDates || new Set();
-  allDates.forEach(d => {
-    const btn = document.getElementById(`md-date-btn-${d.fmt.replace(/[^a-zA-Z0-9]/g,'_')}`);
-    if (!btn) return;
-    btn.classList.toggle('active', sel.has(d.fmt));
-  });
   mdUpdateActiveCount();
   // Re-render games table (filtered + descending) + pitches tables
   if (window._renderMatchDayFiltered) window._renderMatchDayFiltered();
@@ -784,15 +868,8 @@ function renderMatchDay() {
     }
   }
 
-  // ── Build date filter buttons ──
-  const dateBtnsEl = document.getElementById('md-date-btns');
-  if (dateBtnsEl) {
-    dateBtnsEl.innerHTML = allDates.map(d => {
-      const id = `md-date-btn-${d.fmt.replace(/[^a-zA-Z0-9]/g,'_')}`;
-      const active = window._mdSelectedDates.has(d.fmt);
-      return `<button id="${id}" class="btn${active?' active':''}" onclick="mdToggleDate('${d.fmt}')">${d.fmt}</button>`;
-    }).join('');
-  }
+  // ── Build date filter dropdown options ──
+  mdRenderDateOptions(allDates);
   mdRefreshAllBtnStyle();
 
   // ── Build age group list & buttons ──
@@ -909,15 +986,9 @@ function renderMatchDay() {
       window._mdSelectedAges = new Set();
     }
 
-    // Rebuild date + age buttons for test data
-    const dateBtnsEl2 = document.getElementById('md-date-btns');
-    if (dateBtnsEl2) {
-      dateBtnsEl2.innerHTML = testDates.map(d => {
-        const id = `md-date-btn-${d.fmt.replace(/[^a-zA-Z0-9]/g,'_')}`;
-        const active = window._mdSelectedDates.has(d.fmt);
-        return `<button id="${id}" class="btn${active?' active':''}" onclick="mdToggleDate('${d.fmt}')">${d.fmt} <span style="font-size:0.58rem;opacity:0.7;">(test)</span></button>`;
-      }).join('');
-    }
+    // Rebuild date dropdown options for test data
+    mdRenderDateOptions(testDates, true);
+    mdRefreshAllBtnStyle();
 
     const noticeRow = `<tr><td colspan="9" style="text-align:center;padding:8px 14px;background:rgba(253,184,19,0.07);border-bottom:1px solid rgba(253,184,19,0.15);font-size:0.68rem;color:var(--yellow);letter-spacing:0.06em;">
       ⚠ No fixture data loaded — showing 3 synthetic test games for preview only
@@ -1034,9 +1105,11 @@ window._renderMatchDayTables = function() {
   datesToShow.forEach(dateEntry => {
     const dateFmt = dateEntry.fmt;
     const selAge2 = window._mdSelectedAges;
+    const selTp2  = window._mdSelectedTournament || 'all';
     const homeGames = MD_GAMES.filter(g => {
       if (!g.belHome || !g.pitch || g.dateFmt !== dateFmt) return false;
       if (selAge2 && selAge2.size > 0 && !selAge2.has(g.age)) return false;
+      if (selTp2 !== 'all' && g.tournament !== selTp2) return false;
       return true;
     })
       .sort((a,b) => a.pitch.localeCompare(b.pitch));
