@@ -1,8 +1,4 @@
 <!DOCTYPE html>
-
-<script data-goatcounter="https://belmontfc.goatcounter.com/count"
-        async src="//gc.zgo.at/count.js"></script>
-
 <html lang="en">
 <head>
 <meta charset="UTF-8">
@@ -316,7 +312,7 @@ td.loccol { font-size:0.78rem; color:var(--muted); max-width:160px; overflow:hid
 
 <!-- ── MATCH DAY FILTER BAR ── -->
 <div id="md-filters-bar" class="filters-bar">
-  <div class="filters-grid" style="grid-template-columns:auto auto auto;">
+  <div class="filters-grid" style="grid-template-columns:auto auto auto auto;">
 
     <!-- Box 1: Filter by Date -->
     <div class="fbox">
@@ -336,7 +332,18 @@ td.loccol { font-size:0.78rem; color:var(--muted); max-width:160px; overflow:hid
       </div>
     </div>
 
-    <!-- Box 3: Reset + Print -->
+    <!-- Box 3: Filter by Championship -->
+    <div class="fbox">
+      <div class="fbox-title">Filter by Championship</div>
+      <div class="fbox-body" id="md-tp-btns">
+        <button class="btn active" data-md-tp="all"     onclick="mdSetTournament(this,'all')">All</button>
+        <button class="btn"        data-md-tp="League"  onclick="mdSetTournament(this,'League')">League</button>
+        <button class="btn"        data-md-tp="Cup"     onclick="mdSetTournament(this,'Cup')">Cup</button>
+        <button class="btn"        data-md-tp="Other"   onclick="mdSetTournament(this,'Other')">Other</button>
+      </div>
+    </div>
+
+    <!-- Box 4: Reset + Print -->
     <div class="fbox-reset" style="padding:8px 10px;flex-direction:column;align-items:flex-start;gap:6px;">
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         <button class="breset" style="font-size:0.68rem;padding:3px 6px;" onclick="mdResetAll()">↺ Reset</button>
@@ -390,6 +397,7 @@ td.loccol { font-size:0.78rem; color:var(--muted); max-width:160px; overflow:hid
         <tr style="background:var(--blue2);">
           <th style="padding:13px 14px;text-align:left;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--yellow);border-bottom:1px solid var(--border);white-space:nowrap;">Date</th>
           <th style="padding:13px 14px;text-align:left;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--yellow);border-bottom:1px solid var(--border);white-space:nowrap;">Division</th>
+          <th style="padding:13px 14px;text-align:center;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--yellow);border-bottom:1px solid var(--border);white-space:nowrap;">Type</th>
           <th style="padding:13px 14px;text-align:center;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--yellow);border-bottom:1px solid var(--border);white-space:nowrap;">Home Team</th>
           <th style="padding:13px 14px;text-align:center;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--yellow);border-bottom:1px solid var(--border);white-space:nowrap;">Away Team</th>
           <th style="padding:13px 14px;text-align:center;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--yellow);border-bottom:1px solid var(--border);white-space:nowrap;">Kick Off</th>
@@ -437,6 +445,7 @@ function mdDivColor(div) {
 
 // ── Match Day multiselect state ──
 window._mdSelectedDates = null; // null = not yet initialised; Set after first render
+window._mdSelectedTournament = 'all'; // single-select, same logic as Results tab Championship filter
 
 function mdToggleAllDates() {
   const allDates = window._mdAllDates || [];
@@ -486,17 +495,32 @@ function mdUpdateActiveCount() {
   const allAges  = window._mdAllAges  || [];
   const selDates = window._mdSelectedDates;
   const selAges  = window._mdSelectedAges;
+  const selTp    = window._mdSelectedTournament || 'all';
   let count = 0;
   const datesFiltered = selDates && selDates.size > 0 && selDates.size < allDates.length;
   const agesFiltered  = selAges  && selAges.size  > 0 && selAges.size  < allAges.length;
+  const tpFiltered    = selTp !== 'all';
   if (datesFiltered) count++;
   if (agesFiltered)  count++;
+  if (tpFiltered)    count++;
   el.textContent = count > 0 ? `${count} filter${count > 1 ? 's' : ''} active` : '';
+}
+
+// ── Championship filter (single-select — same logic as Results tab) ──
+function mdSetTournament(btn, val) {
+  window._mdSelectedTournament = val;
+  document.querySelectorAll('#md-tp-btns [data-md-tp]').forEach(b =>
+    b.classList.toggle('active', b.dataset.mdTp === val));
+  mdUpdateActiveCount();
+  if (window._renderMatchDayFiltered) window._renderMatchDayFiltered();
 }
 
 function mdResetAll() {
   window._mdSelectedDates = new Set();
   window._mdSelectedAges  = new Set();
+  window._mdSelectedTournament = 'all';
+  document.querySelectorAll('#md-tp-btns [data-md-tp]').forEach(b =>
+    b.classList.toggle('active', b.dataset.mdTp === 'all'));
   mdApplyDateFilter();
   mdApplyAgeFilter();
 }
@@ -703,6 +727,7 @@ function renderMatchDay() {
       dateFmt,
       dateKey:  dateKey(dateSort),
       div:      fc(r,'division_raw'),
+      tournament: fc(r,'tournament') || 'League',
       home,
       hConf:    fc(r,'h_conf'),
       away,
@@ -818,15 +843,25 @@ function renderMatchDay() {
     return `<td style="padding:10px 14px;text-align:center;font-size:0.78rem;color:#ffffff;"><span style="display:inline-flex;align-items:center;gap:6px;justify-content:center;">${name} ${confIcon(conf)}</span></td>`;
   }
 
-  // Store helpers globally for re-use in table render
-  window._mdHelpers = { confIcon, highlightBFC, teamCell, refCell };
+  function tpBadge(tournament) {
+    return tournament === 'Cup'
+      ? '<span class="badge badge-cup">Cup</span>'
+      : tournament === 'League'
+        ? '<span class="badge badge-league">Lge</span>'
+        : '<span class="badge badge-other">' + esc(tournament || 'Other') + '</span>';
+  }
 
-  /* ── Games Table: filtered by selected dates + age groups ── */
+  // Store helpers globally for re-use in table render
+  window._mdHelpers = { confIcon, highlightBFC, teamCell, refCell, tpBadge };
+
+  /* ── Games Table: filtered by selected dates + age groups + championship ── */
   const sel = window._mdSelectedDates;
   const selAge = window._mdSelectedAges;
+  const selTp = window._mdSelectedTournament || 'all';
   const filteredGames = MD_GAMES.filter(g => {
     if (sel && sel.size > 0 && !sel.has(g.dateFmt)) return false;
     if (selAge && selAge.size > 0 && !selAge.has(g.age)) return false;
+    if (selTp !== 'all' && g.tournament !== selTp) return false;
     return true;
   });
 
@@ -839,19 +874,19 @@ function renderMatchDay() {
   // ── Synthetic test games (shown when no real data is loaded) ──
   const MD_TEST_GAMES = [
     {
-      dateFmt:'10-May-25', dateKey:20250510, div:'U12. Div 1',    age:'U12',
+      dateFmt:'10-May-25', dateKey:20250510, div:'U12. Div 1',    age:'U12', tournament:'League',
       home:'Belmont FC',   hConf:'Y',  away:'Leinster FC',  aConf:'Y',
       ko:'10:00', ref:'J. Murphy', refConf:'Y', comments:'Test game A', pitch:'Pitch 1',
       gameLen:60, belHome:true,
     },
     {
-      dateFmt:'10-May-25', dateKey:20250510, div:'U14G. Div 2',   age:'U14G',
+      dateFmt:'10-May-25', dateKey:20250510, div:'U14G. Div 2',   age:'U14G', tournament:'Cup',
       home:'Shelbourne FC',hConf:'N',  away:'Belmont FC',   aConf:'Y',
       ko:'11:30', ref:'',           refConf:'',  comments:'Home team declined', pitch:'Pitch 2',
       gameLen:70, belHome:false,
     },
     {
-      dateFmt:'17-May-25', dateKey:20250517, div:'U16. Div 3',    age:'U16',
+      dateFmt:'17-May-25', dateKey:20250517, div:'U16. Div 3',    age:'U16', tournament:'League',
       home:'Belmont FC',   hConf:'Y',   away:'St. Kevin\'s',  aConf:'N',
       ko:'09:30', ref:'P. Walsh',   refConf:'',  comments:'Away team declined', pitch:'Pitch 3',
       gameLen:80, belHome:true,
@@ -883,7 +918,7 @@ function renderMatchDay() {
       }).join('');
     }
 
-    const noticeRow = `<tr><td colspan="8" style="text-align:center;padding:8px 14px;background:rgba(253,184,19,0.07);border-bottom:1px solid rgba(253,184,19,0.15);font-size:0.68rem;color:var(--yellow);letter-spacing:0.06em;">
+    const noticeRow = `<tr><td colspan="9" style="text-align:center;padding:8px 14px;background:rgba(253,184,19,0.07);border-bottom:1px solid rgba(253,184,19,0.15);font-size:0.68rem;color:var(--yellow);letter-spacing:0.06em;">
       ⚠ No fixture data loaded — showing 3 synthetic test games for preview only
     </td></tr>`;
 
@@ -891,8 +926,10 @@ function renderMatchDay() {
     const testRows = MD_TEST_GAMES.filter(g => {
       const sel2 = window._mdSelectedDates;
       const selAge2 = window._mdSelectedAges;
+      const selTp2 = window._mdSelectedTournament || 'all';
       if (sel2 && sel2.size > 0 && !sel2.has(g.dateFmt)) return false;
       if (selAge2 && selAge2.size > 0 && !selAge2.has(g.age)) return false;
+      if (selTp2 !== 'all' && g.tournament !== selTp2) return false;
       return true;
     }).sort((a,b) => a.dateKey - b.dateKey);
 
@@ -912,6 +949,7 @@ function renderMatchDay() {
         onmouseout="this.style.background='${rowBg}'">
         <td style="padding:10px 14px;font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--muted);white-space:nowrap;">${g.dateFmt}</td>
         <td style="padding:10px 14px;white-space:nowrap;background:${cBg};border-left:3px solid ${cBrd};"><span style="font-size:0.72rem;font-weight:700;padding:3px 8px;border-radius:4px;background:${dc}22;color:${dc};border:1px solid ${dc}44;">${g.div}</span></td>
+        <td style="padding:10px 14px;text-align:center;white-space:nowrap;">${tpBadge(g.tournament)}</td>
         ${teamCell(g.home, g.hConf)}
         ${teamCell(g.away, g.aConf)}
         <td style="padding:10px 14px;text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--yellow);">${g.ko}</td>
@@ -924,7 +962,7 @@ function renderMatchDay() {
     window._renderMatchDayTables();
     return;
   } else if (!sortedGames.length) {
-    tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--muted);">No games for the selected date(s)</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--muted);">No games for the selected date(s)</td></tr>`;
   } else {
     let dateGroupIdx = -1;
     let lastDateKey = null;
@@ -946,6 +984,7 @@ function renderMatchDay() {
       tr.innerHTML = `
         <td style="padding:10px 14px;font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--muted);white-space:nowrap;">${g.dateFmt}</td>
         <td style="padding:10px 14px;white-space:nowrap;background:${confCellBg};border-left:3px solid ${confCellBorder};"><span style="font-size:0.72rem;font-weight:700;padding:3px 8px;border-radius:4px;background:${dc}22;color:${dc};border:1px solid ${dc}44;">${g.div}</span></td>
+        <td style="padding:10px 14px;text-align:center;white-space:nowrap;">${tpBadge(g.tournament)}</td>
         ${teamCell(g.home, g.hConf)}
         ${teamCell(g.away, g.aConf)}
         <td style="padding:10px 14px;text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--yellow);">${g.ko}</td>
@@ -1276,11 +1315,21 @@ window._renderMatchDayFiltered = function() {
     return `<td style="padding:10px 14px;text-align:center;font-size:0.78rem;color:#ffffff;"><span style="display:inline-flex;align-items:center;gap:6px;justify-content:center;">${name} ${confIcon(conf)}</span></td>`;
   }
 
+  function tpBadge(tournament) {
+    return tournament === 'Cup'
+      ? '<span class="badge badge-cup">Cup</span>'
+      : tournament === 'League'
+        ? '<span class="badge badge-league">Lge</span>'
+        : '<span class="badge badge-other">' + esc(tournament || 'Other') + '</span>';
+  }
+
   const sel = window._mdSelectedDates;
   const selAge = window._mdSelectedAges;
+  const selTp = window._mdSelectedTournament || 'all';
   const filteredGames = MD_GAMES.filter(g => {
     if (sel && sel.size > 0 && !sel.has(g.dateFmt)) return false;
     if (selAge && selAge.size > 0 && !selAge.has(g.age)) return false;
+    if (selTp !== 'all' && g.tournament !== selTp) return false;
     return true;
   });
   const sortedGames = [...filteredGames].sort((a,b) => a.dateKey - b.dateKey);
@@ -1289,7 +1338,7 @@ window._renderMatchDayFiltered = function() {
   if (tbody) {
     tbody.innerHTML = '';
     if (!sortedGames.length) {
-      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:40px;color:var(--muted);">No games for the selected date(s)</td></tr>`;
+      tbody.innerHTML = `<tr><td colspan="9" style="text-align:center;padding:40px;color:var(--muted);">No games for the selected date(s)</td></tr>`;
     } else {
       let dateGroupIdx = -1;
       let lastDateKey = null;
@@ -1311,6 +1360,7 @@ window._renderMatchDayFiltered = function() {
         tr.innerHTML = `
           <td style="padding:10px 14px;font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--muted);white-space:nowrap;">${g.dateFmt}</td>
           <td style="padding:10px 14px;white-space:nowrap;background:${confCellBg};border-left:3px solid ${confCellBorder};"><span style="font-size:0.72rem;font-weight:700;padding:3px 8px;border-radius:4px;background:${dc}22;color:${dc};border:1px solid ${dc}44;">${g.div}</span></td>
+          <td style="padding:10px 14px;text-align:center;white-space:nowrap;">${tpBadge(g.tournament)}</td>
           ${teamCell(g.home, g.hConf)}
           ${teamCell(g.away, g.aConf)}
           <td style="padding:10px 14px;text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--yellow);">${g.ko}</td>
