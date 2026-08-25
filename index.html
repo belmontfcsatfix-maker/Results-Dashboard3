@@ -433,6 +433,7 @@ td.loccol { font-size:0.78rem; color:var(--muted); max-width:160px; overflow:hid
 
 // Division colour palette (non-traffic-light)
 const MD_DIV_PALETTE = ['#7c6fcd','#e07b39','#5b9bd5','#4db8b8','#c76eb0','#6fad7c','#d4a843','#6fa8d4'];
+function mdEsc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 const _mdDivColorMap = {};
 let _mdDivColorIdx = 0;
 function mdDivColor(div) {
@@ -848,7 +849,7 @@ function renderMatchDay() {
       ? '<span class="badge badge-cup">Cup</span>'
       : tournament === 'League'
         ? '<span class="badge badge-league">Lge</span>'
-        : '<span class="badge badge-other">' + esc(tournament || 'Other') + '</span>';
+        : '<span class="badge badge-other">' + mdEsc(tournament || 'Other') + '</span>';
   }
 
   // Store helpers globally for re-use in table render
@@ -1320,7 +1321,7 @@ window._renderMatchDayFiltered = function() {
       ? '<span class="badge badge-cup">Cup</span>'
       : tournament === 'League'
         ? '<span class="badge badge-league">Lge</span>'
-        : '<span class="badge badge-other">' + esc(tournament || 'Other') + '</span>';
+        : '<span class="badge badge-other">' + mdEsc(tournament || 'Other') + '</span>';
   }
 
   const sel = window._mdSelectedDates;
