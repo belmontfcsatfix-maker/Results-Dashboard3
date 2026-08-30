@@ -2294,6 +2294,31 @@ function resultsPrint() {
 
     document.body.appendChild(clone);
 
+    // Narrow specific columns for the print export (50% of their normal width):
+    // Date, Group, Division, Type, Result
+    const originalTable = target.matches('table') ? target : target.querySelector('table');
+    const clonedTable   = clone.matches('table') ? clone : clone.querySelector('table');
+    if (originalTable && clonedTable) {
+      const narrowLabels = ['date','group','division','type','result'];
+      const origHeaderCells  = Array.from(originalTable.querySelectorAll('thead th'));
+      const cloneHeaderCells = Array.from(clonedTable.querySelectorAll('thead th'));
+      const colWidths = origHeaderCells.map(th => th.getBoundingClientRect().width);
+      // Force an explicit width so the table's own CSS rule (width:100%) doesn't
+      // conflict with table-layout:fixed inside this width:max-content clone —
+      // that combination otherwise resolves to a runaway table width and the
+      // capture fails to produce a usable image.
+      clonedTable.style.width = 'auto';
+      clonedTable.style.tableLayout = 'fixed';
+      cloneHeaderCells.forEach((th, i) => {
+        const label = (origHeaderCells[i].textContent || '').replace(/[↕\s]+$/,'').trim().toLowerCase();
+        let w = colWidths[i];
+        if (!w) return;
+        if (narrowLabels.some(n => label === n || label.startsWith(n))) w = w * 0.5;
+        th.style.width    = w + 'px';
+        th.style.maxWidth = w + 'px';
+      });
+    }
+
     requestAnimationFrame(() => {
       const W = clone.scrollWidth;
       const H = clone.scrollHeight;
