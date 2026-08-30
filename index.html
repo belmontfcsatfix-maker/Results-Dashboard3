@@ -402,10 +402,13 @@ td.loccol { font-size:0.78rem; color:var(--muted); max-width:160px; overflow:hid
       </div>
       <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
         <div class="active-count" id="md-active-count" style="min-height:0;"></div>
-        <div style="display:flex;gap:4px;margin-left:auto;">
-          <button onclick="mdSetPrintMode('games',this)" id="md-print-games-btn" class="btn" style="font-size:0.65rem;padding:3px 9px;">Games</button>
-          <button onclick="mdSetPrintMode('pitches',this)" id="md-print-pitches-btn" class="btn" style="font-size:0.65rem;padding:3px 9px;">Pitches</button>
-          <button onclick="mdSetPrintMode('all',this)" id="md-print-all-btn" class="btn active" style="font-size:0.65rem;padding:3px 9px;">All</button>
+        <div style="display:flex;align-items:center;gap:6px;margin-left:auto;">
+          <span style="font-size:0.58rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);">Show / Print:</span>
+          <div style="display:flex;gap:4px;">
+            <button onclick="mdSetPrintMode('games',this)" id="md-print-games-btn" class="btn" title="Show only the Games table (on screen and when printing)" style="font-size:0.65rem;padding:3px 9px;">Games</button>
+            <button onclick="mdSetPrintMode('pitches',this)" id="md-print-pitches-btn" class="btn" title="Show only the Pitches section (on screen and when printing)" style="font-size:0.65rem;padding:3px 9px;">Pitches</button>
+            <button onclick="mdSetPrintMode('all',this)" id="md-print-all-btn" class="btn active" title="Show both Games and Pitches (on screen and when printing)" style="font-size:0.65rem;padding:3px 9px;">All</button>
+          </div>
         </div>
       </div>
     </div>
@@ -515,9 +518,86 @@ window._mdSelectedDates = null; // null = not yet initialised; Set after first r
 window._mdAllTournaments = ['League','Cup','Other']; // fixed championship options
 window._mdSelectedTournaments = new Set(); // multi-select; empty Set = show all (same convention as Age Group filter)
 
+// ── Cross-filter availability (mutual exclusivity) ──
+// For each filter dimension, figure out which values still have at least one
+// matching game once the *other two* dimensions' current selections are applied.
+// An empty Set for a dimension means "no filter" for that dimension (show all).
+function mdGetAvailability() {
+  const games   = window._mdAllGames || [];
+  const selDates = window._mdSelectedDates || new Set();
+  const selAges  = window._mdSelectedAges  || new Set();
+  const selTp    = window._mdSelectedTournaments || new Set();
+
+  const availableDates = new Set();
+  const availableAges  = new Set();
+  const availableTps   = new Set();
+
+  games.forEach(g => {
+    const dateOk = selDates.size === 0 || selDates.has(g.dateFmt);
+    const ageOk  = selAges.size  === 0 || selAges.has(g.age);
+    const tpOk   = selTp.size    === 0 || selTp.has(g.tournament);
+
+    if (ageOk && tpOk)   availableDates.add(g.dateFmt);
+    if (dateOk && tpOk)  availableAges.add(g.age);
+    if (dateOk && ageOk) availableTps.add(g.tournament);
+  });
+
+  return { availableDates, availableAges, availableTps };
+}
+
+// "Visible" = available given the other filters, OR already selected (so a
+// selected value never disappears out from under the user — they can still see/deselect it).
+function mdVisibleDates() {
+  const { availableDates } = mdGetAvailability();
+  const sel = window._mdSelectedDates || new Set();
+  return (window._mdAllDates || []).filter(d => availableDates.has(d.fmt) || sel.has(d.fmt));
+}
+function mdVisibleAges() {
+  const { availableAges } = mdGetAvailability();
+  const sel = window._mdSelectedAges || new Set();
+  return (window._mdAllAges || []).filter(a => availableAges.has(a) || sel.has(a));
+}
+function mdVisibleTps() {
+  const { availableTps } = mdGetAvailability();
+  const sel = window._mdSelectedTournaments || new Set();
+  return (window._mdAllTournaments || []).filter(t => availableTps.has(t) || sel.has(t));
+}
+
+// Hide/show individual Age Group buttons based on current Date + Championship selection
+function mdRefreshAgeButtonVisibility() {
+  const visible = new Set(mdVisibleAges());
+  (window._mdAllAges || []).forEach(age => {
+    const btn = document.getElementById(`md-age-btn-${age.replace(/[^a-zA-Z0-9]/g,'_')}`);
+    if (!btn) return;
+    btn.style.display = visible.has(age) ? '' : 'none';
+  });
+}
+
+// Hide/show individual Championship buttons based on current Date + Age Group selection
+function mdRefreshTournamentButtonVisibility() {
+  const visible = new Set(mdVisibleTps());
+  (window._mdAllTournaments || []).forEach(tp => {
+    const btn = document.querySelector(`#md-tp-btns [data-md-tp="${tp}"]`);
+    if (!btn) return;
+    btn.style.display = visible.has(tp) ? '' : 'none';
+  });
+}
+
+// Recompute + apply visibility across all three filter groups. Call this any
+// time any one of the three selections changes.
+function mdRefreshFilterAvailability() {
+  mdRenderDateOptions(window._mdAllDates || []);
+  mdRefreshAgeButtonVisibility();
+  mdRefreshTournamentButtonVisibility();
+  mdRefreshAllBtnStyle();
+  mdRefreshAgeAllBtnStyle();
+  mdRefreshTournamentAllBtnStyle();
+}
+
 function mdToggleAllDates() {
+  const { availableDates } = mdGetAvailability();
   const allDates = window._mdAllDates || [];
-  window._mdSelectedDates = new Set(allDates.map(d => d.fmt));
+  window._mdSelectedDates = new Set(allDates.map(d => d.fmt).filter(f => availableDates.has(f)));
   mdApplyDateFilter();
 }
 
@@ -530,8 +610,9 @@ function mdClearAllDates() {
 window._mdSelectedAges = null; // null = not yet initialised (defaults to empty)
 
 function mdToggleAllAges() {
+  const { availableAges } = mdGetAvailability();
   const allAges = window._mdAllAges || [];
-  window._mdSelectedAges = new Set(allAges);
+  window._mdSelectedAges = new Set(allAges.filter(a => availableAges.has(a)));
   mdApplyAgeFilter();
 }
 
@@ -550,25 +631,25 @@ function mdToggleAge(age) {
 function mdRefreshAgeAllBtnStyle() {
   const btn = document.getElementById('md-age-all-btn');
   if (!btn) return;
-  const allAges = window._mdAllAges || [];
+  const visible = mdVisibleAges();
   const sel = window._mdSelectedAges;
-  const allSelected = sel && sel.size === allAges.length && allAges.length > 0;
-  btn.classList.toggle('active', allSelected);
+  const allSelected = sel && visible.length > 0 && sel.size === visible.length && visible.every(a => sel.has(a));
+  btn.classList.toggle('active', !!allSelected);
 }
 
 function mdUpdateActiveCount() {
   const el = document.getElementById('md-active-count');
   if (!el) return;
-  const allDates = window._mdAllDates || [];
-  const allAges  = window._mdAllAges  || [];
   const selDates = window._mdSelectedDates;
   const selAges  = window._mdSelectedAges;
-  const allTp    = window._mdAllTournaments || [];
   const selTp    = window._mdSelectedTournaments;
+  const visDates = mdVisibleDates().length;
+  const visAges  = mdVisibleAges().length;
+  const visTp    = mdVisibleTps().length;
   let count = 0;
-  const datesFiltered = selDates && selDates.size > 0 && selDates.size < allDates.length;
-  const agesFiltered  = selAges  && selAges.size  > 0 && selAges.size  < allAges.length;
-  const tpFiltered    = selTp    && selTp.size    > 0 && selTp.size    < allTp.length;
+  const datesFiltered = selDates && selDates.size > 0 && selDates.size < visDates;
+  const agesFiltered  = selAges  && selAges.size  > 0 && selAges.size  < visAges;
+  const tpFiltered    = selTp    && selTp.size    > 0 && selTp.size    < visTp;
   if (datesFiltered) count++;
   if (agesFiltered)  count++;
   if (tpFiltered)    count++;
@@ -579,16 +660,17 @@ function mdUpdateActiveCount() {
 function mdRefreshTournamentAllBtnStyle() {
   const btn = document.getElementById('md-tp-all-btn');
   if (!btn) return;
-  const allTp = window._mdAllTournaments || [];
+  const visible = mdVisibleTps();
   const sel = window._mdSelectedTournaments;
   // "All" reads as active whenever no specific subset narrows the results —
-  // i.e. nothing selected yet, or every option is individually selected.
-  const noFilter = !sel || sel.size === 0 || sel.size === allTp.length;
+  // i.e. nothing selected yet, or every currently visible option is individually selected.
+  const noFilter = !sel || sel.size === 0 || (visible.length > 0 && sel.size === visible.length && visible.every(t => sel.has(t)));
   btn.classList.toggle('active', noFilter);
 }
 
 function mdToggleAllTournaments() {
-  window._mdSelectedTournaments = new Set(window._mdAllTournaments || []);
+  const { availableTps } = mdGetAvailability();
+  window._mdSelectedTournaments = new Set((window._mdAllTournaments || []).filter(t => availableTps.has(t)));
   mdApplyTournamentFilter();
 }
 
@@ -600,12 +682,12 @@ function mdToggleTournament(val) {
 }
 
 function mdApplyTournamentFilter() {
-  mdRefreshTournamentAllBtnStyle();
   const sel = window._mdSelectedTournaments || new Set();
   (window._mdAllTournaments || []).forEach(tp => {
     const btn = document.querySelector(`#md-tp-btns [data-md-tp="${tp}"]`);
     if (btn) btn.classList.toggle('active', sel.has(tp));
   });
+  mdRefreshFilterAvailability();
   mdUpdateActiveCount();
   if (window._renderMatchDayFiltered) window._renderMatchDayFiltered();
 }
@@ -623,7 +705,6 @@ function mdResetAll() {
 }
 
 function mdApplyAgeFilter() {
-  mdRefreshAgeAllBtnStyle();
   const allAges = window._mdAllAges || [];
   const sel = window._mdSelectedAges || new Set();
   allAges.forEach(age => {
@@ -631,11 +712,12 @@ function mdApplyAgeFilter() {
     if (!btn) return;
     btn.classList.toggle('active', sel.has(age));
   });
+  mdRefreshFilterAvailability();
   mdUpdateActiveCount();
   if (window._renderMatchDayFiltered) window._renderMatchDayFiltered();
 }
 
-// ── Print mode selector ──
+// ── Print mode selector (also controls what's shown live on screen) ──
 window._mdPrintMode = 'all';
 function mdSetPrintMode(mode, btn) {
   window._mdPrintMode = mode;
@@ -644,6 +726,11 @@ function mdSetPrintMode(mode, btn) {
     if (!b) return;
     b.classList.toggle('active', m === mode);
   });
+  // Toggle live visibility of the Games table / Pitches section on screen
+  const gamesSection   = document.getElementById('md-games-section');
+  const pitchesSection = document.getElementById('md-pitches-section');
+  if (gamesSection)   gamesSection.style.display   = (mode === 'pitches') ? 'none' : '';
+  if (pitchesSection) pitchesSection.style.display = (mode === 'games')   ? 'none' : '';
 }
 
 // ── Print Fixtures ──
@@ -771,12 +858,19 @@ document.addEventListener('click', function(e) {
   }
 });
 
-// Build the checkbox option list inside the date dropdown panel
+// Build the checkbox option list inside the date dropdown panel.
+// Only dates that still have a matching game given the current Age Group +
+// Championship selection are listed (mutual exclusivity), unless already selected.
 function mdRenderDateOptions(allDatesArg, testMode) {
   const optsEl = document.getElementById('md-date-options');
   if (!optsEl) return;
   const sel = window._mdSelectedDates || new Set();
-  optsEl.innerHTML = allDatesArg.map(d => {
+  let listToRender = allDatesArg;
+  if (!testMode) {
+    const visibleFmts = new Set(mdVisibleDates().map(d => d.fmt));
+    listToRender = allDatesArg.filter(d => visibleFmts.has(d.fmt));
+  }
+  optsEl.innerHTML = listToRender.map(d => {
     const id = `md-date-opt-${d.fmt.replace(/[^a-zA-Z0-9]/g,'_')}`;
     const checked = sel.has(d.fmt);
     return `<label class="msdrop-option" for="${id}">
@@ -800,7 +894,8 @@ function mdToggleDate(fmt) {
 function mdRefreshAllBtnStyle() {
   const allDates = window._mdAllDates || [];
   const sel = window._mdSelectedDates || new Set();
-  const allSelected = allDates.length > 0 && sel.size === allDates.length;
+  const visible = mdVisibleDates();
+  const allSelected = visible.length > 0 && sel.size === visible.length && visible.every(d => sel.has(d.fmt));
 
   // Update dropdown trigger label
   const labelEl = document.getElementById('md-date-trigger-label');
@@ -814,7 +909,7 @@ function mdRefreshAllBtnStyle() {
     }
   }
   const trigger = document.getElementById('md-date-trigger');
-  if (trigger) trigger.classList.toggle('active', sel.size > 0 && sel.size < allDates.length);
+  if (trigger) trigger.classList.toggle('active', sel.size > 0 && !allSelected);
 
   // Sync checkbox states
   allDates.forEach(d => {
@@ -824,7 +919,7 @@ function mdRefreshAllBtnStyle() {
 }
 
 function mdApplyDateFilter() {
-  mdRefreshAllBtnStyle();
+  mdRefreshFilterAvailability();
   mdUpdateActiveCount();
   // Re-render games table (filtered + descending) + pitches tables
   if (window._renderMatchDayFiltered) window._renderMatchDayFiltered();
@@ -952,6 +1047,9 @@ function renderMatchDay() {
     if (btn) btn.classList.toggle('active', window._mdSelectedTournaments.has(tp));
   });
   mdRefreshTournamentAllBtnStyle();
+
+  // ── Apply cross-filter mutual exclusivity for initial state ──
+  mdRefreshFilterAvailability();
 
   /* ── helpers ── */
   function confIcon(val) {
@@ -2191,7 +2289,7 @@ function resultsPrint() {
       // Boost font sizes for print readability (skip the banner elements we just added)
       if (el === rBanner || rBanner.contains(el)) return;
       const fs = parseFloat(cs.fontSize);
-      if (!isNaN(fs) && fs > 0) el.style.fontSize = (fs * 1.5) + 'px';
+      if (!isNaN(fs) && fs > 0) el.style.fontSize = (fs * 2.1) + 'px';
     });
 
     document.body.appendChild(clone);
