@@ -1,7 +1,17 @@
 <!DOCTYPE html>
 
-<p>Visitors: <span id="visits">...</span></p>
-<script src="https://counterapi.dev/api/v1/https://belmontfcsatfix-maker.github.io/Results-Dashboard3//up/script.js"></script>
+
+<script>
+  // Cleaned URL key without 'https://' or special slashes
+  fetch('https://counterapi.dev/api/v1/belmontfcsatfix-maker-results-dashboard3/up')
+    .then(response => response.json())
+    .then(data => {
+      document.getElementById('visits').innerText = data.data;
+    })
+    .catch(err => {
+      console.error('Counter error:', err);
+    });
+</script>
 
 
 <html lang="en">
