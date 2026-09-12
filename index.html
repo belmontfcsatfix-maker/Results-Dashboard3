@@ -1,40 +1,5 @@
 <!DOCTYPE html>
 
-
-<p>Unique Visitors: <span id="visits">Loading...</span></p>
-
-<script>
-  const COUNTER_KEY = 'belmontfcsatfix-maker-dashboard-2026';
-  const HAS_VISITED = localStorage.getItem('has_visited_dashboard');
-
-  const apiUrl = !HAS_VISITED 
-    ? `https://api.counterapi.dev/v1/${COUNTER_KEY}/default/up`
-    : `https://api.counterapi.dev/v1/${COUNTER_KEY}/default/`;
-
-  fetch(apiUrl)
-    .then(res => {
-      if (!res.ok) throw new Error('Network response failed');
-      return res.json();
-    })
-    .then(data => {
-      document.getElementById('visits').innerText = data.value;
-      if (!HAS_VISITED) {
-        localStorage.setItem('has_visited_dashboard', 'true');
-      }
-    })
-    .catch(err => {
-      console.error('Counter error:', err);
-      document.getElementById('visits').innerText = '1';
-    });
-</script>
-
-
-
-
-
-
-
-
 <html lang="en">
 <head>
 <meta charset="UTF-8">
