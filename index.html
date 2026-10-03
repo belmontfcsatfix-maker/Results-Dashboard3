@@ -336,6 +336,9 @@ td.loccol { font-size:0.78rem; color:var(--muted); max-width:160px; overflow:hid
 }
 .tab-btn:hover { color:var(--text); }
 .tab-btn.active { color:var(--accent-muted); border-bottom-color:var(--accent-muted); }
+/* Light theme: the tab bar's dark translucent background makes the default
+   muted grey read quite low-contrast — use a darker shade for legibility. */
+[data-theme="light"] .tab-btn { color:#3a3f46; }
 .tab-panel { display:none; }
 .tab-panel.active { display:block; }
 
@@ -653,6 +656,20 @@ function mdDivColor(div) {
     _mdDivColorIdx++;
   }
   return _mdDivColorMap[div];
+}
+// Lightens a hex colour toward white by the given amount (0-1).
+function mdLightenHex(hex, amt) {
+  hex = String(hex || '').replace('#', '');
+  if (hex.length !== 6) return '#' + hex;
+  const r = parseInt(hex.substring(0,2),16), g = parseInt(hex.substring(2,4),16), b = parseInt(hex.substring(4,6),16);
+  const mix = v => Math.round(v + (255 - v) * amt);
+  return '#' + [mix(r), mix(g), mix(b)].map(v => v.toString(16).padStart(2,'0')).join('');
+}
+// Division-badge text colour: in dark theme the base palette reads a little
+// low-contrast against its own tinted chip background, so brighten the text
+// a touch while leaving the chip's accent/border colour untouched.
+function mdDivTextColor(dc) {
+  return (window.currentTheme === 'light') ? dc : mdLightenHex(dc, 0.32);
 }
 
 // ── Match Day multiselect state ──
@@ -1346,7 +1363,7 @@ function renderMatchDay() {
         onmouseover="this.style.background='rgba(var(--overlay-rgb),0.06)'"
         onmouseout="this.style.background='${rowBg}'">
         <td data-sortval="${g.dateKey}" style="padding:10px 14px;font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--muted);white-space:nowrap;">${g.dateFmt}${weekdayTag(g.dateKey)}</td>
-        <td style="padding:10px 14px;white-space:nowrap;background:${cBg};border-left:3px solid ${cBrd};"><span style="font-size:0.72rem;font-weight:700;padding:3px 8px;border-radius:4px;background:${dc}22;color:${dc};border:1px solid ${dc}44;">${g.div}</span></td>
+        <td style="padding:10px 14px;white-space:nowrap;background:${cBg};border-left:3px solid ${cBrd};"><span style="font-size:0.72rem;font-weight:700;padding:3px 8px;border-radius:4px;background:${dc}22;color:${mdDivTextColor(dc)};border:1px solid ${dc}44;">${g.div}</span></td>
         <td style="padding:10px 14px;text-align:center;white-space:nowrap;">${tpBadge(g.tournament)}</td>
         ${teamCell(g.home, g.hConf)}
         ${teamCell(g.away, g.aConf)}
@@ -1381,7 +1398,7 @@ function renderMatchDay() {
       tr.onmouseout  = () => tr.style.background = rowBg;
       tr.innerHTML = `
         <td data-sortval="${g.dateKey}" style="padding:10px 14px;font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--muted);white-space:nowrap;">${g.dateFmt}${weekdayTag(g.dateSort)}</td>
-        <td style="padding:10px 14px;white-space:nowrap;background:${confCellBg};border-left:3px solid ${confCellBorder};"><span style="font-size:0.72rem;font-weight:700;padding:3px 8px;border-radius:4px;background:${dc}22;color:${dc};border:1px solid ${dc}44;">${g.div}</span></td>
+        <td style="padding:10px 14px;white-space:nowrap;background:${confCellBg};border-left:3px solid ${confCellBorder};"><span style="font-size:0.72rem;font-weight:700;padding:3px 8px;border-radius:4px;background:${dc}22;color:${mdDivTextColor(dc)};border:1px solid ${dc}44;">${g.div}</span></td>
         <td style="padding:10px 14px;text-align:center;white-space:nowrap;">${tpBadge(g.tournament)}</td>
         ${teamCell(g.home, g.hConf)}
         ${teamCell(g.away, g.aConf)}
@@ -1759,7 +1776,7 @@ window._renderMatchDayFiltered = function() {
         tr.onmouseout  = () => tr.style.background = rowBg;
         tr.innerHTML = `
           <td data-sortval="${g.dateKey}" style="padding:10px 14px;font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--muted);white-space:nowrap;">${g.dateFmt}${weekdayTag(g.dateSort)}</td>
-          <td style="padding:10px 14px;white-space:nowrap;background:${confCellBg};border-left:3px solid ${confCellBorder};"><span style="font-size:0.72rem;font-weight:700;padding:3px 8px;border-radius:4px;background:${dc}22;color:${dc};border:1px solid ${dc}44;">${g.div}</span></td>
+          <td style="padding:10px 14px;white-space:nowrap;background:${confCellBg};border-left:3px solid ${confCellBorder};"><span style="font-size:0.72rem;font-weight:700;padding:3px 8px;border-radius:4px;background:${dc}22;color:${mdDivTextColor(dc)};border:1px solid ${dc}44;">${g.div}</span></td>
           <td style="padding:10px 14px;text-align:center;white-space:nowrap;">${tpBadge(g.tournament)}</td>
           ${teamCell(g.home, g.hConf)}
           ${teamCell(g.away, g.aConf)}
