@@ -672,8 +672,13 @@ function mdLightenHex(hex, amt) {
 // Division-badge text colour: in dark theme the base palette reads a little
 // low-contrast against its own tinted chip background, so brighten the text
 // a touch while leaving the chip's accent/border colour untouched.
+const MD_DIV_TEXT_LIGHT = {
+  '#594f93':'#3b2a9e','#a15829':'#b84a0a','#416f99':'#1457a0','#378484':'#0b6e6e',
+  '#8f4f7e':'#9c2a7e','#4f7c59':'#1f7a35','#987830':'#8a6100','#4f7898':'#0f5f8f'
+};
 function mdDivTextColor(dc) {
-  return (window.currentTheme === 'light') ? dc : mdLightenHex(dc, 0.32);
+  if (window.currentTheme === 'light') return MD_DIV_TEXT_LIGHT[String(dc).toLowerCase()] || dc;
+  return mdLightenHex(dc, 0.32);
 }
 
 // ── Match Day multiselect state ──
