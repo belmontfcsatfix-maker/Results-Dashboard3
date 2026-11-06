@@ -43,9 +43,13 @@
   --twrap2-bg: transparent;
   --atbl-head-bg: transparent;
   --dark-rgb: 5,13,26;
+  --pitch-col-color: #fdb813;
+  --pitch-col-hdr-color: #c49a0a;
 }
 
 [data-theme="light"] {
+  --pitch-col-color: #2f86d6;
+  --pitch-col-hdr-color: #2f86d6;
   --blue:   #2b2f36;
   --blue2:  #eceef1;
   --dark:   #f4f5f7;
@@ -593,7 +597,7 @@ td.loccol { font-size:0.78rem; color:var(--muted); max-width:160px; overflow:hid
           <th style="padding:13px 14px;text-align:center;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--heading);border-bottom:1px solid var(--border);white-space:nowrap;">Kick Off</th>
           <th style="padding:13px 14px;text-align:center;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--heading);border-bottom:1px solid var(--border);white-space:nowrap;">Referee</th>
           <th style="padding:13px 14px;text-align:center;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--heading);border-bottom:1px solid var(--border);white-space:nowrap;">Comments</th>
-          <th style="padding:13px 14px;text-align:center;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#c49a0a;border-bottom:1px solid var(--border);white-space:nowrap;background:rgba(253,184,19,0.08);">Pitch</th>
+          <th style="padding:13px 14px;text-align:center;font-size:0.6rem;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:var(--pitch-col-hdr-color);border-bottom:1px solid var(--border);white-space:nowrap;background:rgba(253,184,19,0.08);">Pitch</th>
         </tr>
       </thead>
       <tbody id="md-games-tbody"></tbody>
@@ -1370,7 +1374,7 @@ function renderMatchDay() {
         <td style="padding:10px 14px;text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--heading);">${g.ko}</td>
         ${refCell(g.ref, g.refConf)}
         <td style="padding:10px 14px;text-align:center;font-size:0.75rem;color:var(--muted);font-style:italic;">${g.comments||'—'}</td>
-        <td style="padding:10px 14px;text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#fdb813;background:rgba(253,184,19,0.07);">${g.pitch}</td>
+        <td style="padding:10px 14px;text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--pitch-col-color);background:rgba(253,184,19,0.07);">${g.pitch}</td>
       </tr>`;
     }).join('');
 
@@ -1405,7 +1409,7 @@ function renderMatchDay() {
         <td style="padding:10px 14px;text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--heading);">${g.ko}</td>
         ${refCell(g.ref, g.refConf)}
         <td style="padding:10px 14px;text-align:center;font-size:0.75rem;color:var(--muted);font-style:italic;">${g.comments||'—'}</td>
-        <td style="padding:10px 14px;text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#fdb813;background:rgba(253,184,19,0.07);">${g.pitch}</td>
+        <td style="padding:10px 14px;text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--pitch-col-color);background:rgba(253,184,19,0.07);">${g.pitch}</td>
       `;
       tbody.appendChild(tr);
     });
@@ -1783,7 +1787,7 @@ window._renderMatchDayFiltered = function() {
           <td style="padding:10px 14px;text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1.1rem;color:var(--heading);">${g.ko}</td>
           ${refCell(g.ref, g.refConf)}
           <td style="padding:10px 14px;text-align:center;font-size:0.75rem;color:var(--muted);font-style:italic;">${g.comments||'—'}</td>
-          <td style="padding:10px 14px;text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1rem;color:#fdb813;background:rgba(253,184,19,0.07);">${g.pitch}</td>
+          <td style="padding:10px 14px;text-align:center;font-family:'Bebas Neue',sans-serif;font-size:1rem;color:var(--pitch-col-color);background:rgba(253,184,19,0.07);">${g.pitch}</td>
         `;
         tbody.appendChild(tr);
       });
